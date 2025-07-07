@@ -1,4 +1,4 @@
-/** Team Member: Ting Rong YOu, Yong Chong Xin, Anson Chang, Lim Wen Liang
+/** Team Member: Ting Rong You, Yong Chong Xin, Anson Chang, Lim Wen Liang
  *  
  * 
  */
@@ -25,6 +25,7 @@ public class TARUMTClinicManagementSystem {
             System.out.println("\n=== Clinic Management System ===");
             System.out.println("1. Patient Management");
             System.out.println("2. Doctor Management");
+            System.out.println("3. Consultation Management");
             System.out.println("0. Exit");
             System.out.print("Enter choice: ");
             choice = scanner.nextInt();
@@ -37,6 +38,10 @@ public class TARUMTClinicManagementSystem {
                 case 2:
                     DoctorUI doctorUI = new DoctorUI();
                     doctorUI.run();
+                    break;
+                case 3:
+                    ConsultationUI consultationUI = new ConsultationUI();
+                    consultationUI.run();
                     break;
                 case 0:
                     System.out.println("Thank you for using the system.");

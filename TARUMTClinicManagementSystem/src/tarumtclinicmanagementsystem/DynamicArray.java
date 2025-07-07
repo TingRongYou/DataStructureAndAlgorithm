@@ -1,3 +1,5 @@
+package tarumtclinicmanagementsystem;
+
 /*
  * Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
  * Click nbfs://nbhost/SystemFileSystem/Templates/Classes/Class.java to edit this template
@@ -7,6 +9,7 @@
  *
  * @author User
  */
+
 public class DynamicArray<T> implements DynamicArrayInterface<T> {
     private static final int DEFAULT_CAPACITY = 10;
     private Object[] array;

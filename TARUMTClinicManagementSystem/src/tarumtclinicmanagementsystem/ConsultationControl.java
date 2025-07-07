@@ -1,3 +1,5 @@
+package tarumtclinicmanagementsystem;
+
 import java.time.LocalDateTime;
 
 // Control class that manages consultation records using DynamicArray
