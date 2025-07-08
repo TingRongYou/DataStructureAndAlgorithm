@@ -5,27 +5,28 @@ import java.util.Scanner;
 
 public class TreatmentUI {
     private final TreatmentControl control;
+    private final DoctorControl doctorControl;
     private final Scanner scanner;
     
-    public TreatmentUI(){
+    public TreatmentUI(DoctorControl doctorControl){
         this.control = new TreatmentControl();
+        this.doctorControl = doctorControl;
         this.scanner = new Scanner(System.in);
     }
     
     public void run(){
         int choice;
         do{
-            System.out.print("\n=== Medical Treatment Management ===");
+            System.out.println("\n=== Medical Treatment Management ===");
             System.out.println("1. Add New Treatment");
             System.out.println("2. View Patient Treatment History");
             System.out.println("3. Process Next Follow-Up");
             System.out.println("0. Exit");
             System.out.print("Enter choice: ");
-            choice = scanner.nextInt();
             
             try{
                 choice = scanner.nextInt();
-                scanner.nextInt();
+                scanner.nextLine();
                 
                 switch (choice) {
                     case 1 -> addTreatment();
@@ -49,23 +50,29 @@ public class TreatmentUI {
             String diagnosis = scanner.nextLine();
             System.out.print("Prescription: ");
             String prescription = scanner.nextLine();
-            System.out.print("Follow-up needed? (yes/no): "); //changed the true/false
-            boolean isFollowUp = scanner.nextBoolean();
-            scanner.nextLine();
+            System.out.print("Follow-up needed? (yes/no): "); 
+            String followUpInput = scanner.nextLine().trim().toLowerCase();
+            boolean isFollowUp = followUpInput.equals("yes"); 
+            
+            Doctor assignedDoc = getAvailableDoctorId();
+            if(assignedDoc == null){
+                System.out.println("No available doctors. Treatment cannot be added");
+                return;
+            }
 
             MedicalTreatment treatment = new MedicalTreatment(
-                "T" + System.currentTimeMillis(), // generate ID
-                patientId, "D001", diagnosis, prescription, LocalDate.now(), isFollowUp
-            ); //doctorId to be linked later 
+                patientId, assignedDoc.getId(), diagnosis, prescription, LocalDate.now(), isFollowUp
+            ); 
             control.addTreatment(treatment);
-            System.out.println("Treatment added.");
+            System.out.println("Treatment assigned to Dr. " + assignedDoc.getName());
         } catch(Exception e){
             System.out.println("Error! " + e.getMessage());
+            scanner.nextLine();
         }
     }
     
     public void viewPatientHistory(){
-        System.out.print("Patient ID: ");
+        System.out.print("Enter Patient ID: ");
         String patientId = scanner.nextLine();
         DynamicArray<MedicalTreatment> treatments = control.getTreatmentsByPatient(patientId);
         
@@ -90,5 +97,16 @@ public class TreatmentUI {
         }catch (Exception e){
             System.out.println("Error! " + e.getMessage());
         }
+    }
+    
+    private Doctor getAvailableDoctorId(){ //assign if available 
+        for(int i = 0; i < doctorControl.getDoctorCount(); i++){
+            Doctor doc = doctorControl.getDoctorByIndex(i);
+            
+            if(doc != null && doc.isAvailable()){
+                return doc; 
+            }
+        }
+        return null;
     }
 }

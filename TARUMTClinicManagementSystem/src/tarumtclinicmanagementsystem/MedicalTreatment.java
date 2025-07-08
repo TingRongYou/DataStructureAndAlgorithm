@@ -4,7 +4,8 @@ import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 
 public class MedicalTreatment {
-    private final String treatmentId; //or int? 
+    private static int treatmentCounter = 1;
+    private final String treatmentId;
     private String patientId;
     private String doctorId;
     private String diagnosis;
@@ -12,8 +13,8 @@ public class MedicalTreatment {
     private LocalDate date;
     private boolean isFollowUpNeeded;
     
-    public MedicalTreatment(String treatmentId, String patientId, String doctorId, String diagnosis, String prescription, LocalDate date, Boolean isFollowUpNeeded){
-        this.treatmentId = treatmentId;
+    public MedicalTreatment(String patientId, String doctorId, String diagnosis, String prescription, LocalDate date, Boolean isFollowUpNeeded){
+        this.treatmentId = "T" + String.format("%03d", treatmentCounter++);
         this.patientId = patientId;
         this.doctorId = doctorId;
         this.diagnosis = diagnosis;
