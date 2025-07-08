@@ -30,7 +30,7 @@ public class TARUMTClinicManagementSystem {
             System.out.println("1. Patient Management");
             System.out.println("2. Doctor Management");
             System.out.println("3. Consultation Management");
-            System.out.println("4. Medical Treatment Management"); //added
+            System.out.println("4. Medical Treatment Management"); 
             System.out.println("5. Pharmacy Management");
             System.out.println("0. Exit");
             System.out.print("Enter choice: ");
