@@ -12,12 +12,12 @@ package tarumtclinicmanagementsystem;
 import java.util.Scanner;
 
 public class DoctorUI {
-    private DoctorControl control;
-    private Scanner scanner;
+    private final DoctorControl doctorControl; //made both data final
+    private final Scanner scanner;
 
-    public DoctorUI() {
-        control = new DoctorControl();
-        scanner = new Scanner(System.in);
+    public DoctorUI(DoctorControl doctorControl) { //modified
+        this.doctorControl = doctorControl; //modified
+        this.scanner = new Scanner(System.in);
     }
 
     public void run() {
@@ -47,41 +47,41 @@ public class DoctorUI {
                     String schedule = scanner.nextLine();
                     System.out.print("Is Available (true/false): ");
                     boolean available = scanner.nextBoolean();
-                    control.addDoctor(id, name, schedule, available);
+                    doctorControl.addDoctor(id, name, schedule, available);
                     break;
 
                 case 2:
-                    control.displayAllDoctors();
+                    doctorControl.displayAllDoctors();
                     System.out.print("Enter index to remove: ");
                     int removeIndex = scanner.nextInt();
-                    control.removeDoctorByIndex(removeIndex);
+                    doctorControl.removeDoctorByIndex(removeIndex);
                     break;
 
                 case 3:
-                    control.displayAllDoctors();
+                    doctorControl.displayAllDoctors();
                     break;
 
                 case 4:
-                    control.displayAllDoctors();
+                    doctorControl.displayAllDoctors();
                     System.out.print("Enter index to update schedule: ");
                     int schedIndex = scanner.nextInt();
                     scanner.nextLine();
                     System.out.print("Enter new schedule: ");
                     String newSched = scanner.nextLine();
-                    control.updateDoctorSchedule(schedIndex, newSched);
+                    doctorControl.updateDoctorSchedule(schedIndex, newSched);
                     break;
 
                 case 5:
-                    control.displayAllDoctors();
+                    doctorControl.displayAllDoctors();
                     System.out.print("Enter index to update availability: ");
                     int availIndex = scanner.nextInt();
                     System.out.print("Enter availability (true/false): ");
                     boolean newAvail = scanner.nextBoolean();
-                    control.updateDoctorAvailability(availIndex, newAvail);
+                    doctorControl.updateDoctorAvailability(availIndex, newAvail);
                     break;
 
                 case 6:
-                    System.out.println("Total doctors: " + control.getDoctorCount());
+                    System.out.println("Total doctors: " + doctorControl.getDoctorCount());
                     break;
 
                 case 0:
