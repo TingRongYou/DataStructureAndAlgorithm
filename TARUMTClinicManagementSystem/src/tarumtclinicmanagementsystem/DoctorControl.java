@@ -1,14 +1,8 @@
-/*
- * Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
- * Click nbfs://nbhost/SystemFileSystem/Templates/Classes/Class.java to edit this template
- */
 package tarumtclinicmanagementsystem;
 
 /**
- *
- * @author Acer
+ * Team Members: Ting Rong You, Yong Chong Xin, Anson Chang, Lim Wen Liang
  */
-
 public class DoctorControl {
     private MyList<Doctor> doctorList;
 
@@ -63,5 +57,12 @@ public class DoctorControl {
     public int getDoctorCount() {
         return doctorList.size();
     }
-}
 
+    // ✅ Added: Retrieve doctor object safely by index
+    public Doctor getDoctorByIndex(int index) {
+        if (index < 0 || index >= doctorList.size()) {
+            return null;
+        }
+        return doctorList.get(index);
+    }
+}
