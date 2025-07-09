@@ -4,10 +4,10 @@ package tarumtclinicmanagementsystem;
  * Team Members: Ting Rong You, Yong Chong Xin, Anson Chang, Lim Wen Liang
  */
 public class DoctorControl {
-    private MyList<Doctor> doctorList;
+    private ClinicADT<Doctor> doctorList;
 
     public DoctorControl() {
-        doctorList = new MyList<>();
+        doctorList = new MyClinicADT<>(); // Now using the unified ADT
     }
 
     public void addDoctor(String id, String name, String schedule, boolean available) {
@@ -16,11 +16,12 @@ public class DoctorControl {
     }
 
     public void removeDoctorByIndex(int index) {
-        boolean removed = doctorList.remove(index);
-        if (removed)
+        try {
+            doctorList.remove(index);
             System.out.println("Doctor removed.");
-        else
+        } catch (IndexOutOfBoundsException e) {
             System.out.println("Invalid index.");
+        }
     }
 
     public void displayAllDoctors() {
@@ -35,21 +36,21 @@ public class DoctorControl {
     }
 
     public void updateDoctorSchedule(int index, String newSchedule) {
-        Doctor doc = doctorList.get(index);
-        if (doc != null) {
+        try {
+            Doctor doc = doctorList.get(index);
             doc.setSchedule(newSchedule);
             System.out.println("Schedule updated.");
-        } else {
+        } catch (IndexOutOfBoundsException e) {
             System.out.println("Doctor not found.");
         }
     }
 
     public void updateDoctorAvailability(int index, boolean available) {
-        Doctor doc = doctorList.get(index);
-        if (doc != null) {
+        try {
+            Doctor doc = doctorList.get(index);
             doc.setAvailability(available);
             System.out.println("Availability updated.");
-        } else {
+        } catch (IndexOutOfBoundsException e) {
             System.out.println("Doctor not found.");
         }
     }
@@ -58,7 +59,6 @@ public class DoctorControl {
         return doctorList.size();
     }
 
-    // ✅ Added: Retrieve doctor object safely by index
     public Doctor getDoctorByIndex(int index) {
         if (index < 0 || index >= doctorList.size()) {
             return null;

@@ -5,21 +5,24 @@ import java.time.LocalDateTime;
 // Control class that manages consultation records using DynamicArray
 public class ConsultationControl {
 
-    // Custom dynamic array to store Consultation objects
-    private DynamicArray<Consultation> consultations = new DynamicArray<>();
+    private ClinicADT<Consultation> consultations;
 
-    // Adds a new consultation to the dynamic array
+    public ConsultationControl() {
+        consultations = new MyClinicADT<>();
+    }
+
+    // Adds a new consultation to the dynamic list
     public void addConsultation(String patient, String doctor, LocalDateTime date) {
-        Consultation c = new Consultation(patient, doctor, date);  // Create new consultation object
-        consultations.add(c);  // Add to dynamic array
-        System.out.println("Consultation added: " + c);  // Display confirmation
+        Consultation c = new Consultation(patient, doctor, date);
+        consultations.add(c);
+        System.out.println("Consultation added: " + c);
     }
 
     // Removes a consultation by its unique ID
     public boolean removeConsultationById(int id) {
         for (int i = 0; i < consultations.size(); i++) {
-            if (consultations.get(i).getId() == id) {  // Match consultation ID
-                consultations.remove(i);  // Remove from array
+            if (consultations.get(i).getId() == id) {
+                consultations.remove(i);
                 System.out.println("Consultation removed.");
                 return true;
             }
@@ -28,24 +31,25 @@ public class ConsultationControl {
         return false;
     }
 
-    // Lists all consultations stored in the dynamic array
+    // Lists all consultations
     public void listConsultations() {
-        if (consultations.isEmpty()) {  // Check if array is empty
+        if (consultations.isEmpty()) {
             System.out.println("No consultations.");
             return;
         }
+
         System.out.println("=== All Consultations ===");
         for (int i = 0; i < consultations.size(); i++) {
-            System.out.println(consultations.get(i));  // Print each consultation
+            System.out.println(consultations.get(i));
         }
     }
 
-    // Searches for consultations by patient name (case-insensitive)
+    // Searches for consultations by patient name
     public void searchByPatient(String patientName) {
         boolean found = false;
         for (int i = 0; i < consultations.size(); i++) {
             if (consultations.get(i).getPatientName().equalsIgnoreCase(patientName)) {
-                System.out.println(consultations.get(i));  // Print matching consultation
+                System.out.println(consultations.get(i));
                 found = true;
             }
         }
