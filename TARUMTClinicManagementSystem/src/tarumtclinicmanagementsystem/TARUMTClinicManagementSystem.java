@@ -18,6 +18,10 @@ import java.util.Scanner;
 public class TARUMTClinicManagementSystem {
 
     public static void main(String[] args) {
+        //added new lines here
+        DoctorControl doctorControl = new DoctorControl();
+        TreatmentUI treatmentUI = new TreatmentUI(doctorControl);
+        
         Scanner scanner = new Scanner(System.in);
         int choice;
 
@@ -26,6 +30,8 @@ public class TARUMTClinicManagementSystem {
             System.out.println("1. Patient Management");
             System.out.println("2. Doctor Management");
             System.out.println("3. Consultation Management");
+            System.out.println("4. Medical Treatment Management");
+            System.out.println("5. Pharmacy Management");
             System.out.println("0. Exit");
             System.out.print("Enter choice: ");
             choice = scanner.nextInt();
@@ -36,13 +42,20 @@ public class TARUMTClinicManagementSystem {
                     patientUI.run();
                     break;
                 case 2:
-                    DoctorUI doctorUI = new DoctorUI();
+                    DoctorUI doctorUI = new DoctorUI(doctorControl);
                     doctorUI.run();
                     break;
                 case 3:
                     ConsultationUI consultationUI = new ConsultationUI();
                     consultationUI.run();
                     break;
+                case 4: 
+                    //added
+                    treatmentUI.run();
+                    break;
+                case 5:
+                    PharmacyUI pharmacyUI = new PharmacyUI();
+                    pharmacyUI.run();
                 case 0:
                     System.out.println("Thank you for using the system.");
                     break;

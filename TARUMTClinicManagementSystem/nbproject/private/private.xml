@@ -3,6 +3,7 @@
     <editor-bookmarks xmlns="http://www.netbeans.org/ns/editor-bookmarks/2" lastBookmarkId="0"/>
     <open-files xmlns="http://www.netbeans.org/ns/projectui-open-files/2">
         <group>
+<<<<<<< HEAD
             <file>file:/C:/Users/Acer/Documents/NetBeansProjects/DSAPractical/DSAAssignment/TARUMTClinicManagementSystem/src/tarumtclinicmanagementsystem/MyQueue.java</file>
             <file>file:/C:/Users/Acer/Documents/NetBeansProjects/DSAPractical/DSAAssignment/TARUMTClinicManagementSystem/src/tarumtclinicmanagementsystem/DoctorUI.java</file>
             <file>file:/C:/Users/Acer/Documents/NetBeansProjects/DSAPractical/DSAAssignment/TARUMTClinicManagementSystem/src/tarumtclinicmanagementsystem/ListInterface.java</file>
@@ -19,6 +20,27 @@
             <file>file:/C:/Users/Acer/Documents/NetBeansProjects/DSAPractical/DSAAssignment/TARUMTClinicManagementSystem/src/tarumtclinicmanagementsystem/PatientControl.java</file>
             <file>file:/C:/Users/Acer/Documents/NetBeansProjects/DSAPractical/DSAAssignment/TARUMTClinicManagementSystem/src/tarumtclinicmanagementsystem/ConsultationControl.java</file>
             <file>file:/C:/Users/Acer/Documents/NetBeansProjects/DSAPractical/DSAAssignment/TARUMTClinicManagementSystem/src/tarumtclinicmanagementsystem/DoctorControl.java</file>
+=======
+            <file>file:/C:/Users/yongc/Desktop/DataStructureAndAlgorithm/TARUMTClinicManagementSystem/src/tarumtclinicmanagementsystem/DoctorControl.java</file>
+            <file>file:/C:/Users/yongc/Desktop/DataStructureAndAlgorithm/TARUMTClinicManagementSystem/src/tarumtclinicmanagementsystem/TreatmentUI.java</file>
+            <file>file:/C:/Users/yongc/Desktop/DataStructureAndAlgorithm/TARUMTClinicManagementSystem/src/tarumtclinicmanagementsystem/ConsultationControl.java</file>
+            <file>file:/C:/Users/yongc/Desktop/DataStructureAndAlgorithm/TARUMTClinicManagementSystem/src/tarumtclinicmanagementsystem/QueueInterface.java</file>
+            <file>file:/C:/Users/yongc/Desktop/DataStructureAndAlgorithm/TARUMTClinicManagementSystem/src/tarumtclinicmanagementsystem/ConsultationUI.java</file>
+            <file>file:/C:/Users/yongc/Desktop/DataStructureAndAlgorithm/TARUMTClinicManagementSystem/src/tarumtclinicmanagementsystem/MyQueue.java</file>
+            <file>file:/C:/Users/yongc/Desktop/DataStructureAndAlgorithm/TARUMTClinicManagementSystem/src/tarumtclinicmanagementsystem/TreatmentControl.java</file>
+            <file>file:/C:/Users/yongc/Desktop/DataStructureAndAlgorithm/TARUMTClinicManagementSystem/src/tarumtclinicmanagementsystem/DynamicArrayInterface.java</file>
+            <file>file:/C:/Users/yongc/Desktop/DataStructureAndAlgorithm/TARUMTClinicManagementSystem/src/tarumtclinicmanagementsystem/ListInterface.java</file>
+            <file>file:/C:/Users/yongc/Desktop/DataStructureAndAlgorithm/TARUMTClinicManagementSystem/src/tarumtclinicmanagementsystem/PatientUI.java</file>
+            <file>file:/C:/Users/yongc/Desktop/DataStructureAndAlgorithm/TARUMTClinicManagementSystem/src/tarumtclinicmanagementsystem/DoctorUI.java</file>
+            <file>file:/C:/Users/yongc/Desktop/DataStructureAndAlgorithm/TARUMTClinicManagementSystem/src/tarumtclinicmanagementsystem/MyList.java</file>
+            <file>file:/C:/Users/yongc/Desktop/DataStructureAndAlgorithm/TARUMTClinicManagementSystem/src/tarumtclinicmanagementsystem/PatientControl.java</file>
+            <file>file:/C:/Users/yongc/Desktop/DataStructureAndAlgorithm/TARUMTClinicManagementSystem/src/tarumtclinicmanagementsystem/DynamicArray.java</file>
+            <file>file:/C:/Users/yongc/Desktop/DataStructureAndAlgorithm/TARUMTClinicManagementSystem/src/tarumtclinicmanagementsystem/MedicalTreatment.java</file>
+            <file>file:/C:/Users/yongc/Desktop/DataStructureAndAlgorithm/TARUMTClinicManagementSystem/src/tarumtclinicmanagementsystem/TARUMTClinicManagementSystem.java</file>
+            <file>file:/C:/Users/yongc/Desktop/DataStructureAndAlgorithm/TARUMTClinicManagementSystem/src/tarumtclinicmanagementsystem/Doctor.java</file>
+            <file>file:/C:/Users/yongc/Desktop/DataStructureAndAlgorithm/TARUMTClinicManagementSystem/src/tarumtclinicmanagementsystem/Consultation.java</file>
+            <file>file:/C:/Users/yongc/Desktop/DataStructureAndAlgorithm/TARUMTClinicManagementSystem/src/tarumtclinicmanagementsystem/Patient.java</file>
+>>>>>>> e0d6b4b8517d1d03fddd619967e61683d9c0a98b
         </group>
     </open-files>
 </project-private>
