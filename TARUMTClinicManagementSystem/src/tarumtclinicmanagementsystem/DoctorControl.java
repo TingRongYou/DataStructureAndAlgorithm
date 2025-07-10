@@ -1,10 +1,14 @@
 package tarumtclinicmanagementsystem;
 
+<<<<<<< HEAD
 /**
  * Team Members: Ting Rong You, Yong Chong Xin, Anson Chang, Lim Wen Liang
  */
 
 import java.time.DayOfWeek;
+=======
+import java.util.Comparator;
+>>>>>>> 799e9b2fc56aec04e669a1dff14c09088c36bc85
 
 public class DoctorControl {
     private ClinicADT<Doctor> doctorList;
@@ -119,6 +123,47 @@ public class DoctorControl {
             }
         }
         return null;
+    }
+
+    // ✅ Report 1: Display All Doctors Sorted by Name
+    public void printDoctorsSortedByName() {
+        if (doctorList.isEmpty()) {
+            System.out.println("No doctors available.");
+            return;
+        }
+
+        ClinicADT<Doctor> sorted = new MyClinicADT<>();
+        for (int i = 0; i < doctorList.size(); i++) {
+            sorted.add(doctorList.get(i));
+        }
+
+        sorted.sort(new Comparator<Doctor>() {
+            @Override
+            public int compare(Doctor d1, Doctor d2) {
+                return d1.getName().compareToIgnoreCase(d2.getName());
+            }
+        });
+
+        System.out.println("=== Doctor List (Sorted by Name) ===");
+        for (int i = 0; i < sorted.size(); i++) {
+            System.out.println(sorted.get(i));
+        }
+    }
+
+    // ✅ Report 2: Display Only Available Doctors
+    public void printAvailableDoctors() {
+        boolean found = false;
+        System.out.println("=== Available Doctors ===");
+        for (int i = 0; i < doctorList.size(); i++) {
+            Doctor doc = doctorList.get(i);
+            if (doc.isAvailable()) {
+                System.out.println(doc);
+                found = true;
+            }
+        }
+        if (!found) {
+            System.out.println("No doctors are currently available.");
+        }
     }
 }
 
