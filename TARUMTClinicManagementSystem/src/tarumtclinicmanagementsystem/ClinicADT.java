@@ -29,4 +29,7 @@ public interface ClinicADT<T> {
     int size();                        // Number of elements
     boolean isEmpty();                 // Is collection empty
     void clear();                      // Clear all items
+    
+    // --- Sort items using comparator ---
+    void sort(java.util.Comparator<T> comparator);
 }

@@ -4,6 +4,8 @@
  */
 package tarumtclinicmanagementsystem;
 
+import java.util.Comparator;
+
 /**
  *
  * @author Acer
@@ -17,7 +19,7 @@ public class PatientControl {
 
     public void registerPatient(String name, String id) {
         Patient newPatient = new Patient(name, id);
-        patientQueue.enqueue(newPatient);  // Same behavior as before
+        patientQueue.enqueue(newPatient);  // FIFO behavior
         System.out.println("Patient registered and added to the queue.");
     }
 
@@ -58,5 +60,42 @@ public class PatientControl {
 
     public int getPatientCount() {
         return patientQueue.size();
+    }
+
+    // ✅ Corrected method to sort the current patient queue by name
+    public void printAllPatientsSortedByName() {
+        if (patientQueue.isEmpty()) {
+            System.out.println("No patients in the queue.");
+            return;
+        }
+
+        // Copy patients to a temporary list for sorting
+        ClinicADT<Patient> sorted = new MyClinicADT<>();
+        ClinicADT<Patient> tempQueue = new MyClinicADT<>();
+
+        while (!patientQueue.isEmpty()) {
+            Patient p = patientQueue.dequeue();
+            sorted.add(p);
+            tempQueue.enqueue(p); // Backup original order
+        }
+
+        // Restore the original queue
+        while (!tempQueue.isEmpty()) {
+            patientQueue.enqueue(tempQueue.dequeue());
+        }
+
+        // Sort the copied list using comparator
+        sorted.sort(new Comparator<Patient>() {
+            @Override
+            public int compare(Patient p1, Patient p2) {
+                return p1.getName().compareToIgnoreCase(p2.getName());
+            }
+        });
+
+        // Print sorted list
+        System.out.println("=== Patient List (Sorted by Name) ===");
+        for (int i = 0; i < sorted.size(); i++) {
+            System.out.println(sorted.get(i));
+        }
     }
 }

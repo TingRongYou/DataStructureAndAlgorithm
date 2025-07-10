@@ -12,11 +12,11 @@ package tarumtclinicmanagementsystem;
 import java.util.Scanner;
 
 public class DoctorUI {
-    private final DoctorControl doctorControl; //made both data final
+    private final DoctorControl doctorControl;
     private final Scanner scanner;
 
-    public DoctorUI(DoctorControl doctorControl) { //modified
-        this.doctorControl = doctorControl; //modified
+    public DoctorUI(DoctorControl doctorControl) {
+        this.doctorControl = doctorControl;
         this.scanner = new Scanner(System.in);
     }
 
@@ -31,14 +31,20 @@ public class DoctorUI {
             System.out.println("4. Update Doctor Schedule");
             System.out.println("5. Update Availability");
             System.out.println("6. Show Doctor Count");
+            System.out.println("7. Display Doctors Sorted by Name");         // ✅ New
+            System.out.println("8. Display Only Available Doctors");         // ✅ New
             System.out.println("0. Exit");
             System.out.print("Enter choice: ");
 
+            while (!scanner.hasNextInt()) {
+                System.out.print("Please enter a valid number: ");
+                scanner.next();
+            }
             choice = scanner.nextInt();
             scanner.nextLine(); // Clear newline
 
             switch (choice) {
-                case 1:
+                case 1 -> {
                     System.out.print("Enter Doctor ID: ");
                     String id = scanner.nextLine();
                     System.out.print("Enter Doctor Name: ");
@@ -48,20 +54,18 @@ public class DoctorUI {
                     System.out.print("Is Available (true/false): ");
                     boolean available = scanner.nextBoolean();
                     doctorControl.addDoctor(id, name, schedule, available);
-                    break;
+                }
 
-                case 2:
+                case 2 -> {
                     doctorControl.displayAllDoctors();
                     System.out.print("Enter index to remove: ");
                     int removeIndex = scanner.nextInt();
                     doctorControl.removeDoctorByIndex(removeIndex);
-                    break;
+                }
 
-                case 3:
-                    doctorControl.displayAllDoctors();
-                    break;
+                case 3 -> doctorControl.displayAllDoctors();
 
-                case 4:
+                case 4 -> {
                     doctorControl.displayAllDoctors();
                     System.out.print("Enter index to update schedule: ");
                     int schedIndex = scanner.nextInt();
@@ -69,27 +73,26 @@ public class DoctorUI {
                     System.out.print("Enter new schedule: ");
                     String newSched = scanner.nextLine();
                     doctorControl.updateDoctorSchedule(schedIndex, newSched);
-                    break;
+                }
 
-                case 5:
+                case 5 -> {
                     doctorControl.displayAllDoctors();
                     System.out.print("Enter index to update availability: ");
                     int availIndex = scanner.nextInt();
                     System.out.print("Enter availability (true/false): ");
                     boolean newAvail = scanner.nextBoolean();
                     doctorControl.updateDoctorAvailability(availIndex, newAvail);
-                    break;
+                }
 
-                case 6:
-                    System.out.println("Total doctors: " + doctorControl.getDoctorCount());
-                    break;
+                case 6 -> System.out.println("Total doctors: " + doctorControl.getDoctorCount());
 
-                case 0:
-                    System.out.println("Exiting Doctor Management.");
-                    break;
+                case 7 -> doctorControl.printDoctorsSortedByName();          // ✅ New
 
-                default:
-                    System.out.println("Invalid choice.");
+                case 8 -> doctorControl.printAvailableDoctors();             // ✅ New
+
+                case 0 -> System.out.println("Exiting Doctor Management.");
+
+                default -> System.out.println("Invalid choice.");
             }
 
         } while (choice != 0);

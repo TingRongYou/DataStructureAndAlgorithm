@@ -1,6 +1,6 @@
 package tarumtclinicmanagementsystem;
 
-import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.Scanner;
 
 public class TreatmentUI {
@@ -25,8 +25,7 @@ public class TreatmentUI {
             System.out.print("Enter choice: ");
 
             try {
-                choice = scanner.nextInt();
-                scanner.nextLine();
+                choice = Integer.parseInt(scanner.nextLine());
 
                 switch (choice) {
                     case 1 -> addTreatment();
@@ -37,7 +36,6 @@ public class TreatmentUI {
                 }
             } catch(Exception e) {
                 System.out.println("Error! Invalid input. Please try again.");
-                scanner.nextLine();
                 choice = -1;
             }
         } while (choice != 0);
@@ -47,10 +45,24 @@ public class TreatmentUI {
         try {
             System.out.print("Enter Patient ID: ");
             String patientId = scanner.nextLine();
+
+            System.out.print("Enter Patient Name: ");
+            String patientName = scanner.nextLine();
+
             System.out.print("Enter Diagnosis: ");
             String diagnosis = scanner.nextLine();
-            System.out.print("Prescription: ");
+
+            System.out.print("Enter Prescription: ");
             String prescription = scanner.nextLine();
+
+            System.out.print("Enter Date (yyyy-MM-dd): ");
+            String date = scanner.nextLine();
+
+            System.out.print("Enter Time (HH:mm): ");
+            String time = scanner.nextLine();
+
+            LocalDateTime dateTime = LocalDateTime.parse(date + "T" + time + ":00");
+
             System.out.print("Follow-up needed? (yes/no): ");
             String followUpInput = scanner.nextLine().trim().toLowerCase();
             boolean isFollowUp = followUpInput.equals("yes");
@@ -62,14 +74,19 @@ public class TreatmentUI {
             }
 
             MedicalTreatment treatment = new MedicalTreatment(
-                patientId, assignedDoc.getId(), diagnosis, prescription, LocalDate.now(), isFollowUp
+                patientId,
+                patientName,
+                assignedDoc.getId(),
+                diagnosis,
+                prescription,
+                dateTime,
+                isFollowUp
             );
 
             control.addTreatment(treatment);
             System.out.println("Treatment assigned to Dr. " + assignedDoc.getName());
         } catch(Exception e){
             System.out.println("Error! " + e.getMessage());
-            scanner.nextLine();
         }
     }
 
@@ -94,7 +111,7 @@ public class TreatmentUI {
             if (nextFollowUp == null) {
                 System.out.println("No follow-ups in queue.");
             } else {
-                System.out.println("Processing follow-up: \n" + nextFollowUp);
+                System.out.println("Processing follow-up:\n" + nextFollowUp);
             }
         } catch (Exception e) {
             System.out.println("Error! " + e.getMessage());

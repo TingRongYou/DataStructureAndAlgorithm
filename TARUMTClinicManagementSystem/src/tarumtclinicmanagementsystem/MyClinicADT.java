@@ -4,143 +4,92 @@
  */
 package tarumtclinicmanagementsystem;
 
+import java.util.Comparator;
+
 /**
  *
  * @author Acer
  */
 
 public class MyClinicADT<T> implements ClinicADT<T> {
-
-    private class Node {
-        T data;
-        Node next;
-
-        Node(T data) {
-            this.data = data;
-        }
-    }
-
-    private Node head;
+    private Object[] data;
     private int size;
+    private static final int INITIAL_CAPACITY = 10;
 
     public MyClinicADT() {
-        head = null;
+        data = new Object[INITIAL_CAPACITY];
         size = 0;
     }
 
-    // ---------------- List-like operations ----------------
+    private void ensureCapacity() {
+        if (size >= data.length) {
+            Object[] newData = new Object[data.length * 2];
+            for (int i = 0; i < size; i++) {
+                newData[i] = data[i];
+            }
+            data = newData;
+        }
+    }
 
     @Override
     public void add(T item) {
-        add(size, item);
+        ensureCapacity();
+        data[size++] = item;
     }
 
     @Override
     public void add(int index, T item) {
-        if (index < 0 || index > size)
-            throw new IndexOutOfBoundsException("Invalid index");
-
-        Node newNode = new Node(item);
-
-        if (index == 0) {
-            newNode.next = head;
-            head = newNode;
-        } else {
-            Node prev = head;
-            for (int i = 0; i < index - 1; i++)
-                prev = prev.next;
-
-            newNode.next = prev.next;
-            prev.next = newNode;
+        if (index < 0 || index > size) throw new IndexOutOfBoundsException();
+        ensureCapacity();
+        for (int i = size; i > index; i--) {
+            data[i] = data[i - 1];
         }
+        data[index] = item;
         size++;
     }
 
     @Override
     public T get(int index) {
-        if (index < 0 || index >= size)
-            throw new IndexOutOfBoundsException("Invalid index");
-
-        Node current = head;
-        for (int i = 0; i < index; i++)
-            current = current.next;
-
-        return current.data;
+        if (index < 0 || index >= size) throw new IndexOutOfBoundsException();
+        return (T) data[index];
     }
 
     @Override
     public T set(int index, T item) {
-        if (index < 0 || index >= size)
-            throw new IndexOutOfBoundsException("Invalid index");
-
-        Node current = head;
-        for (int i = 0; i < index; i++)
-            current = current.next;
-
-        T oldData = current.data;
-        current.data = item;
-        return oldData;
+        if (index < 0 || index >= size) throw new IndexOutOfBoundsException();
+        T old = (T) data[index];
+        data[index] = item;
+        return old;
     }
 
     @Override
     public T remove(int index) {
-        if (index < 0 || index >= size)
-            throw new IndexOutOfBoundsException("Invalid index");
-
-        Node removed;
-
-        if (index == 0) {
-            removed = head;
-            head = head.next;
-        } else {
-            Node prev = head;
-            for (int i = 0; i < index - 1; i++)
-                prev = prev.next;
-
-            removed = prev.next;
-            prev.next = removed.next;
+        if (index < 0 || index >= size) throw new IndexOutOfBoundsException();
+        T removed = (T) data[index];
+        for (int i = index; i < size - 1; i++) {
+            data[i] = data[i + 1];
         }
-
-        size--;
-        return removed.data;
+        data[--size] = null;
+        return removed;
     }
 
     @Override
     public boolean remove(T item) {
-        if (head == null) return false;
-
-        if (head.data.equals(item)) {
-            head = head.next;
-            size--;
+        int index = indexOf(item);
+        if (index != -1) {
+            remove(index);
             return true;
         }
-
-        Node current = head;
-        while (current.next != null && !current.next.data.equals(item)) {
-            current = current.next;
-        }
-
-        if (current.next != null) {
-            current.next = current.next.next;
-            size--;
-            return true;
-        }
-
         return false;
     }
 
     @Override
     public int indexOf(T item) {
-        Node current = head;
-        int index = 0;
-
-        while (current != null) {
-            if (current.data.equals(item))
-                return index;
-            current = current.next;
-            index++;
+        for (int i = 0; i < size; i++) {
+            if (data[i].equals(item)) {
+                return i;
+            }
         }
-
         return -1;
     }
 
@@ -148,8 +97,6 @@ public class MyClinicADT<T> implements ClinicADT<T> {
     public boolean contains(T item) {
         return indexOf(item) != -1;
     }
-
-    // ---------------- Queue-like operations ----------------
 
     @Override
     public void enqueue(T item) {
@@ -166,8 +113,6 @@ public class MyClinicADT<T> implements ClinicADT<T> {
         return get(0);
     }
 
-    // ---------------- Utility operations ----------------
-
     @Override
     public int size() {
         return size;
@@ -180,8 +125,24 @@ public class MyClinicADT<T> implements ClinicADT<T> {
 
     @Override
     public void clear() {
-        head = null;
+        for (int i = 0; i < size; i++) {
+            data[i] = null;
+        }
         size = 0;
+    }
+
+    @Override
+    public void sort(Comparator<T> comparator) {
+        for (int i = 0; i < size - 1; i++) {
+            for (int j = 0; j < size - i - 1; j++) {
+                T a = (T) data[j];
+                T b = (T) data[j + 1];
+                if (comparator.compare(a, b) > 0) {
+                    data[j] = b;
+                    data[j + 1] = a;
+                }
+            }
+        }
     }
 }
 
