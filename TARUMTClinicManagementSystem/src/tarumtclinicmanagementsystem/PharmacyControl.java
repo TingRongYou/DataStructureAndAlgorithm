@@ -9,7 +9,7 @@ package tarumtclinicmanagementsystem;
  * @author User
  */
 public class PharmacyControl {
-    private DynamicArray<Medicine> medicineList = new DynamicArray<>();
+    private ClinicADT<Medicine> medicineList = new MyClinicADT<>();
 
     public void addMedicine(Medicine med) {
         medicineList.add(med);

@@ -2,6 +2,7 @@
 <project-private xmlns="http://www.netbeans.org/ns/project-private/1">
     <open-files xmlns="http://www.netbeans.org/ns/projectui-open-files/2">
         <group>
+<<<<<<< HEAD
             <file>file:/C:/Users/yongc/Desktop/DataStructureAndAlgorithm/TARUMTClinicManagementSystem/src/tarumtclinicmanagementsystem/ConsultationUI.java</file>
             <file>file:/C:/Users/yongc/Desktop/DataStructureAndAlgorithm/TARUMTClinicManagementSystem/src/tarumtclinicmanagementsystem/ConsultationControl.java</file>
             <file>file:/C:/Users/yongc/Desktop/DataStructureAndAlgorithm/TARUMTClinicManagementSystem/src/tarumtclinicmanagementsystem/MedicalTreatment.java</file>
@@ -21,6 +22,25 @@
             <file>file:/C:/Users/yongc/Desktop/DataStructureAndAlgorithm/TARUMTClinicManagementSystem/src/tarumtclinicmanagementsystem/Patient.java</file>
             <file>file:/C:/Users/yongc/Desktop/DataStructureAndAlgorithm/TARUMTClinicManagementSystem/src/tarumtclinicmanagementsystem/DynamicArray.java</file>
             <file>file:/C:/Users/yongc/Desktop/DataStructureAndAlgorithm/TARUMTClinicManagementSystem/src/tarumtclinicmanagementsystem/TARUMTClinicManagementSystem.java</file>
+=======
+            <file>file:/C:/Users/Acer/Documents/NetBeansProjects/DSAPractical/DSAAssignment/TARUMTClinicManagementSystem/src/tarumtclinicmanagementsystem/DoctorUI.java</file>
+            <file>file:/C:/Users/Acer/Documents/NetBeansProjects/DSAPractical/DSAAssignment/TARUMTClinicManagementSystem/src/tarumtclinicmanagementsystem/Consultation.java</file>
+            <file>file:/C:/Users/Acer/Documents/NetBeansProjects/DSAPractical/DSAAssignment/TARUMTClinicManagementSystem/src/tarumtclinicmanagementsystem/Patient.java</file>
+            <file>file:/C:/Users/Acer/Documents/NetBeansProjects/DSAPractical/DSAAssignment/TARUMTClinicManagementSystem/src/tarumtclinicmanagementsystem/Doctor.java</file>
+            <file>file:/C:/Users/Acer/Documents/NetBeansProjects/DSAPractical/DSAAssignment/TARUMTClinicManagementSystem/src/tarumtclinicmanagementsystem/PharmacyUI.java</file>
+            <file>file:/C:/Users/Acer/Documents/NetBeansProjects/DSAPractical/DSAAssignment/TARUMTClinicManagementSystem/src/tarumtclinicmanagementsystem/ClinicADT.java</file>
+            <file>file:/C:/Users/Acer/Documents/NetBeansProjects/DSAPractical/DSAAssignment/TARUMTClinicManagementSystem/src/tarumtclinicmanagementsystem/MedicalTreatment.java</file>
+            <file>file:/C:/Users/Acer/Documents/NetBeansProjects/DSAPractical/DSAAssignment/TARUMTClinicManagementSystem/src/tarumtclinicmanagementsystem/PatientUI.java</file>
+            <file>file:/C:/Users/Acer/Documents/NetBeansProjects/DSAPractical/DSAAssignment/TARUMTClinicManagementSystem/src/tarumtclinicmanagementsystem/TreatmentUI.java</file>
+            <file>file:/C:/Users/Acer/Documents/NetBeansProjects/DSAPractical/DSAAssignment/TARUMTClinicManagementSystem/src/tarumtclinicmanagementsystem/ConsultationUI.java</file>
+            <file>file:/C:/Users/Acer/Documents/NetBeansProjects/DSAPractical/DSAAssignment/TARUMTClinicManagementSystem/src/tarumtclinicmanagementsystem/PharmacyControl.java</file>
+            <file>file:/C:/Users/Acer/Documents/NetBeansProjects/DSAPractical/DSAAssignment/TARUMTClinicManagementSystem/src/tarumtclinicmanagementsystem/TreatmentControl.java</file>
+            <file>file:/C:/Users/Acer/Documents/NetBeansProjects/DSAPractical/DSAAssignment/TARUMTClinicManagementSystem/src/tarumtclinicmanagementsystem/TARUMTClinicManagementSystem.java</file>
+            <file>file:/C:/Users/Acer/Documents/NetBeansProjects/DSAPractical/DSAAssignment/TARUMTClinicManagementSystem/src/tarumtclinicmanagementsystem/PatientControl.java</file>
+            <file>file:/C:/Users/Acer/Documents/NetBeansProjects/DSAPractical/DSAAssignment/TARUMTClinicManagementSystem/src/tarumtclinicmanagementsystem/ConsultationControl.java</file>
+            <file>file:/C:/Users/Acer/Documents/NetBeansProjects/DSAPractical/DSAAssignment/TARUMTClinicManagementSystem/src/tarumtclinicmanagementsystem/DoctorControl.java</file>
+            <file>file:/C:/Users/Acer/Documents/NetBeansProjects/DSAPractical/DSAAssignment/TARUMTClinicManagementSystem/src/tarumtclinicmanagementsystem/MyClinicADT.java</file>
+>>>>>>> c17b9b8ac2d9ef964417220bf050207ab6ab2aa4
         </group>
     </open-files>
 </project-private>
