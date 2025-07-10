@@ -9,47 +9,49 @@ package tarumtclinicmanagementsystem;
  * @author Acer
  */
 
+
 public class Doctor {
+    private static int idCounter = 1000;
+
     private String id;
     private String name;
-    private String schedule;
-    private boolean isAvailable;
+    private int roomNumber;
+    private String gender;
+    private String icNumber;
+    private String phoneNumber;
+    private DutySchedule dutySchedule;
 
-    public Doctor(String id, String name, String schedule, boolean isAvailable) {
-        this.id = id;
+    public Doctor(String name, int roomNumber, String gender, String icNumber, String phoneNumber, DutySchedule dutySchedule) {
+        this.id = "D" + (idCounter++);
         this.name = name;
-        this.schedule = schedule;
-        this.isAvailable = isAvailable;
+        this.roomNumber = roomNumber;
+        this.gender = gender;
+        this.icNumber = icNumber;
+        this.phoneNumber = phoneNumber;
+        this.dutySchedule = dutySchedule;
     }
 
-    public String getId() {
-        return id;
-    }
-
-    public String getName() {
-        return name;
-    }
-
-    public String getSchedule() {
-        return schedule;
-    }
+    // Getters
+    public String getId() { return id; }
+    public String getName() { return name; }
+    public int getRoomNumber() { return roomNumber; }
+    public String getGender() { return gender; }
+    public String getIcNumber() { return icNumber; }
+    public String getPhoneNumber() { return phoneNumber; }
+    public DutySchedule getDutySchedule() { return dutySchedule; }
 
     public boolean isAvailable() {
-        return isAvailable;
-    }
-
-    public void setSchedule(String schedule) {
-        this.schedule = schedule;
-    }
-
-    public void setAvailability(boolean available) {
-        this.isAvailable = available;
+        return dutySchedule.isOnDutyNow();
     }
 
     @Override
     public String toString() {
-        return "Doctor ID: " + id + ", Name: " + name + ", Schedule: " + schedule +
-               ", Available: " + (isAvailable ? "Yes" : "No");
+        return "Doctor ID: " + id + ", Name: " + name + ", Room: " + roomNumber;
     }
 }
+
+
+
+
+
 

@@ -1,13 +1,5 @@
-/*
- * Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
- * Click nbfs://nbhost/SystemFileSystem/Templates/Classes/Class.java to edit this template
- */
 package tarumtclinicmanagementsystem;
 
-/**
- *
- * @author Acer
- */
 import java.util.Scanner;
 
 public class PatientUI {
@@ -32,16 +24,29 @@ public class PatientUI {
             System.out.println("0. Exit");
             System.out.print("Enter your choice: ");
 
+            while (!scanner.hasNextInt()) {
+                System.out.print("Invalid input. Enter a number: ");
+                scanner.next();
+            }
             choice = scanner.nextInt();
             scanner.nextLine(); // Clear newline
 
             switch (choice) {
                 case 1:
-                    System.out.print("Enter patient name: ");
+                    System.out.print("Enter name: ");
                     String name = scanner.nextLine();
-                    System.out.print("Enter patient ID: ");
-                    String id = scanner.nextLine();
-                    control.registerPatient(name, id);
+
+                    System.out.print("Enter age: ");
+                    int age = scanner.nextInt();
+                    scanner.nextLine();
+
+                    System.out.print("Enter gender (M/F): ");
+                    String gender = scanner.nextLine();
+
+                    System.out.print("Enter contact number: ");
+                    String contact = scanner.nextLine();
+
+                    control.registerPatient(name, age, gender, contact);
                     break;
 
                 case 2:

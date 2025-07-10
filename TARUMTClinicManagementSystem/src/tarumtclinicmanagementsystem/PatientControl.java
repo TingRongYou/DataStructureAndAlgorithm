@@ -1,13 +1,8 @@
-/*
- * Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
- * Click nbfs://nbhost/SystemFileSystem/Templates/Classes/Class.java to edit this template
- */
 package tarumtclinicmanagementsystem;
 
-/**
- *
- * @author Acer
- */
+import java.io.FileWriter;
+import java.io.IOException;
+
 public class PatientControl {
     private ClinicADT<Patient> patientQueue;
 
@@ -15,10 +10,19 @@ public class PatientControl {
         patientQueue = new MyClinicADT<>();
     }
 
-    public void registerPatient(String name, String id) {
-        Patient newPatient = new Patient(name, id);
-        patientQueue.enqueue(newPatient);  // Same behavior as before
-        System.out.println("Patient registered and added to the queue.");
+    public void registerPatient(String name, int age, String gender, String contact) {
+        Patient newPatient = new Patient(name, age, gender, contact);
+        patientQueue.enqueue(newPatient);
+        System.out.println("Patient registered: " + newPatient);
+        savePatientToFile(newPatient);
+    }
+
+    private void savePatientToFile(Patient patient) {
+        try (FileWriter writer = new FileWriter("patients.txt", true)) {
+            writer.write(patient.toFileString() + "\n");
+        } catch (IOException e) {
+            System.out.println("Error saving patient to file: " + e.getMessage());
+        }
     }
 
     public Patient callNextPatient() {
@@ -26,7 +30,7 @@ public class PatientControl {
             System.out.println("No patients in the queue.");
             return null;
         }
-        Patient next = patientQueue.dequeue();  // FIFO
+        Patient next = patientQueue.dequeue();
         System.out.println("Calling patient: " + next);
         return next;
     }
@@ -42,17 +46,16 @@ public class PatientControl {
     public void displayAllPatients() {
         System.out.println("Total patients in queue: " + patientQueue.size());
 
-        // Copy and preserve queue state
         ClinicADT<Patient> tempQueue = new MyClinicADT<>();
 
         while (!patientQueue.isEmpty()) {
             Patient p = patientQueue.dequeue();
             System.out.println(p);
-            tempQueue.enqueue(p); // Keep the original order
+            tempQueue.enqueue(p);
         }
 
         while (!tempQueue.isEmpty()) {
-            patientQueue.enqueue(tempQueue.dequeue()); // Restore queue
+            patientQueue.enqueue(tempQueue.dequeue());
         }
     }
 
