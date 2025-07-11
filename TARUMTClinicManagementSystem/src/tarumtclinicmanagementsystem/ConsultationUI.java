@@ -5,15 +5,20 @@ import java.time.format.DateTimeFormatter;
 import java.util.Scanner;
 
 public class ConsultationUI {
-    private ConsultationControl control;
+    private ConsultationControl consultationControl;
     private Scanner sc;
     private PatientControl patientControl;
     private DoctorControl doctorControl;
+    private ClinicADT<Consultation> consultations;
+    private ClinicADT<MedicalTreatment> treatments;
 
-    public ConsultationUI(PatientControl patientControl, DoctorControl doctorControl) {
+    public ConsultationUI(PatientControl patientControl, DoctorControl doctorControl,
+                           ClinicADT<Consultation> consultations, ClinicADT<MedicalTreatment> treatments) {
         this.patientControl = patientControl;
         this.doctorControl = doctorControl;
-        this.control = new ConsultationControl(patientControl, doctorControl);
+        this.consultations = consultations;
+        this.treatments = treatments;
+        this.consultationControl = new ConsultationControl(patientControl, doctorControl, consultations);
         this.sc = new Scanner(System.in);
     }
 
@@ -38,11 +43,11 @@ public class ConsultationUI {
             switch (ch) {
                 case 1 -> addConsultation();
                 case 2 -> removeConsultation();
-                case 3 -> control.listConsultations();
+                case 3 -> consultationControl.listConsultations();
                 case 4 -> searchByPatient();
                 case 5 -> searchByDoctor();
-                case 6 -> control.printConsultationsSortedByDate();
-                case 7 -> System.out.println("Total Consultations: " + control.getTotalConsultations());
+                case 6 -> consultationControl.printConsultationsSortedByDate();
+                case 7 -> System.out.println("Total Consultations: " + consultationControl.getTotalConsultations());
                 case 8 -> checkDoctorAvailability();
                 case 9 -> showWorkingHours();
                 case 0 -> {
@@ -56,55 +61,94 @@ public class ConsultationUI {
 
     private void addConsultation() {
         System.out.println("\n=== Add New Consultation ===");
-        System.out.println("📋 This will guide you through scheduling a consultation");
-        System.out.println("⏰ Each consultation is 1 hour long");
-        System.out.println("🩺 Only available doctors during working hours will be shown");
+        System.out.println("This will guide you through scheduling a consultation");
+        System.out.println("Each consultation is 1 hour long");
+        System.out.println("Only available doctors during working hours will be shown");
         System.out.println();
-        
-        control.addConsultationFlow();
+
+        BookingUI bookingUI = new BookingUI(patientControl, doctorControl, consultations, treatments, consultationControl);
+        bookingUI.run(true); // true = only allow consultation
     }
 
     private void removeConsultation() {
         System.out.println("\n=== Remove Consultation ===");
-        
+
         // Show current consultations first
-        control.listConsultations();
-        
-        if (control.getTotalConsultations() == 0) {
+        consultationControl.listConsultations();
+
+        if (consultationControl.getTotalConsultations() == 0) {
             return;
         }
-        
+
         System.out.print("Enter Consultation ID to remove: ");
         int id = sc.nextInt();
         sc.nextLine();
-        control.removeConsultationById(id);
+        consultationControl.removeConsultationById(id);
     }
 
     private void searchByPatient() {
         System.out.println("\n=== Search Consultations by Patient ===");
-        System.out.print("Enter patient name: ");
-        String name = sc.nextLine();
-        control.searchByPatient(name);
+
+        // Step 1: Fetch all patients who have at least one consultation
+        ClinicADT<Patient> consultedPatients = consultationControl.getPatientsWithConsultations();
+
+        if (consultedPatients.isEmpty()) {
+            System.out.println("❌ No patients with consultations found.");
+            return;
+        }
+
+        // Step 2: Display the patient table
+        System.out.println("\n📋 Patients with Consultations:");
+        String format = "| %-10s | %-20s | %-3s | %-6s | %-12s |\n";
+        String line = "+------------+----------------------+-----+--------+--------------+";
+
+        System.out.println(line);
+        System.out.printf(format, "Patient ID", "Name", "Age", "Gender", "Contact");
+        System.out.println(line);
+
+        for (int i = 0; i < consultedPatients.size(); i++) {
+            Patient p = consultedPatients.get(i);
+            System.out.printf(format,
+                    p.getId(),
+                    p.getName(),
+                    p.getAge(),
+                    p.getGender(),
+                    p.getContact());
+        }
+        System.out.println(line);
+
+        // Step 3: Ask for Patient ID
+        System.out.print("\nEnter Patient ID to view consultation history: ");
+        String inputId = sc.nextLine().trim().toUpperCase();
+
+        Patient selected = patientControl.getPatientById(inputId);
+        if (selected == null) {
+            System.out.println("❌ Invalid Patient ID.");
+            return;
+        }
+
+        // Step 4: Show consultations for selected patient
+        consultationControl.searchByPatient(selected.getName());
     }
 
     private void searchByDoctor() {
         System.out.println("\n=== Search Consultations by Doctor ===");
         System.out.print("Enter doctor name: ");
         String name = sc.nextLine();
-        control.searchByDoctor(name);
+        consultationControl.searchByDoctor(name);
     }
 
     private void checkDoctorAvailability() {
         System.out.println("\n=== Check Doctor Availability ===");
-        
+
         while (true) {
             try {
                 System.out.print("Enter date to check (yyyy-MM-dd): ");
                 String input = sc.nextLine().trim();
                 DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd");
                 LocalDateTime date = LocalDateTime.parse(input + " 00:00", DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm"));
-                
-                control.showDoctorScheduleForDate(date);
+
+                consultationControl.showDoctorScheduleForDate(date);
                 break;
             } catch (Exception e) {
                 System.out.println("❌ Invalid date format. Please use 'yyyy-MM-dd'.");

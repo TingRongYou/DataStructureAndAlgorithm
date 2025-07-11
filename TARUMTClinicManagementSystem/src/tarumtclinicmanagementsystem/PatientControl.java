@@ -101,12 +101,13 @@ public class PatientControl {
         ClinicADT<Patient> temp = new MyClinicADT<>();
         Patient found = null;
 
+        // Search and temporarily remove patients from the queue
         while (!patientQueue.isEmpty()) {
             Patient p = patientQueue.dequeue();
-            if (p.getId().equalsIgnoreCase(id)) {
-                found = p;
+            if (found == null && p.getId().equalsIgnoreCase(id)) {
+                found = p; // Found the patient
             }
-            temp.enqueue(p);
+            temp.enqueue(p); // Keep all patients
         }
 
         // Restore the original queue

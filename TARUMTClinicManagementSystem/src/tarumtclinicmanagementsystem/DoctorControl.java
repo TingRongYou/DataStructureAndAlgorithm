@@ -4,12 +4,13 @@ import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.time.DayOfWeek;
+import java.time.LocalDateTime;
 import java.util.Comparator;
 import java.util.Scanner;
 
 public class DoctorControl {
     private ClinicADT<Doctor> doctorList;
-    private final String doctorFilePath = "src\\textFile\\doctor.txt";
+    private final String doctorFilePath = "src/textFile/doctor.txt";
 
     public DoctorControl() {
         doctorList = new MyClinicADT<>();
@@ -34,7 +35,6 @@ public class DoctorControl {
         System.out.println("Doctor registered:");
         System.out.println(doctor);
         
-        // 🔧 FIX 1: Save to file after adding doctor
         saveToFile(doctorFilePath);
     }
 
@@ -167,7 +167,7 @@ public class DoctorControl {
             System.out.println("\n✅ Schedule updated for Dr. " + doctor.getName() + ":");
             schedule.printScheduleTable(doctor.getName());
 
-            saveToFile(doctorFilePath); // persist update to file
+            saveToFile(doctorFilePath);
 
             System.out.print("Do you want to edit another session? (Y/N): ");
             String repeat = scanner.nextLine().trim().toUpperCase();
@@ -223,6 +223,75 @@ public class DoctorControl {
 
         System.out.println("+------------+----------------+--------+------------+------------+------------------+--------------+");
     }
+    
+    // Fixed: Added separate method for basic availability check
+    public boolean isDoctorAvailable(Doctor doctor, LocalDateTime startTime, int durationHours) {
+        if (doctor == null) {
+            return false;
+        }
+        
+        DayOfWeek dayOfWeek = startTime.getDayOfWeek();
+        Session sessionForDay = doctor.getDutySchedule().getSessionForDay(dayOfWeek);
+        
+        if (sessionForDay == Session.REST) {
+            return false;
+        }
+        
+        int hour = startTime.getHour();
+        
+        // Check if the start time and duration fit within the doctor's session
+        switch (sessionForDay) {
+            case MORNING:
+                return hour >= 8 && (hour + durationHours) <= 12;
+            case AFTERNOON:
+                return hour >= 12 && (hour + durationHours) <= 18;
+            case NIGHT:
+                return hour >= 18 && (hour + durationHours) <= 24;
+            default:
+                return false;
+        }
+    }
+
+    // Fixed: Renamed method to avoid confusion with the basic availability check
+    public boolean isDoctorAvailableForAppointment(
+        Doctor doctor,
+        LocalDateTime startTime,
+        int durationHours,
+        ClinicADT<Consultation> consultations,
+        ClinicADT<MedicalTreatment> treatments) {
+
+        if (!isDoctorAvailable(doctor, startTime, durationHours)) {
+            return false; // Not within working session
+        }
+
+        LocalDateTime endTime = startTime.plusHours(durationHours);
+
+        // Check consultations
+        for (int i = 0; i < consultations.size(); i++) {
+            Consultation c = consultations.get(i);
+            if (c.getDoctorName().equalsIgnoreCase(doctor.getName())) {
+                LocalDateTime cStart = c.getConsultationDate();
+                LocalDateTime cEnd = cStart.plusHours(1);
+                if (startTime.isBefore(cEnd) && endTime.isAfter(cStart)) {
+                    return false; // Overlaps
+                }
+            }
+        }
+
+        // Check treatments
+        for (int i = 0; i < treatments.size(); i++) {
+            MedicalTreatment t = treatments.get(i);
+            if (t.getDoctorId().equalsIgnoreCase(doctor.getId())) {
+                LocalDateTime tStart = t.getTreatmentDateTime();
+                LocalDateTime tEnd = tStart.plusHours(2);
+                if (startTime.isBefore(tEnd) && endTime.isAfter(tStart)) {
+                    return false; // Overlaps
+                }
+            }
+        }
+
+        return true; // Available
+    }
 
     public void printAvailableDoctors() {
         boolean found = false;
@@ -243,21 +312,39 @@ public class DoctorControl {
         }
 
         if (!found) {
-            System.out.println("|        No doctors are currently available.                                     |");
+            System.out.println("|                          No doctors are currently available.                                    |");
         }
 
         System.out.println("+------------+----------------+--------+------------+------------+------------------+--------------+");
     }
+    
+    public void printAvailableDoctorsOn(LocalDateTime startTime, int durationHours) {
+        System.out.println("=== Available Doctors at " + startTime + " ===");
+        boolean found = false;
+        
+        for (int i = 0; i < doctorList.size(); i++) {
+            Doctor doc = doctorList.get(i);
+            if (isDoctorAvailable(doc, startTime, durationHours)) {
+                System.out.printf("Doctor: %s (%s), Room: %d\n", doc.getName(), doc.getId(), doc.getRoomNumber());
+                found = true;
+            }
+        }
+        
+        if (!found) {
+            System.out.println("No doctors available at the specified time.");
+        }
+    }
 
-    // 🔧 FIX 2: Improved saveToFile method with better error handling and directory creation
     private void saveToFile(String filePath) {
         try {
             // Create directory if it doesn't exist
             File file = new File(filePath);
             File parentDir = file.getParentFile();
             if (parentDir != null && !parentDir.exists()) {
-                parentDir.mkdirs();
-                System.out.println("Created directory: " + parentDir.getAbsolutePath());
+                boolean created = parentDir.mkdirs();
+                if (created) {
+                    System.out.println("Created directory: " + parentDir.getAbsolutePath());
+                }
             }
 
             // Write to file
@@ -271,15 +358,14 @@ public class DoctorControl {
                     }
                     writer.write("\n");
                 }
-                System.out.println("✅ Doctor data saved successfully");
+                System.out.println("✅ Doctor data saved successfully to: " + filePath);
             }
         } catch (IOException e) {
             System.out.println("❌ Error writing to file: " + filePath + " - " + e.getMessage());
-            e.printStackTrace(); // This will help debug the exact issue
+            e.printStackTrace();
         }
     }
 
-    // 🔧 FIX 3: Improved loadFromFile method with better error handling
     public void loadFromFile(String filePath) {
         File file = new File(filePath);
         if (!file.exists()) {
@@ -294,7 +380,9 @@ public class DoctorControl {
 
             while (fileScanner.hasNextLine()) {
                 String line = fileScanner.nextLine();
-                if (line.trim().isEmpty()) continue;
+                if (line.trim().isEmpty()) {
+                    continue;
+                }
 
                 if (!line.startsWith("  ")) {
                     // Doctor data line
@@ -319,6 +407,8 @@ public class DoctorControl {
                         }
                     } else {
                         System.out.println("❌ Invalid doctor data format in line: " + line);
+                        currentDoctor = null;
+                        currentSchedule = null;
                     }
                 } else if (currentSchedule != null && currentDoctor != null) {
                     // Schedule data line
@@ -340,18 +430,15 @@ public class DoctorControl {
         }
     }
 
-    // 🔧 FIX 4: Add a method to manually save all data (useful for testing)
     public void saveAllData() {
         saveToFile(doctorFilePath);
     }
 
-    // 🔧 FIX 5: Add a method to get file path (useful for debugging)
     public String getFilePath() {
         return doctorFilePath;
     }
 
-    // 🔧 FIX 6: Add a method to check if file exists
     public boolean fileExists() {
         return new File(doctorFilePath).exists();
     }
-}
+} 

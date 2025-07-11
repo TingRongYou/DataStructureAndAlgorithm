@@ -3,11 +3,9 @@
     <editor-bookmarks xmlns="http://www.netbeans.org/ns/editor-bookmarks/2" lastBookmarkId="0"/>
     <open-files xmlns="http://www.netbeans.org/ns/projectui-open-files/2">
         <group>
-            <file>file:/C:/Users/yongc/Desktop/DataStructureAndAlgorithm/TARUMTClinicManagementSystem/src/tarumtclinicmanagementsystem/DoctorControl.java</file>
-            <file>file:/C:/Users/yongc/Desktop/DataStructureAndAlgorithm/TARUMTClinicManagementSystem/src/textFile/doctor.txt</file>
-            <file>file:/C:/Users/yongc/Desktop/DataStructureAndAlgorithm/TARUMTClinicManagementSystem/src/tarumtclinicmanagementsystem/Session.java</file>
-            <file>file:/C:/Users/yongc/Desktop/DataStructureAndAlgorithm/TARUMTClinicManagementSystem/src/tarumtclinicmanagementsystem/DoctorUI.java</file>
-            <file>file:/C:/Users/yongc/Desktop/DataStructureAndAlgorithm/TARUMTClinicManagementSystem/src/tarumtclinicmanagementsystem/Patient.java</file>
+            <file>file:/C:/Users/yongc/Desktop/DataStructureAndAlgorithm/TARUMTClinicManagementSystem/src/tarumtclinicmanagementsystem/ConsultationUI.java</file>
+            <file>file:/C:/Users/yongc/Desktop/DataStructureAndAlgorithm/TARUMTClinicManagementSystem/src/textFile/patients.txt</file>
+            <file>file:/C:/Users/yongc/Desktop/DataStructureAndAlgorithm/TARUMTClinicManagementSystem/src/tarumtclinicmanagementsystem/Doctor.java</file>
         </group>
     </open-files>
 </project-private>

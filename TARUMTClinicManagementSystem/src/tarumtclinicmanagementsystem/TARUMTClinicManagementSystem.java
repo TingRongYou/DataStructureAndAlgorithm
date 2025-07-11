@@ -17,8 +17,11 @@ public class TARUMTClinicManagementSystem {
 
     public static void main(String[] args) {
         DoctorControl doctorControl = new DoctorControl();
-        PatientControl patientControl = new PatientControl(); // ✅ Shared patient control instance
-        TreatmentUI treatmentUI = new TreatmentUI(doctorControl);
+        PatientControl patientControl = new PatientControl();
+        ClinicADT<Consultation> consultations = new MyClinicADT<>();
+        ClinicADT<MedicalTreatment> treatments = new MyClinicADT<>();
+
+        ConsultationControl consultationControl = new ConsultationControl(patientControl, doctorControl, consultations);
 
         Scanner scanner = new Scanner(System.in);
         int choice;
@@ -39,33 +42,14 @@ public class TARUMTClinicManagementSystem {
             choice = scanner.nextInt();
 
             switch (choice) {
-                case 1:
-                    PatientUI patientUI = new PatientUI(patientControl); // ✅ pass shared instance
-                    patientUI.run();
-                    break;
-                case 2:
-                    DoctorUI doctorUI = new DoctorUI(doctorControl);
-                    doctorUI.run();
-                    break;
-                case 3:
-                    ConsultationUI consultationUI = new ConsultationUI(patientControl, doctorControl); // ✅ pass shared instance
-                    consultationUI.run();
-                    break;
-                case 4:
-                    treatmentUI.run();
-                    break;
-                case 5:
-                    PharmacyUI pharmacyUI = new PharmacyUI();
-                    pharmacyUI.run();
-                    break; // ✅ Prevent fall-through to case 0
-                case 0:
-                    System.out.println("Thank you for using the system.");
-                    break;
-                default:
-                    System.out.println("Invalid choice. Please try again.");
+                case 1 -> new PatientUI(patientControl).run();
+                case 2 -> new DoctorUI(doctorControl).run();
+                case 3 -> new ConsultationUI(patientControl, doctorControl, consultations, treatments).run();
+                case 4 -> new TreatmentUI(patientControl, doctorControl, consultations, treatments, consultationControl).run();
+                case 5 -> new PharmacyUI().run();
+                case 0 -> System.out.println("Thank you for using the system.");
+                default -> System.out.println("Invalid choice. Please try again.");
             }
-
         } while (choice != 0);
     }
-
 }

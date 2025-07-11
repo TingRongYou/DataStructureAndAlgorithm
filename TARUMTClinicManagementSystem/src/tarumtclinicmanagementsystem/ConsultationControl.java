@@ -1,384 +1,622 @@
-package tarumtclinicmanagementsystem;
+    package tarumtclinicmanagementsystem;
 
-import java.io.FileWriter;
-import java.io.IOException;
-import java.time.LocalDateTime;
-import java.time.LocalTime;
-import java.time.format.DateTimeFormatter;
-import java.util.ArrayList;
-import java.util.Comparator;
-import java.util.List;
-import java.util.Scanner;
+    import java.io.FileWriter;
+    import java.io.IOException;
+    import java.time.LocalDate;
+    import java.time.LocalDateTime;
+    import java.time.LocalTime;
+    import java.time.format.DateTimeFormatter;
+    import java.util.Comparator;
+    import java.util.Scanner;
 
-public class ConsultationControl {
-    private ClinicADT<Consultation> consultations;
-    private PatientControl patientControl;
-    private DoctorControl doctorControl;
-    private Scanner sc;
-    
-    // Working hours for each session
-    private static final LocalTime MORNING_START = LocalTime.of(8, 0);
-    private static final LocalTime MORNING_END = LocalTime.of(12, 0);
-    private static final LocalTime AFTERNOON_START = LocalTime.of(13, 0);
-    private static final LocalTime AFTERNOON_END = LocalTime.of(17, 0);
-    private static final LocalTime NIGHT_START = LocalTime.of(18, 0);
-    private static final LocalTime NIGHT_END = LocalTime.of(22, 0);
+    public class ConsultationControl {
+        private ClinicADT<Consultation> consultations;
+        private PatientControl patientControl;
+        private DoctorControl doctorControl;
+        private Scanner sc;
+        private String consultationFilePath = "src/textFile/consultations.txt";
 
-    public ConsultationControl(PatientControl patientControl, DoctorControl doctorControl) {
-        this.patientControl = patientControl;
-        this.doctorControl = doctorControl;
-        this.consultations = new MyClinicADT<>();
-        this.sc = new Scanner(System.in);
-    }
+        // Working hours for each session
+        private static final LocalTime MORNING_START = LocalTime.of(8, 0);
+        private static final LocalTime MORNING_END = LocalTime.of(12, 0);
+        private static final LocalTime AFTERNOON_START = LocalTime.of(13, 0);
+        private static final LocalTime AFTERNOON_END = LocalTime.of(17, 0);
+        private static final LocalTime NIGHT_START = LocalTime.of(18, 0);
+        private static final LocalTime NIGHT_END = LocalTime.of(22, 0);
 
-    public void addConsultationFlow() {
-        ClinicADT<Patient> allPatients = patientControl.getAllPatients();
+        // Consultation duration in hours
+        private static final int CONSULTATION_DURATION = 1;
 
-        if (allPatients.isEmpty()) {
-            System.out.println("❌ No patients registered. Please register a patient first.");
-            return;
+        public ConsultationControl(PatientControl patientControl, DoctorControl doctorControl, 
+                                  ClinicADT<Consultation> consultations) {
+            this.patientControl = patientControl;
+            this.doctorControl = doctorControl;
+            this.consultations = consultations; // Use shared collection instead of creating new one
+            this.sc = new Scanner(System.in);
         }
 
-        System.out.println("\n📋 Registered Patients:");
-        displayPatientTable(allPatients);
-
-        System.out.print("Enter Patient ID from the list: ");
-        String patientId = sc.nextLine().trim().toUpperCase();
-
-        Patient selectedPatient = patientControl.getPatientById(patientId);
-        if (selectedPatient == null) {
-            System.out.println("❌ Invalid Patient ID.");
-            return;
+        // Alternative constructor for backward compatibility
+        public ConsultationControl(PatientControl patientControl, DoctorControl doctorControl) {
+            this(patientControl, doctorControl, new MyClinicADT<>());
         }
 
-        LocalDateTime dateTime = getValidDateTime();
-        if (dateTime == null) {
-            return; // User cancelled or invalid input
+        public void addConsultationFlow() {
+            ClinicADT<Patient> allPatients = patientControl.getAllPatients();
+
+            if (allPatients.isEmpty()) {
+                System.out.println("No patients registered. Please register a patient first.");
+                return;
+            }
+
+            System.out.println("\nRegistered Patients:");
+            displayPatientTable(allPatients);
+
+            Patient selectedPatient = selectPatient();
+            if (selectedPatient == null) return;
+
+            LocalDateTime dateTime = getValidDateTime();
+            if (dateTime == null) return;
+
+            // ✅ Check if patient already booked at that time
+            if (isPatientAlreadyBooked(selectedPatient.getId(), dateTime.toLocalDate(), true)) {
+                System.out.println("Patient already has a consultation booked at that time.");
+                return;
+            }
+
+            Doctor selectedDoctor = selectAvailableDoctor(dateTime);
+            if (selectedDoctor == null) return;
+
+            addConsultation(selectedPatient.getId(),selectedPatient.getName(),selectedDoctor.getName(),dateTime
+            );
         }
 
-        // Get available doctors for the selected time
-        List<Doctor> availableDoctors = getAvailableDoctors(dateTime);
-        
-        if (availableDoctors.isEmpty()) {
-            System.out.println("❌ No doctors available at the selected time.");
-            System.out.println("Please choose a different time slot.");
-            return;
+        private Patient selectPatient() {
+            System.out.print("Enter Patient ID from the list: ");
+            String patientId = sc.nextLine().trim().toUpperCase();
+
+            Patient selectedPatient = patientControl.getPatientById(patientId);
+            if (selectedPatient == null) {
+                System.out.println("Invalid Patient ID.");
+            }
+            return selectedPatient;
         }
 
-        // Display available doctors
-        System.out.println("\n👨‍⚕️ Available Doctors for " + dateTime.format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm")) + ":");
-        displayAvailableDoctors(availableDoctors);
+       private Doctor selectAvailableDoctor(LocalDateTime dateTime) {
+            ClinicADT<Doctor> availableDoctors = getAvailableDoctors(dateTime);
 
-        // Select doctor
-        System.out.print("Select Doctor ID: ");
-        String doctorId = sc.nextLine().trim().toUpperCase();
-        
-        Doctor selectedDoctor = null;
-        for (Doctor doc : availableDoctors) {
-            if (doc.getId().equals(doctorId)) {
-                selectedDoctor = doc;
-                break;
+            if (availableDoctors.isEmpty()) {
+                System.out.println("No doctors available at the selected time.");
+                System.out.println("Please choose a different time slot.");
+                return null;
+            }
+
+            System.out.println("\nAvailable Doctors for " + 
+                              dateTime.format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm")) + ":");
+            displayAvailableDoctors(availableDoctors);
+
+            System.out.print("Select Doctor ID: ");
+            String doctorId = sc.nextLine().trim().toUpperCase();
+
+            for (int i = 0; i < availableDoctors.size(); i++) {
+                Doctor doc = availableDoctors.get(i);
+                if (doc.getId().equalsIgnoreCase(doctorId)) {
+                    if (isDoctorBooked(doc.getName(), dateTime)) {
+                        System.out.println("Doctor " + doc.getName() + " is already booked for this time slot.");
+                        return null;
+                    }
+                    return doc;
             }
         }
 
-        if (selectedDoctor == null) {
-            System.out.println("❌ Invalid Doctor ID or doctor not available at this time.");
-            return;
-        }
-
-        // Check if doctor is already booked for this time slot
-        if (isDoctorBooked(selectedDoctor.getName(), dateTime)) {
-            System.out.println("❌ Doctor " + selectedDoctor.getName() + " is already booked for this time slot.");
-            return;
-        }
-
-        addConsultation(selectedPatient.getName(), selectedDoctor.getName(), dateTime);
-    }
-
-    private LocalDateTime getValidDateTime() {
-        while (true) {
-            try {
-                System.out.print("Enter date and time (yyyy-MM-dd HH:mm): ");
-                String input = sc.nextLine().trim();
-                DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm");
-                LocalDateTime dateTime = LocalDateTime.parse(input, formatter);
-                
-                // Check if the time is in the past
-                if (dateTime.isBefore(LocalDateTime.now())) {
-                    System.out.println("❌ Cannot schedule consultation in the past.");
-                    continue;
-                }
-                
-                // Check if the time is during working hours
-                if (!isWorkingHours(dateTime.toLocalTime())) {
-                    System.out.println("❌ Time is outside working hours.");
-                    System.out.println("Working hours: 08:00-12:00 (Morning), 13:00-17:00 (Afternoon), 18:00-22:00 (Night)");
-                    continue;
-                }
-                
-                return dateTime;
-            } catch (Exception e) {
-                System.out.println("❌ Invalid format. Use 'yyyy-MM-dd HH:mm'.");
-            }
-        }
-    }
-
-    private boolean isWorkingHours(LocalTime time) {
-        return (time.isAfter(MORNING_START.minusMinutes(1)) && time.isBefore(MORNING_END)) ||
-               (time.isAfter(AFTERNOON_START.minusMinutes(1)) && time.isBefore(AFTERNOON_END)) ||
-               (time.isAfter(NIGHT_START.minusMinutes(1)) && time.isBefore(NIGHT_END));
-    }
-
-    private Session getSessionForTime(LocalTime time) {
-        if (time.isAfter(MORNING_START.minusMinutes(1)) && time.isBefore(MORNING_END)) {
-            return Session.MORNING;
-        } else if (time.isAfter(AFTERNOON_START.minusMinutes(1)) && time.isBefore(AFTERNOON_END)) {
-            return Session.AFTERNOON;
-        } else if (time.isAfter(NIGHT_START.minusMinutes(1)) && time.isBefore(NIGHT_END)) {
-            return Session.NIGHT;
-        }
+        System.out.println("Invalid Doctor ID or doctor not available at this time.");
         return null;
     }
 
-    private List<Doctor> getAvailableDoctors(LocalDateTime dateTime) {
-        List<Doctor> availableDoctors = new ArrayList<>();
-        Session requiredSession = getSessionForTime(dateTime.toLocalTime());
-        
-        if (requiredSession == null) {
-            return availableDoctors; // No session for this time
+        private LocalDateTime getValidDateTime() {
+            while (true) {
+                try {
+                    System.out.print("Enter date and time (yyyy-MM-dd HH:mm): ");
+                    String input = sc.nextLine().trim();
+                    DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm");
+                    LocalDateTime dateTime = LocalDateTime.parse(input, formatter);
+
+                    if (dateTime.isBefore(LocalDateTime.now())) {
+                        System.out.println("Cannot schedule consultation in the past.");
+                        continue;
+                    }
+
+                    if (!isWorkingHours(dateTime.toLocalTime())) {
+                        System.out.println("Time is outside working hours.");
+                        displayWorkingHours();
+                        continue;
+                    }
+
+                    return dateTime;
+                } catch (Exception e) {
+                    System.out.println("Invalid format. Use 'yyyy-MM-dd HH:mm'.");
+                }
+            }
         }
 
-        for (int i = 0; i < doctorControl.getDoctorCount(); i++) {
-            Doctor doctor = doctorControl.getDoctorByIndex(i);
-            if (doctor != null) {
-                DutySchedule schedule = doctor.getDutySchedule();
-                Session doctorSession = schedule.getSessionForDay(dateTime.getDayOfWeek());
-                
-                if (doctorSession == requiredSession) {
+        private void displayWorkingHours() {
+            System.out.println("Working hours:");
+            System.out.println("Morning: 08:00-12:00");
+            System.out.println("Afternoon: 13:00-17:00");
+            System.out.println("Night: 18:00-22:00");
+        }
+
+        private boolean isWorkingHours(LocalTime time) {
+            return isInTimeRange(time, MORNING_START, MORNING_END) ||
+                   isInTimeRange(time, AFTERNOON_START, AFTERNOON_END) ||
+                   isInTimeRange(time, NIGHT_START, NIGHT_END);
+        }
+
+        private boolean isInTimeRange(LocalTime time, LocalTime start, LocalTime end) {
+            return !time.isBefore(start) && time.isBefore(end);
+        }
+
+        private Session getSessionForTime(LocalTime time) {
+            if (isInTimeRange(time, MORNING_START, MORNING_END)) {
+                return Session.MORNING;
+            } else if (isInTimeRange(time, AFTERNOON_START, AFTERNOON_END)) {
+                return Session.AFTERNOON;
+            } else if (isInTimeRange(time, NIGHT_START, NIGHT_END)) {
+                return Session.NIGHT;
+            }
+            return null;
+        }
+
+        private ClinicADT<Doctor> getAvailableDoctors(LocalDateTime dateTime) {
+            ClinicADT<Doctor> availableDoctors = new MyClinicADT<>();
+            Session requiredSession = getSessionForTime(dateTime.toLocalTime());
+
+            if (requiredSession == null) {
+                return availableDoctors; // return empty ClinicADT
+            }
+
+            for (int i = 0; i < doctorControl.getDoctorCount(); i++) {
+                Doctor doctor = doctorControl.getDoctorByIndex(i);
+                if (doctor != null && isDoctorOnDuty(doctor, dateTime, requiredSession)) {
                     availableDoctors.add(doctor);
                 }
             }
-        }
-        
-        return availableDoctors;
-    }
 
-    private void displayAvailableDoctors(List<Doctor> doctors) {
-        System.out.println("+------------+----------------+--------+------------+------------------+");
-        System.out.printf("| %-10s | %-14s | %-6s | %-10s | %-16s |\n",
-                          "Doctor ID", "Name", "Room", "Gender", "Phone");
-        System.out.println("+------------+----------------+--------+------------+------------------+");
-
-        for (Doctor doc : doctors) {
-            System.out.printf("| %-10s | %-14s | %-6d | %-10s | %-16s |\n",
-                              doc.getId(), doc.getName(), doc.getRoomNumber(),
-                              doc.getGender(), doc.getPhoneNumber());
+            return availableDoctors;
         }
 
-        System.out.println("+------------+----------------+--------+------------+------------------+");
-    }
-
-    private void displayPatientTable(ClinicADT<Patient> patients) {
-        System.out.printf("+------------+----------------------+-----+--------+--------------+\n");
-        System.out.printf("| %-10s | %-20s | %-3s | %-6s | %-12s |\n", "Patient ID", "Name", "Age", "Gender", "Contact");
-        System.out.printf("+------------+----------------------+-----+--------+--------------+\n");
-
-        for (int i = 0; i < patients.size(); i++) {
-            Patient p = patients.get(i);
-            System.out.printf("| %-10s | %-20s | %-3d | %-6s | %-12s |\n",
-                    p.getId(), p.getName(), p.getAge(), p.getGender(), p.getContact());
+        private boolean isDoctorOnDuty(Doctor doctor, LocalDateTime dateTime, Session requiredSession) {
+            DutySchedule schedule = doctor.getDutySchedule();
+            Session doctorSession = schedule.getSessionForDay(dateTime.getDayOfWeek());
+            return doctorSession == requiredSession;
         }
 
-        System.out.printf("+------------+----------------------+-----+--------+--------------+\n");
-    }
+        private void displayAvailableDoctors(ClinicADT<Doctor> doctors) {
+            String format = "| %-10s | %-15s | %-6s | %-8s | %-16s |\n";
+            String line = "+------------+-----------------+--------+----------+------------------+";
 
-    private boolean isDoctorBooked(String doctorName, LocalDateTime dateTime) {
-        LocalDateTime consultationEnd = dateTime.plusHours(1); // Each consultation is 1 hour
-        
-        for (int i = 0; i < consultations.size(); i++) {
-            Consultation consultation = consultations.get(i);
-            if (consultation.getDoctorName().equalsIgnoreCase(doctorName)) {
-                LocalDateTime existingStart = consultation.getConsultationDate();
-                LocalDateTime existingEnd = existingStart.plusHours(1);
-                
-                // Check for time overlap
-                if (dateTime.isBefore(existingEnd) && consultationEnd.isAfter(existingStart)) {
-                    return true; // Time slot is already booked
+            System.out.println(line);
+            System.out.printf(format, "Doctor ID", "Name", "Room", "Gender", "Phone");
+            System.out.println(line);
+
+            for (int i = 0; i < doctors.size(); i++) {
+                Doctor doc = doctors.get(i);
+                System.out.printf(format,
+                        doc.getId(),
+                        doc.getName(),
+                        doc.getRoomNumber(),
+                        doc.getGender(),
+                        doc.getPhoneNumber());
+            }
+
+            System.out.println(line);
+        }
+
+        private void displayPatientTable(ClinicADT<Patient> patients) {
+            String format = "| %-10s | %-20s | %-3s | %-6s | %-12s |\n";
+            String line = "+------------+----------------------+-----+--------+--------------+";
+
+            System.out.println(line);
+            System.out.printf(format, "Patient ID", "Name", "Age", "Gender", "Contact");
+            System.out.println(line);
+
+            for (int i = 0; i < patients.size(); i++) {
+                Patient p = patients.get(i);
+                System.out.printf(format,
+                        p.getId(),
+                        p.getName(),
+                        p.getAge(),
+                        p.getGender(),
+                        p.getContact());
+            }
+
+            System.out.println(line);
+        }
+
+        private boolean isDoctorBooked(String doctorName, LocalDateTime dateTime) {
+            LocalDateTime consultationEnd = dateTime.plusHours(CONSULTATION_DURATION);
+
+            for (int i = 0; i < consultations.size(); i++) {
+                Consultation consultation = consultations.get(i);
+                if (consultation.getDoctorName().equalsIgnoreCase(doctorName)) {
+                    LocalDateTime existingStart = consultation.getConsultationDate();
+                    LocalDateTime existingEnd = existingStart.plusHours(CONSULTATION_DURATION);
+
+                    // Check for time overlap
+                    if (hasTimeOverlap(dateTime, consultationEnd, existingStart, existingEnd)) {
+                        return true;
+                    }
                 }
             }
+            return false;
         }
-        return false;
-    }
 
-    public void addConsultation(String patient, String doctor, LocalDateTime date) {
-        Consultation c = new Consultation(patient, doctor, date);
-        consultations.add(c);
-        saveConsultationToFile(c);
-        System.out.println("✅ Consultation added successfully!");
-        System.out.println("📋 " + c);
-        System.out.println("⏰ Duration: 1 hour (ends at " + 
-                         date.plusHours(1).format(DateTimeFormatter.ofPattern("HH:mm")) + ")");
-    }
-
-    private void saveConsultationToFile(Consultation c) {
-        try (FileWriter fw = new FileWriter("consultations.txt", true)) {
-            DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm");
-            fw.write(c.getId() + "," + c.getPatientName() + "," + c.getDoctorName() + "," + 
-                    c.getConsultationDate().format(formatter) + "\n");
-        } catch (IOException e) {
-            System.out.println("❌ Error saving consultation: " + e.getMessage());
+        private boolean hasTimeOverlap(LocalDateTime start1, LocalDateTime end1, 
+                                      LocalDateTime start2, LocalDateTime end2) {
+            return start1.isBefore(end2) && end1.isAfter(start2);
         }
+
+        public void addConsultation(String patientId, String patientName, String doctorName, LocalDateTime date) {
+        System.out.println("DEBUG: addConsultation() called with patientId=" + patientId + ", doctorName=" + doctorName + ", date=" + date);
+
+        Consultation consultation = new Consultation(patientId, patientName, doctorName, date);
+        consultations.add(consultation);
+        saveConsultationToFile(consultation);
+        displayConsultationConfirmation(consultation);
     }
 
-    public boolean removeConsultationById(int id) {
-        for (int i = 0; i < consultations.size(); i++) {
-            if (consultations.get(i).getId() == id) {
-                Consultation removed = consultations.get(i);
-                consultations.remove(i);
-                System.out.println("✅ Consultation removed: " + removed);
-                return true;
+
+        private void displayConsultationConfirmation(Consultation consultation) {
+            System.out.println("Consultation added successfully!");
+            System.out.println(consultation);
+            System.out.println("Duration: " + CONSULTATION_DURATION + " hour (ends at " + 
+                             consultation.getConsultationDate().plusHours(CONSULTATION_DURATION)
+                             .format(DateTimeFormatter.ofPattern("HH:mm")) + ")");
+        }
+
+        private void saveConsultationToFile(Consultation consultation) {
+            System.out.println("DEBUG: Saving consultation to file...");
+            try (FileWriter fw = new FileWriter("src/textFile/consultations.txt", true)) {
+                DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm");
+                String line = String.format("%d,%s,%s,%s%n",
+                        consultation.getId(),
+                        consultation.getPatientName(),
+                        consultation.getDoctorName(),
+                        consultation.getConsultationDate().format(formatter));
+                fw.write(line);
+                System.out.println("DEBUG: Consultation saved to file: " + line.trim());
+            } catch (IOException e) {
+                System.out.println("Error saving consultation: " + e.getMessage());
+                e.printStackTrace();
             }
         }
-        System.out.println("❌ Consultation not found.");
-        return false;
-    }
 
-    public void listConsultations() {
-        if (consultations.isEmpty()) {
-            System.out.println("No consultations scheduled.");
-            return;
+
+        public boolean removeConsultationById(int id) {
+            for (int i = 0; i < consultations.size(); i++) {
+                if (consultations.get(i).getId() == id) {
+                    Consultation removed = consultations.get(i);
+                    consultations.remove(i);
+                    System.out.println("Consultation removed: " + removed);
+                    return true;
+                }
+            }
+            System.out.println("Consultation not found.");
+            return false;
         }
 
-        System.out.println("\n=== All Consultations ===");
-        System.out.printf("%-5s | %-20s | %-20s | %-20s | %-10s\n", "ID", "Patient", "Doctor", "Date & Time", "Duration");
-        System.out.println("--------------------------------------------------------------------------------");
+        public void listConsultations() {
+            if (consultations.isEmpty()) {
+                System.out.println("No consultations scheduled.");
+                return;
+            }
 
-        for (int i = 0; i < consultations.size(); i++) {
-            Consultation c = consultations.get(i);
-            System.out.printf("%-5d | %-20s | %-20s | %-20s | %-10s\n",
-                    c.getId(), c.getPatientName(), c.getDoctorName(),
-                    c.getConsultationDate().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm")),
-                    "1 hour");
+            System.out.println("\n=== All Consultations ===");
+            displayConsultationTable();
         }
-    }
 
-    public void searchByPatient(String patientName) {
-        boolean found = false;
-        System.out.println("\n=== Consultations for Patient: " + patientName + " ===");
-        
-        for (int i = 0; i < consultations.size(); i++) {
-            if (consultations.get(i).getPatientName().equalsIgnoreCase(patientName)) {
+        private void displayConsultationTable() {
+            String format = "| %-4s | %-20s | %-20s | %-20s | %-9s |\n";
+            String line = "+------+----------------------+----------------------+----------------------+-----------+";
+
+            System.out.println(line);
+            System.out.printf(format, "ID", "Patient", "Doctor", "Date & Time", "Duration");
+            System.out.println(line);
+
+            for (int i = 0; i < consultations.size(); i++) {
                 Consultation c = consultations.get(i);
-                System.out.println("📋 " + c);
-                System.out.println("   Duration: 1 hour (ends at " + 
-                                 c.getConsultationDate().plusHours(1).format(DateTimeFormatter.ofPattern("HH:mm")) + ")");
-                found = true;
+                System.out.printf(format,
+                        c.getId(),
+                        c.getPatientName(),
+                        c.getDoctorName(),
+                        c.getConsultationDate().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm")),
+                        CONSULTATION_DURATION + " hr");
             }
-        }
-        
-        if (!found) {
-            System.out.println("❌ No consultations found for patient: " + patientName);
-        }
-    }
 
-    public void searchByDoctor(String doctorName) {
-        boolean found = false;
-        System.out.println("\n=== Consultations for Doctor: " + doctorName + " ===");
-        
-        for (int i = 0; i < consultations.size(); i++) {
-            if (consultations.get(i).getDoctorName().equalsIgnoreCase(doctorName)) {
+            System.out.println(line);
+        }
+
+        public void searchByPatient(String patientName) {
+            ClinicADT<Consultation> found = new MyClinicADT<>();
+
+            for (int i = 0; i < consultations.size(); i++) {
                 Consultation c = consultations.get(i);
-                System.out.println("📋 " + c);
-                System.out.println("   Duration: 1 hour (ends at " + 
-                                 c.getConsultationDate().plusHours(1).format(DateTimeFormatter.ofPattern("HH:mm")) + ")");
-                found = true;
+                if (c.getPatientName().equalsIgnoreCase(patientName)) {
+                    found.add(c);
+                }
             }
-        }
-        
-        if (!found) {
-            System.out.println("❌ No consultations found for doctor: " + doctorName);
-        }
-    }
 
-    public void printConsultationsSortedByDate() {
-        if (consultations.isEmpty()) {
-            System.out.println("No consultations to sort.");
-            return;
+            if (found.isEmpty()) {
+                System.out.println("No consultations found for patient: " + patientName);
+                return;
+            }
+
+            System.out.println("\n=== Consultations for Patient: " + patientName + " ===");
+            displayConsultationDetails(found);
         }
 
-        ClinicADT<Consultation> sorted = new MyClinicADT<>();
-        for (int i = 0; i < consultations.size(); i++) {
-            sorted.add(consultations.get(i));
+        public void searchByDoctor(String doctorName) {
+            ClinicADT<Consultation> found = new MyClinicADT<>();
+
+            for (int i = 0; i < consultations.size(); i++) {
+                Consultation c = consultations.get(i);
+                if (c.getDoctorName().equalsIgnoreCase(doctorName)) {
+                    found.add(c);
+                }
+            }
+
+            if (found.isEmpty()) {
+                System.out.println("❌ No consultations found for doctor: " + doctorName);
+                return;
+            }
+
+            System.out.println("\n=== Consultations for Doctor: " + doctorName + " ===");
+            displayConsultationDetails(found);
         }
 
-        sorted.sort(Comparator.comparing(Consultation::getConsultationDate));
+        private ClinicADT<Consultation> SearchByPatient(String patientName) {
+            ClinicADT<Consultation> found = new MyClinicADT<>();
 
-        System.out.println("\n=== Consultations (Sorted by Date) ===");
-        System.out.printf("%-5s | %-20s | %-20s | %-20s | %-10s\n", "ID", "Patient", "Doctor", "Date & Time", "Duration");
-        System.out.println("--------------------------------------------------------------------------------");
+            for (int i = 0; i < consultations.size(); i++) {
+                Consultation c = consultations.get(i);
+                if (c.getPatientName().equalsIgnoreCase(patientName)) {
+                    found.add(c);
+                }
+            }
 
-        for (int i = 0; i < sorted.size(); i++) {
-            Consultation c = sorted.get(i);
-            System.out.printf("%-5d | %-20s | %-20s | %-20s | %-10s\n",
-                    c.getId(), c.getPatientName(), c.getDoctorName(),
-                    c.getConsultationDate().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm")),
-                    "1 hour");
-        }
-    }
-
-    public void showDoctorScheduleForDate(LocalDateTime date) {
-        System.out.println("\n=== Doctor Availability for " + 
-                         date.format(DateTimeFormatter.ofPattern("yyyy-MM-dd (EEEE)")) + " ===");
-        
-        List<Doctor> morningDoctors = getAvailableDoctorsForSession(date, Session.MORNING);
-        List<Doctor> afternoonDoctors = getAvailableDoctorsForSession(date, Session.AFTERNOON);
-        List<Doctor> nightDoctors = getAvailableDoctorsForSession(date, Session.NIGHT);
-
-        System.out.println("\n🌅 Morning Shift (08:00-12:00):");
-        if (morningDoctors.isEmpty()) {
-            System.out.println("   No doctors available");
-        } else {
-            morningDoctors.forEach(doc -> System.out.println("   " + doc.getName() + " (Room " + doc.getRoomNumber() + ")"));
+            return found;
         }
 
-        System.out.println("\n🌞 Afternoon Shift (13:00-17:00):");
-        if (afternoonDoctors.isEmpty()) {
-            System.out.println("   No doctors available");
-        } else {
-            afternoonDoctors.forEach(doc -> System.out.println("   " + doc.getName() + " (Room " + doc.getRoomNumber() + ")"));
+        private ClinicADT<Consultation> findConsultationsByDoctor(String doctorName) {
+            ClinicADT<Consultation> found = new MyClinicADT<>();
+
+            for (int i = 0; i < consultations.size(); i++) {
+                Consultation c = consultations.get(i);
+                if (c.getDoctorName().equalsIgnoreCase(doctorName)) {
+                    found.add(c);
+                }
+            }
+
+            return found;
         }
 
-        System.out.println("\n🌙 Night Shift (18:00-22:00):");
-        if (nightDoctors.isEmpty()) {
-            System.out.println("   No doctors available");
-        } else {
-            nightDoctors.forEach(doc -> System.out.println("   " + doc.getName() + " (Room " + doc.getRoomNumber() + ")"));
-        }
-    }
+       private void displayConsultationDetails(ClinicADT<Consultation> consultations) {
+            String format = "| %-4s | %-20s | %-15s | %-16s | %-8s | %-8s | %-8s |\n";
+            String line = "+------+----------------------+-----------------+------------------+----------+----------+----------+";
 
-    private List<Doctor> getAvailableDoctorsForSession(LocalDateTime date, Session session) {
-        List<Doctor> sessionDoctors = new ArrayList<>();
-        
-        for (int i = 0; i < doctorControl.getDoctorCount(); i++) {
-            Doctor doctor = doctorControl.getDoctorByIndex(i);
-            if (doctor != null) {
-                DutySchedule schedule = doctor.getDutySchedule();
-                Session doctorSession = schedule.getSessionForDay(date.getDayOfWeek());
-                
-                if (doctorSession == session) {
+            System.out.println(line);
+            System.out.printf(format, "ID", "Patient", "Doctor", "Date", "Start", "End", "Duration");
+            System.out.println(line);
+
+            for (int i = 0; i < consultations.size(); i++) {
+                Consultation c = consultations.get(i);
+                LocalDateTime start = c.getConsultationDate();
+                LocalDateTime end = start.plusHours(CONSULTATION_DURATION);
+
+                System.out.printf(format,
+                        c.getId(),
+                        c.getPatientName(),
+                        c.getDoctorName(),
+                        start.toLocalDate(),
+                        start.toLocalTime().format(DateTimeFormatter.ofPattern("HH:mm")),
+                        end.toLocalTime().format(DateTimeFormatter.ofPattern("HH:mm")),
+                        CONSULTATION_DURATION + " hr");
+            }
+
+            System.out.println(line);
+        }
+
+        public void printConsultationsSortedByDate() {
+            if (consultations.isEmpty()) {
+                System.out.println("No consultations to sort.");
+                return;
+            }
+
+            ClinicADT<Consultation> sorted = new MyClinicADT<>();
+            for (int i = 0; i < consultations.size(); i++) {
+                sorted.add(consultations.get(i));
+            }
+
+            sorted.sort(Comparator.comparing(Consultation::getConsultationDate));
+
+            System.out.println("\n=== Consultations (Sorted by Date) ===");
+            displaySortedConsultations(sorted);
+        }
+
+        private void displaySortedConsultations(ClinicADT<Consultation> sorted) {
+            String format = "| %-4s | %-20s | %-20s | %-20s | %-9s |\n";
+            String line = "+------+----------------------+----------------------+----------------------+-----------+";
+
+            System.out.println(line);
+            System.out.printf(format, "ID", "Patient", "Doctor", "Date & Time", "Duration");
+            System.out.println(line);
+
+            for (int i = 0; i < sorted.size(); i++) {
+                Consultation c = sorted.get(i);
+                System.out.printf(format,
+                        c.getId(),
+                        c.getPatientName(),
+                        c.getDoctorName(),
+                        c.getConsultationDate().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm")),
+                        CONSULTATION_DURATION + " hr");
+            }
+
+            System.out.println(line);
+        }
+
+        public void showDoctorScheduleForDate(LocalDateTime date) {
+            if (date.toLocalDate().isBefore(LocalDateTime.now().toLocalDate())) {
+                System.out.println("Cannot check availability for past dates.");
+                return;
+            }
+
+            System.out.println("\n=== Doctor Availability for " + 
+                date.format(DateTimeFormatter.ofPattern("yyyy-MM-dd (EEEE)")) + " ===");
+
+            displaySessionAvailability(date, Session.MORNING, "Morning Shift (08:00-12:00)");
+            displaySessionAvailability(date, Session.AFTERNOON, "Afternoon Shift (13:00-17:00)");
+            displaySessionAvailability(date, Session.NIGHT, "Night Shift (18:00-22:00)");
+        }
+
+        private void displaySessionAvailability(LocalDateTime date, Session session, String header) {
+            ClinicADT<Doctor> sessionDoctors = getAvailableDoctorsForSession(date, session);
+
+            System.out.println("\n" + header);
+            String line = "+----------------+------------+";
+            String format = "| %-14s | %-10s |\n";
+
+            System.out.println(line);
+            System.out.printf(format, "Doctor Name", "Room No.");
+            System.out.println(line);
+
+            if (sessionDoctors.isEmpty()) {
+                System.out.printf("| %-24s |\n", "No doctors available");
+            } else {
+                for (int i = 0; i < sessionDoctors.size(); i++) {
+                    Doctor doc = sessionDoctors.get(i);
+                    System.out.printf(format, doc.getName(), doc.getRoomNumber());
+                }
+            }
+
+            System.out.println(line);
+        }
+
+        private ClinicADT<Doctor> getAvailableDoctorsForSession(LocalDateTime date, Session session) {
+            ClinicADT<Doctor> sessionDoctors = new MyClinicADT<>();
+
+            for (int i = 0; i < doctorControl.getDoctorCount(); i++) {
+                Doctor doctor = doctorControl.getDoctorByIndex(i);
+                if (doctor != null && isDoctorOnDuty(doctor, date, session)) {
                     sessionDoctors.add(doctor);
                 }
             }
+
+            return sessionDoctors;
         }
-        
-        return sessionDoctors;
+
+        public int getTotalConsultations() {
+            return consultations.size();
+        }
+
+        public ClinicADT<Consultation> getAllConsultations() {
+            return consultations;
+        }
+
+        // Utility method to get consultation statistics
+        public void displayConsultationStatistics() {
+            System.out.println("\n=== Consultation Statistics ===");
+            System.out.println("Total Consultations: " + consultations.size());
+
+            if (consultations.isEmpty()) {
+                System.out.println("No consultation data available.");
+                return;
+            }
+
+            // Count consultations by session
+            int morningCount = 0, afternoonCount = 0, nightCount = 0;
+
+            for (int i = 0; i < consultations.size(); i++) {
+                Consultation c = consultations.get(i);
+                LocalTime time = c.getConsultationDate().toLocalTime();
+
+                if (isInTimeRange(time, MORNING_START, MORNING_END)) {
+                    morningCount++;
+                } else if (isInTimeRange(time, AFTERNOON_START, AFTERNOON_END)) {
+                    afternoonCount++;
+                } else if (isInTimeRange(time, NIGHT_START, NIGHT_END)) {
+                    nightCount++;
+                }
+            }
+
+            System.out.println("By Session:");
+            System.out.println("  Morning: " + morningCount);
+            System.out.println("  Afternoon: " + afternoonCount);
+            System.out.println("  Night: " + nightCount);
+        }
+
+        public ClinicADT<Patient> getPatientsWithConsultations() {
+            ClinicADT<Patient> result = new MyClinicADT<>();
+
+            for (int i = 0; i < consultations.size(); i++) {
+                Consultation c = consultations.get(i);
+                String patientId = c.getPatientId(); // use ID for uniqueness
+
+                // Check if already added
+                boolean exists = false;
+                for (int j = 0; j < result.size(); j++) {
+                    if (result.get(j).getId().equalsIgnoreCase(patientId)) {
+                        exists = true;
+                        break;
+                    }
+                }
+
+                if (!exists) {
+                    Patient p = patientControl.getPatientById(patientId);
+                    if (p != null) {
+                        result.add(p);
+                    }
+                }
+            }
+
+            return result;
+        }
+
+        private boolean isPatientAlreadyBooked(String patientId, LocalDate selectedDate, boolean isConsultation) {
+    int consultationCount = 0;
+    int treatmentCount = 0;
+
+    // Count consultations
+    for (int i = 0; i < consultations.size(); i++) {
+        Consultation c = consultations.get(i);
+        if (c.getPatientId().equalsIgnoreCase(patientId) &&
+            c.getConsultationDate().toLocalDate().equals(selectedDate)) {
+            consultationCount++;
+        }
     }
 
-    public int getTotalConsultations() {
-        return consultations.size();
+    /* Count treatments
+    if (treatments != null) {
+        for (int i = 0; i < treatments.size(); i++) {
+            MedicalTreatment t = treatments.get(i);
+            if (t.getPatientId().equalsIgnoreCase(patientId) &&
+                t.getTreatmentDateTime().toLocalDate().equals(selectedDate)) {
+                treatmentCount++;
+            }
+        }
+    }
+*/
+
+    // If booking a consultation and already has one → reject
+    if (isConsultation && consultationCount >= 1) {
+        return true;
     }
 
-    public ClinicADT<Consultation> getAllConsultations() {
-        return consultations;
+    // If booking a treatment and already has one → reject
+    if (!isConsultation && treatmentCount >= 1) {
+        return true;
     }
-}
+
+    // Otherwise it's valid
+    return false;
+    }
+
+}   

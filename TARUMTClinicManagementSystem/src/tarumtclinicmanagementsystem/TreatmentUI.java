@@ -1,17 +1,24 @@
-
 package tarumtclinicmanagementsystem;
 
-import java.time.LocalDateTime;
 import java.util.Scanner;
 
 public class TreatmentUI {
     private final TreatmentControl control;
     private final DoctorControl doctorControl;
+    private final PatientControl patientControl;
+    private final ConsultationControl consultationControl;
+    private final ClinicADT<Consultation> consultations;
+    private final ClinicADT<MedicalTreatment> treatments;
     private final Scanner scanner;
 
-    public TreatmentUI(DoctorControl doctorControl){
+    public TreatmentUI(PatientControl patientControl, DoctorControl doctorControl,
+                       ClinicADT<Consultation> consultations, ClinicADT<MedicalTreatment> treatments, ConsultationControl consultationControl) {
         this.control = new TreatmentControl();
+        this.patientControl = patientControl;
         this.doctorControl = doctorControl;
+        this.consultations = consultations;
+        this.treatments = treatments;
+        this.consultationControl = consultationControl;
         this.scanner = new Scanner(System.in);
     }
 
@@ -43,89 +50,40 @@ public class TreatmentUI {
     }
 
     private void addTreatment() {
-        try {
-            System.out.print("Enter Patient ID: ");
-            String patientId = scanner.nextLine();
+        System.out.println("\n=== Add New Treatment ===");
+        System.out.println("📋 This will guide you through scheduling a medical treatment");
+        System.out.println("⏰ Each treatment takes 2 hours");
+        System.out.println("🩺 Only available doctors during working hours will be shown\n");
 
-            System.out.print("Enter Patient Name: ");
-            String patientName = scanner.nextLine();
-
-            System.out.print("Enter Diagnosis: ");
-            String diagnosis = scanner.nextLine();
-
-            System.out.print("Enter Prescription: ");
-            String prescription = scanner.nextLine();
-
-            System.out.print("Enter Date (yyyy-MM-dd): ");
-            String date = scanner.nextLine();
-
-            System.out.print("Enter Time (HH:mm): ");
-            String time = scanner.nextLine();
-
-            LocalDateTime dateTime = LocalDateTime.parse(date + "T" + time + ":00");
-
-            System.out.print("Follow-up needed? (yes/no): ");
-            String followUpInput = scanner.nextLine().trim().toLowerCase();
-            boolean isFollowUp = followUpInput.equals("yes");
-
-            Doctor assignedDoc = getAvailableDoctorId();
-            if (assignedDoc == null) {
-                System.out.println("No available doctors. Treatment cannot be added.");
-                return;
-            }
-
-            MedicalTreatment treatment = new MedicalTreatment(
-                patientId,
-                patientName,
-                assignedDoc.getId(),
-                diagnosis,
-                prescription,
-                dateTime,
-                isFollowUp
-            );
-
-            control.addTreatment(treatment);
-            System.out.println("Treatment assigned to Dr. " + assignedDoc.getName());
-        } catch(Exception e){
-            System.out.println("Error! " + e.getMessage());
-        }
+        BookingUI bookingUI = new BookingUI(patientControl, doctorControl, consultations, treatments, consultationControl);
+        bookingUI.run(false); // false = treatment mode
     }
 
     private void viewPatientHistory() {
         System.out.print("Enter Patient ID: ");
         String patientId = scanner.nextLine();
-        ClinicADT<MedicalTreatment> treatments = control.getTreatmentsByPatient(patientId);
+        ClinicADT<MedicalTreatment> result = control.getTreatmentsByPatient(patientId);
 
-        if (treatments.isEmpty()) {
+        if (result.isEmpty()) {
             System.out.println("No treatment record found.");
         } else {
             System.out.println("\n=== Treatment History ===");
-            for (int i = 0; i < treatments.size(); i++) {
-                System.out.println(treatments.get(i));
+            for (int i = 0; i < result.size(); i++) {
+                System.out.println(result.get(i));
             }
         }
     }
 
     private void processFollowUp() {
         try {
-            MedicalTreatment nextFollowUp = control.processNextFollowUp();
-            if (nextFollowUp == null) {
+            var next = control.processNextFollowUp();
+            if (next == null) {
                 System.out.println("No follow-ups in queue.");
             } else {
-                System.out.println("Processing follow-up:\n" + nextFollowUp);
+                System.out.println("Processing follow-up:\n" + next);
             }
         } catch (Exception e) {
             System.out.println("Error! " + e.getMessage());
         }
-    }
-
-    private Doctor getAvailableDoctorId() {
-        for (int i = 0; i < doctorControl.getDoctorCount(); i++) {
-            Doctor doc = doctorControl.getDoctorByIndex(i);
-            if (doc != null && doc.isAvailable()) {
-                return doc;
-            }
-        }
-        return null;
     }
 }

@@ -16,6 +16,8 @@ public class TreatmentControl {
         }
         System.out.println("✅ Treatment recorded.");
     }
+    
+    
 
     public MedicalTreatment processNextFollowUp() {
         if (!followUpQueue.isEmpty()) {
@@ -87,7 +89,7 @@ public class TreatmentControl {
             for (int j = 0; j < sorted.size() - i - 1; j++) {
                 MedicalTreatment t1 = sorted.get(j);
                 MedicalTreatment t2 = sorted.get(j + 1);
-                if (t1.getDateTime().isAfter(t2.getDateTime())) {
+                if (t1.getTreatmentDateTime().isAfter(t2.getTreatmentDateTime())) {
                     sorted.set(j, t2);
                     sorted.set(j + 1, t1);
                 }

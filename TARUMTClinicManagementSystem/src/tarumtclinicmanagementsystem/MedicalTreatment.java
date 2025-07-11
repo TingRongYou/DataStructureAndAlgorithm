@@ -3,37 +3,39 @@ package tarumtclinicmanagementsystem;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 
-public class MedicalTreatment {
-    private static int treatmentCounter = 1;
-    private final String treatmentId;
+public class MedicalTreatment implements Comparable<MedicalTreatment> {
+    private static int counter = 1;
+    private final int treatmentId;
     private String patientId;
     private String patientName;
     private String doctorId;
     private String diagnosis;
     private String prescription;
-    private LocalDateTime dateTime;
-    private boolean isFollowUpNeeded;
+    private LocalDateTime treatmentDateTime;
+    private boolean completed;
 
-    public MedicalTreatment(String patientId, String patientName, String doctorId, String diagnosis, String prescription, LocalDateTime dateTime, Boolean isFollowUpNeeded) {
-        this.treatmentId = "T" + String.format("%03d", treatmentCounter++);
+    public MedicalTreatment(String patientId, String patientName, String doctorId,
+                            String diagnosis, String prescription,
+                            LocalDateTime treatmentDateTime, boolean completed) {
+        this.treatmentId = counter++;
         this.patientId = patientId;
         this.patientName = patientName;
         this.doctorId = doctorId;
         this.diagnosis = diagnosis;
         this.prescription = prescription;
-        this.dateTime = dateTime;
-        this.isFollowUpNeeded = isFollowUpNeeded;
+        this.treatmentDateTime = treatmentDateTime;
+        this.completed = completed;
     }
 
     // Getters
-    public String getTreatmentId() {
+    public int getTreatmentId() {
         return treatmentId;
     }
 
     public String getPatientId() {
         return patientId;
     }
-    
+
     public String getPatientName() {
         return patientName;
     }
@@ -50,15 +52,27 @@ public class MedicalTreatment {
         return prescription;
     }
 
-    public LocalDateTime getDateTime() {
-        return dateTime;
+    public LocalDateTime getTreatmentDateTime() {
+        return treatmentDateTime;
     }
 
-    public Boolean isFollowUpNeeded() {
-        return isFollowUpNeeded;
+    public boolean isCompleted() {
+        return completed;
     }
 
     // Setters
+    public void setPatientId(String patientId) {
+        this.patientId = patientId;
+    }
+
+    public void setPatientName(String patientName) {
+        this.patientName = patientName;
+    }
+
+    public void setDoctorId(String doctorId) {
+        this.doctorId = doctorId;
+    }
+
     public void setDiagnosis(String diagnosis) {
         this.diagnosis = diagnosis;
     }
@@ -67,28 +81,33 @@ public class MedicalTreatment {
         this.prescription = prescription;
     }
 
-    public void setDateTime(LocalDateTime dateTime) {
-        this.dateTime = dateTime;
+    public void setTreatmentDateTime(LocalDateTime treatmentDateTime) {
+        this.treatmentDateTime = treatmentDateTime;
     }
 
-    public void setIsFollowUpNeeded(Boolean isFollowUpNeeded) {
-        this.isFollowUpNeeded = isFollowUpNeeded;
+    public void setCompleted(boolean completed) {
+        this.completed = completed;
     }
-    
-    public void setPatientName(String patientName) {
-        this.patientName = patientName;
+
+    // Follow-up logic: return true if not completed AND more than 3 days have passed
+    public boolean isFollowUpNeeded() {
+        return !completed && treatmentDateTime.plusDays(3).isBefore(LocalDateTime.now());
+    }
+
+    @Override
+    public int compareTo(MedicalTreatment other) {
+        return this.treatmentDateTime.compareTo(other.getTreatmentDateTime());
     }
 
     @Override
     public String toString() {
         DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm");
         return "Treatment ID: " + treatmentId +
-                ", Patient ID: " + patientId +
-                ", Patient Name: " + patientName +
-                ", Doctor ID: " + doctorId +
-                ", Date/Time: " + dateTime.format(formatter) +
-                ", Diagnosis: " + diagnosis +
-                ", Prescription: " + prescription +
-                ", Follow Up: " + (isFollowUpNeeded ? "Yes" : "No");
+               ", Patient: " + patientName + " (" + patientId + ")" +
+               ", Doctor ID: " + doctorId +
+               ", Date: " + treatmentDateTime.format(formatter) +
+               ", Completed: " + (completed ? "Yes" : "No") +
+               ", Diagnosis: " + diagnosis +
+               ", Prescription: " + prescription;
     }
 }
