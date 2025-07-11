@@ -4,12 +4,6 @@
  */
 package tarumtclinicmanagementsystem;
 
-/**
- *
- * @author Acer
- */
-
-
 public class Doctor {
     private static int idCounter = 1000;
 
@@ -21,6 +15,7 @@ public class Doctor {
     private String phoneNumber;
     private DutySchedule dutySchedule;
 
+   // Auto-ID constructor
     public Doctor(String name, int roomNumber, String gender, String icNumber, String phoneNumber, DutySchedule dutySchedule) {
         this.id = "D" + (idCounter++);
         this.name = name;
@@ -29,6 +24,24 @@ public class Doctor {
         this.icNumber = icNumber;
         this.phoneNumber = phoneNumber;
         this.dutySchedule = dutySchedule;
+    }
+
+    // Manual ID (for loading from file)
+    public Doctor(String id, String name, int roomNumber, String gender, String icNumber, String phoneNumber, DutySchedule dutySchedule) {
+        this.id = id;
+        this.name = name;
+        this.roomNumber = roomNumber;
+        this.gender = gender;
+        this.icNumber = icNumber;
+        this.phoneNumber = phoneNumber;
+        this.dutySchedule = dutySchedule;
+
+        try {
+            int numeric = Integer.parseInt(id.replaceAll("[^0-9]", ""));
+            if (numeric >= idCounter) {
+                idCounter = numeric + 1;
+            }
+        } catch (NumberFormatException ignored) {}
     }
 
     // Getters
@@ -48,7 +61,12 @@ public class Doctor {
     public String toString() {
         return "Doctor ID: " + id + ", Name: " + name + ", Room: " + roomNumber;
     }
+
+    public String toFileString() {
+        return id + "," + name + "," + roomNumber + "," + gender + "," + icNumber + "," + phoneNumber;
+    }
 }
+
 
 
 

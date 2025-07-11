@@ -1,44 +1,27 @@
 package tarumtclinicmanagementsystem;
 
-<<<<<<< HEAD
-import java.io.FileWriter;
-import java.io.IOException;
-
-=======
+import java.io.*;
 import java.util.Comparator;
+import java.util.Scanner;
 
-/**
- *
- * @author Acer
- */
->>>>>>> 799e9b2fc56aec04e669a1dff14c09088c36bc85
 public class PatientControl {
     private ClinicADT<Patient> patientQueue;
+    private final String filePath = "src/textFile/patients.txt";
 
     public PatientControl() {
         patientQueue = new MyClinicADT<>();
-    }
-
-<<<<<<< HEAD
-    public void registerPatient(String name, int age, String gender, String contact) {
-        Patient newPatient = new Patient(name, age, gender, contact);
-        patientQueue.enqueue(newPatient);
-        System.out.println("Patient registered: " + newPatient);
-        savePatientToFile(newPatient);
-    }
-
-    private void savePatientToFile(Patient patient) {
-        try (FileWriter writer = new FileWriter("patients.txt", true)) {
-            writer.write(patient.toFileString() + "\n");
-        } catch (IOException e) {
-            System.out.println("Error saving patient to file: " + e.getMessage());
+        File directory = new File("src/textFile");
+        if (!directory.exists()) {
+            directory.mkdirs();
         }
-=======
-    public void registerPatient(String name, String id) {
-        Patient newPatient = new Patient(name, id);
-        patientQueue.enqueue(newPatient);  // FIFO behavior
-        System.out.println("Patient registered and added to the queue.");
->>>>>>> 799e9b2fc56aec04e669a1dff14c09088c36bc85
+        loadFromFile();
+    }
+
+    public void registerPatient(String name, int age, String gender, String icNumber, String contact) {
+        Patient newPatient = new Patient(name, age, gender, icNumber, contact);
+        patientQueue.enqueue(newPatient);
+        System.out.println("Patient registered:\n" + newPatient);
+        saveAllToFile();
     }
 
     public Patient callNextPatient() {
@@ -48,6 +31,7 @@ public class PatientControl {
         }
         Patient next = patientQueue.dequeue();
         System.out.println("Calling patient: " + next);
+        saveAllToFile();
         return next;
     }
 
@@ -55,68 +39,225 @@ public class PatientControl {
         if (patientQueue.isEmpty()) {
             System.out.println("No patients in the queue.");
         } else {
-            System.out.println("Next patient in queue: " + patientQueue.peek());
+            System.out.println("Next patient: " + patientQueue.peek());
         }
     }
 
     public void displayAllPatients() {
-        System.out.println("Total patients in queue: " + patientQueue.size());
+        int total = patientQueue.size();
+        System.out.println("\n📋 Total Patients: " + total);
 
-        ClinicADT<Patient> tempQueue = new MyClinicADT<>();
+        if (total == 0) {
+            System.out.println("No patients in the queue.");
+            return;
+        }
+
+        ClinicADT<Patient> temp = new MyClinicADT<>();
+        int position = 1;
+
+        // Define column widths
+        final int COL_NO = 4;
+        final int COL_ID = 10;
+        final int COL_NAME = 25;
+        final int COL_AGE = 5;
+        final int COL_GENDER = 8;
+        final int COL_IC = 15;
+        final int COL_CONTACT = 16;
+
+        // Create dynamic separator
+        String separator = "+" + "-".repeat(COL_NO + 2) + "+"
+                                 + "-".repeat(COL_ID + 2) + "+"
+                                 + "-".repeat(COL_NAME + 2) + "+"
+                                 + "-".repeat(COL_AGE + 2) + "+"
+                                 + "-".repeat(COL_GENDER + 2) + "+"
+                                 + "-".repeat(COL_IC + 2) + "+"
+                                 + "-".repeat(COL_CONTACT + 2) + "+";
+
+        // Header
+        System.out.println(separator);
+        System.out.printf("| %-" + COL_NO + "s | %-" + COL_ID + "s | %-" + COL_NAME + "s | %-" + COL_AGE + "s | %-" + COL_GENDER + "s | %-" + COL_IC + "s | %-" + COL_CONTACT + "s |\n",
+                          "No.", "ID", "Name", "Age", "Gender", "IC Number", "Contact");
+        System.out.println(separator);
+
+        // Rows
+        while (!patientQueue.isEmpty()) {
+            Patient p = patientQueue.dequeue();
+            System.out.printf("| %-" + COL_NO + "d | %-" + COL_ID + "s | %-" + COL_NAME + "s | %-" + COL_AGE + "d | %-" + COL_GENDER + "s | %-" + COL_IC + "s | %-" + COL_CONTACT + "s |\n",
+                              position, p.getId(), p.getName(), p.getAge(), p.getGender(), p.getIcNumber(), p.getContact());
+            temp.enqueue(p);
+            position++;
+        }
+
+        // Footer
+        System.out.println(separator);
+
+        // Restore queue
+        while (!temp.isEmpty()) {
+            patientQueue.enqueue(temp.dequeue());
+        }
+    }
+
+    public Patient getPatientById(String id) {
+        ClinicADT<Patient> temp = new MyClinicADT<>();
+        Patient found = null;
 
         while (!patientQueue.isEmpty()) {
             Patient p = patientQueue.dequeue();
-            System.out.println(p);
-            tempQueue.enqueue(p);
+            if (p.getId().equalsIgnoreCase(id)) {
+                found = p;
+            }
+            temp.enqueue(p);
         }
 
-        while (!tempQueue.isEmpty()) {
-            patientQueue.enqueue(tempQueue.dequeue());
+        // Restore the original queue
+        while (!temp.isEmpty()) {
+            patientQueue.enqueue(temp.dequeue());
         }
+
+        return found;
+    }
+
+    public void printAllPatientsSortedByName() {
+        if (patientQueue.isEmpty()) {
+            System.out.println("No patients.");
+            return;
+        }
+
+        ClinicADT<Patient> sorted = new MyClinicADT<>();
+        ClinicADT<Patient> temp = new MyClinicADT<>();
+
+        while (!patientQueue.isEmpty()) {
+            Patient p = patientQueue.dequeue();
+            sorted.add(p);
+            temp.enqueue(p);
+        }
+
+        // Restore original queue
+        while (!temp.isEmpty()) {
+            patientQueue.enqueue(temp.dequeue());
+        }
+
+        sorted.sort(Comparator.comparing(Patient::getName, String.CASE_INSENSITIVE_ORDER));
+
+        System.out.println("\n📋 Patients Sorted by Name:");
+        // Define column widths
+        final int COL_NO = 4;
+        final int COL_ID = 10;
+        final int COL_NAME = 25;
+        final int COL_AGE = 5;
+        final int COL_GENDER = 8;
+        final int COL_IC = 15;
+        final int COL_CONTACT = 16;
+
+        // Create dynamic separator
+        String separator = "+" + "-".repeat(COL_NO + 2) + "+"
+                                 + "-".repeat(COL_ID + 2) + "+"
+                                 + "-".repeat(COL_NAME + 2) + "+"
+                                 + "-".repeat(COL_AGE + 2) + "+"
+                                 + "-".repeat(COL_GENDER + 2) + "+"
+                                 + "-".repeat(COL_IC + 2) + "+"
+                                 + "-".repeat(COL_CONTACT + 2) + "+";
+
+        // Header
+        System.out.println(separator);
+        System.out.printf("| %-" + COL_NO + "s | %-" + COL_ID + "s | %-" + COL_NAME + "s | %-" + COL_AGE + "s | %-" + COL_GENDER + "s | %-" + COL_IC + "s | %-" + COL_CONTACT + "s |\n",
+                          "No.", "ID", "Name", "Age", "Gender", "IC Number", "Contact");
+        System.out.println(separator);
+
+        // Rows
+        for (int i = 0; i < sorted.size(); i++) {
+            Patient p = sorted.get(i);
+            System.out.printf("| %-" + COL_NO + "d | %-" + COL_ID + "s | %-" + COL_NAME + "s | %-" + COL_AGE + "d | %-" + COL_GENDER + "s | %-" + COL_IC + "s | %-" + COL_CONTACT + "s |\n",
+                              (i + 1), p.getId(), p.getName(), p.getAge(), p.getGender(), p.getIcNumber(), p.getContact());
+        }
+
+        // Footer
+        System.out.println(separator);
     }
 
     public int getPatientCount() {
         return patientQueue.size();
     }
-<<<<<<< HEAD
-}
-=======
 
-    // ✅ Corrected method to sort the current patient queue by name
-    public void printAllPatientsSortedByName() {
-        if (patientQueue.isEmpty()) {
-            System.out.println("No patients in the queue.");
+    private void saveAllToFile() {
+        try (FileWriter writer = new FileWriter(filePath)) {
+            ClinicADT<Patient> temp = new MyClinicADT<>();
+
+            while (!patientQueue.isEmpty()) {
+                Patient p = patientQueue.dequeue();
+                writer.write(p.toFileString() + "\n");
+                temp.enqueue(p);
+            }
+
+            while (!temp.isEmpty()) {
+                patientQueue.enqueue(temp.dequeue());
+            }
+        } catch (IOException e) {
+            System.out.println("Failed to save patients: " + e.getMessage());
+        }
+    }
+
+    private void loadFromFile() {
+        File file = new File(filePath);
+        int maxId = 1000;
+
+        if (!file.exists()) {
+            System.out.println("Patient file not found. Starting fresh.");
             return;
         }
 
-        // Copy patients to a temporary list for sorting
-        ClinicADT<Patient> sorted = new MyClinicADT<>();
-        ClinicADT<Patient> tempQueue = new MyClinicADT<>();
+        try (Scanner sc = new Scanner(file)) {
+            while (sc.hasNextLine()) {
+                String line = sc.nextLine().trim();
+                if (line.isEmpty()) continue;
+
+                String[] parts = line.split(",", -1);
+                if (parts.length == 6) {
+                    String id = parts[0];
+                    String name = parts[1];
+                    int age = Integer.parseInt(parts[2]);
+                    String gender = parts[3];
+                    String icNumber = parts[4];
+                    String contact = parts[5];
+
+                    Patient patient = new Patient(id, name, age, gender, icNumber, contact);
+                    patientQueue.enqueue(patient);
+
+                    try {
+                        int numId = Integer.parseInt(id.substring(1));
+                        if (numId >= maxId) {
+                            maxId = numId + 1;
+                        }
+                    } catch (NumberFormatException e) {
+                        System.out.println("Invalid ID format in file: " + id);
+                    }
+                } else {
+                    System.out.println("Skipping malformed line in patient file (expected 6 parts): " + line);
+                }
+            }
+
+            Patient.setIdCounter(maxId);
+        } catch (IOException e) {
+            System.out.println("Error reading patients from file: " + e.getMessage());
+        } catch (NumberFormatException e) {
+            System.out.println("Error parsing patient data from file: " + e.getMessage());
+        }
+    }
+
+    public ClinicADT<Patient> getAllPatients() {
+        ClinicADT<Patient> allPatients = new MyClinicADT<>();
+        ClinicADT<Patient> temp = new MyClinicADT<>();
 
         while (!patientQueue.isEmpty()) {
             Patient p = patientQueue.dequeue();
-            sorted.add(p);
-            tempQueue.enqueue(p); // Backup original order
+            allPatients.add(p);
+            temp.enqueue(p);
         }
 
-        // Restore the original queue
-        while (!tempQueue.isEmpty()) {
-            patientQueue.enqueue(tempQueue.dequeue());
+        while (!temp.isEmpty()) {
+            patientQueue.enqueue(temp.dequeue());
         }
 
-        // Sort the copied list using comparator
-        sorted.sort(new Comparator<Patient>() {
-            @Override
-            public int compare(Patient p1, Patient p2) {
-                return p1.getName().compareToIgnoreCase(p2.getName());
-            }
-        });
-
-        // Print sorted list
-        System.out.println("=== Patient List (Sorted by Name) ===");
-        for (int i = 0; i < sorted.size(); i++) {
-            System.out.println(sorted.get(i));
-        }
+        return allPatients;
     }
 }
->>>>>>> 799e9b2fc56aec04e669a1dff14c09088c36bc85

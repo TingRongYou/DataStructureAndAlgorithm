@@ -1,9 +1,7 @@
 /** Team Member: Ting Rong You, Yong Chong Xin, Anson Chang, Lim Wen Liang
  *  
  * 
- */
-
-/*
+ *
  * Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
  * Click nbfs://nbhost/SystemFileSystem/Templates/Classes/Main.java to edit this template
  */
@@ -18,10 +16,10 @@ import java.util.Scanner;
 public class TARUMTClinicManagementSystem {
 
     public static void main(String[] args) {
-        //added new lines here
         DoctorControl doctorControl = new DoctorControl();
+        PatientControl patientControl = new PatientControl(); // ✅ Shared patient control instance
         TreatmentUI treatmentUI = new TreatmentUI(doctorControl);
-        
+
         Scanner scanner = new Scanner(System.in);
         int choice;
 
@@ -34,11 +32,15 @@ public class TARUMTClinicManagementSystem {
             System.out.println("5. Pharmacy Management");
             System.out.println("0. Exit");
             System.out.print("Enter choice: ");
+            while (!scanner.hasNextInt()) {
+                System.out.print("Invalid input. Enter a number: ");
+                scanner.next();
+            }
             choice = scanner.nextInt();
 
             switch (choice) {
                 case 1:
-                    PatientUI patientUI = new PatientUI();
+                    PatientUI patientUI = new PatientUI(patientControl); // ✅ pass shared instance
                     patientUI.run();
                     break;
                 case 2:
@@ -46,16 +48,16 @@ public class TARUMTClinicManagementSystem {
                     doctorUI.run();
                     break;
                 case 3:
-                    ConsultationUI consultationUI = new ConsultationUI();
+                    ConsultationUI consultationUI = new ConsultationUI(patientControl, doctorControl); // ✅ pass shared instance
                     consultationUI.run();
                     break;
-                case 4: 
-                    //added
+                case 4:
                     treatmentUI.run();
                     break;
                 case 5:
                     PharmacyUI pharmacyUI = new PharmacyUI();
                     pharmacyUI.run();
+                    break; // ✅ Prevent fall-through to case 0
                 case 0:
                     System.out.println("Thank you for using the system.");
                     break;
@@ -65,4 +67,5 @@ public class TARUMTClinicManagementSystem {
 
         } while (choice != 0);
     }
+
 }

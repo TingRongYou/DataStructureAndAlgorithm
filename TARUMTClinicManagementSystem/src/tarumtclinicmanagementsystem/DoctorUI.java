@@ -23,126 +23,74 @@ public class DoctorUI {
     public void run() {
         int choice;
         do {
-<<<<<<< HEAD
-            System.out.println("\n=== Doctor Management Menu ===");
-            System.out.println("1. Register Doctor");
-            System.out.println("2. Display All Doctors");
-            System.out.println("3. View Doctor Schedule Table");
-=======
             System.out.println("\n=== Doctor Management Module ===");
             System.out.println("1. Add Doctor");
             System.out.println("2. Remove Doctor");
             System.out.println("3. Display All Doctors");
-            System.out.println("4. Update Doctor Schedule");
-            System.out.println("5. Update Availability");
+            System.out.println("4. View Doctor Schedule Table");
+            System.out.println("5. Update Doctor Schedule");
             System.out.println("6. Show Doctor Count");
-            System.out.println("7. Display Doctors Sorted by Name");         // ✅ New
-            System.out.println("8. Display Only Available Doctors");         // ✅ New
->>>>>>> 799e9b2fc56aec04e669a1dff14c09088c36bc85
+            System.out.println("7. Display Doctors Sorted by Name");
+            System.out.println("8. Display Only Available Doctors");
             System.out.println("0. Exit");
             System.out.print("Choice: ");
 
             while (!scanner.hasNextInt()) {
-<<<<<<< HEAD
                 System.out.print("Invalid input. Please enter a number: ");
-                scanner.next(); // consume invalid
-=======
-                System.out.print("Please enter a valid number: ");
-                scanner.next();
->>>>>>> 799e9b2fc56aec04e669a1dff14c09088c36bc85
+                scanner.next(); 
             }
             choice = scanner.nextInt();
-            scanner.nextLine(); // clear input buffer
+            scanner.nextLine(); 
 
             switch (choice) {
-<<<<<<< HEAD
-                case 1:
-                    registerDoctor();
-                    break;
-                case 2:
-                    doctorControl.displayAllDoctors();
-                    break;
-                case 3:
-                    doctorControl.displayAllDoctors();
-                    viewDoctorSchedule();
-                    break;
-                case 0:
-                    System.out.println("Exiting Doctor Management.");
-                    break;
-                default:
-                    System.out.println("Invalid choice.");
-=======
-                case 1 -> {
-                    System.out.print("Enter Doctor ID: ");
-                    String id = scanner.nextLine();
-                    System.out.print("Enter Doctor Name: ");
-                    String name = scanner.nextLine();
-                    System.out.print("Enter Duty Schedule: ");
-                    String schedule = scanner.nextLine();
-                    System.out.print("Is Available (true/false): ");
-                    boolean available = scanner.nextBoolean();
-                    doctorControl.addDoctor(id, name, schedule, available);
-                }
-
+                case 1 -> registerDoctor();
                 case 2 -> {
                     doctorControl.displayAllDoctors();
-                    System.out.print("Enter index to remove: ");
-                    int removeIndex = scanner.nextInt();
-                    doctorControl.removeDoctorByIndex(removeIndex);
+                    System.out.print("Enter Doctor ID to remove: ");
+                    String doctorID = scanner.nextLine().trim().toUpperCase();
+                    doctorControl.removeDoctorById(doctorID);
                 }
-
                 case 3 -> doctorControl.displayAllDoctors();
-
                 case 4 -> {
                     doctorControl.displayAllDoctors();
-                    System.out.print("Enter index to update schedule: ");
-                    int schedIndex = scanner.nextInt();
-                    scanner.nextLine();
-                    System.out.print("Enter new schedule: ");
-                    String newSched = scanner.nextLine();
-                    doctorControl.updateDoctorSchedule(schedIndex, newSched);
+                    viewDoctorSchedule();
                 }
-
                 case 5 -> {
                     doctorControl.displayAllDoctors();
-                    System.out.print("Enter index to update availability: ");
-                    int availIndex = scanner.nextInt();
-                    System.out.print("Enter availability (true/false): ");
-                    boolean newAvail = scanner.nextBoolean();
-                    doctorControl.updateDoctorAvailability(availIndex, newAvail);
+                    System.out.print("Enter Doctor ID to update schedule: ");
+                    String doctorId = scanner.nextLine().trim().toUpperCase();
+                    doctorControl.updateDoctorScheduleById(doctorId, scanner); // Pass scanner too
                 }
-
                 case 6 -> System.out.println("Total doctors: " + doctorControl.getDoctorCount());
-
-                case 7 -> doctorControl.printDoctorsSortedByName();          // ✅ New
-
-                case 8 -> doctorControl.printAvailableDoctors();             // ✅ New
-
+                case 7 -> doctorControl.printDoctorsSortedByName();
+                case 8 -> {
+                    doctorControl.printAvailableDoctors();
+                    break;
+                }
                 case 0 -> System.out.println("Exiting Doctor Management.");
-
                 default -> System.out.println("Invalid choice.");
->>>>>>> 799e9b2fc56aec04e669a1dff14c09088c36bc85
             }
         } while (choice != 0);
     }
 
+    // ✅ Input logic should be in UI class
     private void registerDoctor() {
-    System.out.print("Enter Doctor Name: ");
-    String name = scanner.nextLine();
+        System.out.print("Enter Doctor Name: ");
+        String name = scanner.nextLine();
 
-    int room;
-    while (true) {
-        System.out.print("Enter Room Number (1–10): ");
-        if (scanner.hasNextInt()) {
-            room = scanner.nextInt();
-            scanner.nextLine(); // consume newline
-            if (room >= 1 && room <= 10) break;
-            else System.out.println("Room must be between 1 and 10.");
-        } else {
-            System.out.println("Please enter a valid number for room.");
-            scanner.next(); // discard invalid input
+        int room;
+        while (true) {
+            System.out.print("Enter Room Number (1–10): ");
+            if (scanner.hasNextInt()) {
+                room = scanner.nextInt();
+                scanner.nextLine();
+                if (room >= 1 && room <= 10) break;
+                else System.out.println("Room must be between 1 and 10.");
+            } else {
+                System.out.println("Please enter a valid number for room.");
+                scanner.next();
+            }
         }
-    }
 
         String gender;
         while (true) {
@@ -171,9 +119,8 @@ public class DoctorUI {
         doctorControl.addDoctor(name, room, gender, icNumber, phoneNum);
     }
 
-
     private void viewDoctorSchedule() {
-       System.out.print("Enter Doctor ID to view schedule table: ");
+        System.out.print("Enter Doctor ID to view schedule table: ");
         String doctorId = scanner.nextLine().trim().toUpperCase();
 
         Doctor doctor = doctorControl.getDoctorById(doctorId);
