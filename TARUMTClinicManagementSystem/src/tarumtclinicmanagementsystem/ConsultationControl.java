@@ -1,5 +1,7 @@
     package tarumtclinicmanagementsystem;
 
+import java.io.BufferedReader;
+import java.io.FileReader;
     import java.io.FileWriter;
     import java.io.IOException;
     import java.time.LocalDate;
@@ -14,6 +16,7 @@
         private PatientControl patientControl;
         private DoctorControl doctorControl;
         private Scanner sc;
+        private ClinicADT<MedicalTreatment> treatments;
         private String consultationFilePath = "src/textFile/consultations.txt";
 
         // Working hours for each session
@@ -28,16 +31,19 @@
         private static final int CONSULTATION_DURATION = 1;
 
         public ConsultationControl(PatientControl patientControl, DoctorControl doctorControl, 
-                                  ClinicADT<Consultation> consultations) {
+                                  ClinicADT<Consultation> consultations, ClinicADT<MedicalTreatment> treatments) {
             this.patientControl = patientControl;
             this.doctorControl = doctorControl;
-            this.consultations = consultations; // Use shared collection instead of creating new one
+            this.consultations = consultations;
+            this.treatments = treatments;
             this.sc = new Scanner(System.in);
+            
+            loadConsultationsFromFile();
         }
 
         // Alternative constructor for backward compatibility
         public ConsultationControl(PatientControl patientControl, DoctorControl doctorControl) {
-            this(patientControl, doctorControl, new MyClinicADT<>());
+            this(patientControl, doctorControl, new MyClinicADT<>(), new MyClinicADT<>());
         }
 
         public void addConsultationFlow() {
@@ -256,8 +262,7 @@
         }
 
         public void addConsultation(String patientId, String patientName, String doctorName, LocalDateTime date) {
-        System.out.println("DEBUG: addConsultation() called with patientId=" + patientId + ", doctorName=" + doctorName + ", date=" + date);
-
+            
         Consultation consultation = new Consultation(patientId, patientName, doctorName, date);
         consultations.add(consultation);
         saveConsultationToFile(consultation);
@@ -274,22 +279,20 @@
         }
 
         private void saveConsultationToFile(Consultation consultation) {
-            System.out.println("DEBUG: Saving consultation to file...");
-            try (FileWriter fw = new FileWriter("src/textFile/consultations.txt", true)) {
+            try (FileWriter fw = new FileWriter(consultationFilePath, true)) {
                 DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm");
-                String line = String.format("%d,%s,%s,%s%n",
+                String line = String.format("%d,%s,%s,%s,%s%n",
                         consultation.getId(),
+                        consultation.getPatientId(),
                         consultation.getPatientName(),
                         consultation.getDoctorName(),
                         consultation.getConsultationDate().format(formatter));
                 fw.write(line);
-                System.out.println("DEBUG: Consultation saved to file: " + line.trim());
             } catch (IOException e) {
                 System.out.println("Error saving consultation: " + e.getMessage());
                 e.printStackTrace();
             }
         }
-
 
         public boolean removeConsultationById(int id) {
             for (int i = 0; i < consultations.size(); i++) {
@@ -580,43 +583,69 @@
             return result;
         }
 
-        private boolean isPatientAlreadyBooked(String patientId, LocalDate selectedDate, boolean isConsultation) {
-    int consultationCount = 0;
-    int treatmentCount = 0;
+    private boolean isPatientAlreadyBooked(String patientId, LocalDate selectedDate, boolean isConsultation) {
+        int consultationCount = 0;
+        int treatmentCount = 0;
 
-    // Count consultations
-    for (int i = 0; i < consultations.size(); i++) {
-        Consultation c = consultations.get(i);
-        if (c.getPatientId().equalsIgnoreCase(patientId) &&
-            c.getConsultationDate().toLocalDate().equals(selectedDate)) {
-            consultationCount++;
-        }
-    }
-
-    /* Count treatments
-    if (treatments != null) {
-        for (int i = 0; i < treatments.size(); i++) {
-            MedicalTreatment t = treatments.get(i);
-            if (t.getPatientId().equalsIgnoreCase(patientId) &&
-                t.getTreatmentDateTime().toLocalDate().equals(selectedDate)) {
-                treatmentCount++;
+        // Check consultations
+        for (int i = 0; i < consultations.size(); i++) {
+            Consultation c = consultations.get(i);
+            if (c.getPatientId().equalsIgnoreCase(patientId) &&
+                c.getConsultationDate().toLocalDate().equals(selectedDate)) {
+                consultationCount++;
             }
         }
-    }
-*/
 
-    // If booking a consultation and already has one → reject
-    if (isConsultation && consultationCount >= 1) {
-        return true;
-    }
+        // Check treatments
+        if (treatments != null) {
+            for (int i = 0; i < treatments.size(); i++) {
+                MedicalTreatment t = treatments.get(i);
+                if (t.getPatientId().equalsIgnoreCase(patientId) &&
+                    t.getTreatmentDateTime().toLocalDate().equals(selectedDate)) {
+                    treatmentCount++;
+                }
+            }
+        }
 
-    // If booking a treatment and already has one → reject
-    if (!isConsultation && treatmentCount >= 1) {
-        return true;
+        // Rules
+        if (isConsultation && (consultationCount > 0 || treatmentCount > 0)) {
+            return true;
+        }
+        if (!isConsultation && (consultationCount > 0 || treatmentCount > 0)) {
+            return true;
+        }
+        return false;
     }
+    
+    public void loadConsultationsFromFile() {
+        consultations.clear(); 
+        try (BufferedReader br = new BufferedReader(new FileReader(consultationFilePath))) {
+            String line;
+            DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm");
+            while ((line = br.readLine()) != null) {
+                // Assuming file format per line:
+                // consultationId,patientName,doctorName,consultationDateTime (yyyy-MM-dd HH:mm)
+                // But you want to also save patientId, so change file format to:
+                // consultationId,patientId,patientName,doctorName,consultationDateTime
+                // Adjust accordingly.
 
-    // Otherwise it's valid
-    return false;
-    }
+                String[] parts = line.split(",");
+                if (parts.length < 5) {
+                    System.out.println("Invalid line in consultations file: " + line);
+                    continue;
+                }
 
+                int consultationId = Integer.parseInt(parts[0].trim());
+                String patientId = parts[1].trim();
+                String patientName = parts[2].trim();
+                String doctorName = parts[3].trim();
+                LocalDateTime date = LocalDateTime.parse(parts[4].trim(), formatter);
+
+                Consultation consultation = new Consultation(consultationId, patientId, patientName, doctorName, date);
+                consultations.add(consultation);
+            }
+        } catch (IOException e) {
+            System.out.println("Error loading consultations: " + e.getMessage());
+        }
+    }  
 }   

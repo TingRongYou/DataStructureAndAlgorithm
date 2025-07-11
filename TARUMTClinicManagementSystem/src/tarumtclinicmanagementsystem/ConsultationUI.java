@@ -12,14 +12,16 @@ public class ConsultationUI {
     private ClinicADT<Consultation> consultations;
     private ClinicADT<MedicalTreatment> treatments;
 
-    public ConsultationUI(PatientControl patientControl, DoctorControl doctorControl,
-                           ClinicADT<Consultation> consultations, ClinicADT<MedicalTreatment> treatments) {
-        this.patientControl = patientControl;
-        this.doctorControl = doctorControl;
-        this.consultations = consultations;
-        this.treatments = treatments;
-        this.consultationControl = new ConsultationControl(patientControl, doctorControl, consultations);
-        this.sc = new Scanner(System.in);
+   public ConsultationUI(PatientControl patientControl, DoctorControl doctorControl,
+                       ClinicADT<Consultation> consultations, ClinicADT<MedicalTreatment> treatments) {
+    this.patientControl = patientControl;
+    this.doctorControl = doctorControl;
+    this.consultations = consultations;
+    this.treatments = treatments;
+    this.consultationControl = new ConsultationControl(patientControl, doctorControl, consultations, treatments);
+    this.sc = new Scanner(System.in);
+    
+    consultationControl.loadConsultationsFromFile();
     }
 
     public void run() {
@@ -157,18 +159,22 @@ public class ConsultationUI {
     }
 
     private void showWorkingHours() {
-        System.out.println("\n=== Clinic Working Hours ===");
-        System.out.println("🌅 Morning Shift:   08:00 - 12:00");
-        System.out.println("🌞 Afternoon Shift: 13:00 - 17:00");
-        System.out.println("🌙 Night Shift:     18:00 - 22:00");
-        System.out.println();
-        System.out.println("⏰ Each consultation is exactly 1 hour long");
-        System.out.println("📅 Consultations can only be scheduled during working hours");
-        System.out.println("👨‍⚕️ Only doctors on duty for the selected time slot will be available");
-        System.out.println();
-        System.out.println("💡 Tips:");
-        System.out.println("   • Check doctor availability before scheduling");
-        System.out.println("   • Ensure the selected time doesn't conflict with existing appointments");
-        System.out.println("   • Doctors have different schedules for different days");
+        System.out.println("=== Clinic Working Hours ===\n");
+
+        System.out.println("+---------------------------------------------+");
+        System.out.println("|                Shift Timings                |");
+        System.out.println("+---------------------------------------------+");
+        System.out.println("|  Morning Shift   : 08:00 - 12:00            |");
+        System.out.println("|  Afternoon Shift : 13:00 - 17:00            |");
+        System.out.println("|  Night Shift     : 18:00 - 22:00            |");
+        System.out.println("+---------------------------------------------+\n");
+
+        System.out.println("-> Each consultation is exactly 1 hour long.");
+        System.out.println("-> Consultations can only be scheduled during working hours.");
+        System.out.println("-> Only doctors on duty during that shift are available.\n");
+        System.out.println(" 💡 Tips:");
+        System.out.println("    • Check doctor availability before scheduling.");
+        System.out.println("    • Avoid time clashes with other bookings.");
+        System.out.println("    • Doctor schedules vary by day.");
     }
 }

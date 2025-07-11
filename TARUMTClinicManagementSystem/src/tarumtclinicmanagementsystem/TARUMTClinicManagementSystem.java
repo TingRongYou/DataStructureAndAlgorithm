@@ -21,7 +21,7 @@ public class TARUMTClinicManagementSystem {
         ClinicADT<Consultation> consultations = new MyClinicADT<>();
         ClinicADT<MedicalTreatment> treatments = new MyClinicADT<>();
 
-        ConsultationControl consultationControl = new ConsultationControl(patientControl, doctorControl, consultations);
+        ConsultationControl consultationControl = new ConsultationControl(patientControl, doctorControl, consultations, treatments);
 
         Scanner scanner = new Scanner(System.in);
         int choice;

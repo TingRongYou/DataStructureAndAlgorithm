@@ -19,6 +19,18 @@ public class Consultation implements Comparable<Consultation> {
         this.doctorName = doctorName;
         this.consultationDate = consultationDate;
     }
+    
+    public Consultation(int consultationId, String patientId, String patientName, String doctorName, LocalDateTime consultationDate) {
+        this.consultationId = consultationId;
+        this.patientId = patientId;
+        this.patientName = patientName;
+        this.doctorName = doctorName;
+        this.consultationDate = consultationDate;
+
+        if (consultationId >= counter) {
+            counter = consultationId + 1;
+        }
+    }
 
     public int getId() {
         return consultationId;

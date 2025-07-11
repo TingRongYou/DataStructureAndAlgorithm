@@ -37,7 +37,7 @@ public class BookingUI {
         Patient patient = patientControl.getPatientById(patientId);
 
         if (patient == null) {
-            System.out.println("❌ Patient not found.");
+            System.out.println("Patient not found.");
             return;
         }
 
@@ -50,70 +50,83 @@ public class BookingUI {
         LocalDateTime chosenSlot = showAvailableTimeSlotsAndSelect(selectedDate, duration, patient, isConsultation, serviceType);
         if (chosenSlot == null) return;
 
-        System.out.println("\n" + serviceType + " successfully booked!");
-        System.out.println(" Booking Details:");
-        System.out.println("   Patient: " + patient.getName() + " (" + patient.getId() + ")");
-        System.out.println("   Service: " + serviceType);
-        System.out.println("   Date & Time: " + chosenSlot.format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm")));
-        System.out.println("   Duration: " + duration + " hour(s)");
+       System.out.println("\nBooking Confirmation:");
+       String line = "+------------+--------------------------+";
+       String format = "| %-10s | %-24s |\n";
+
+       System.out.println(line);
+       System.out.printf(format, "Field", "Details");
+       System.out.println(line);
+       System.out.printf(format, "Patient", patient.getName() + " (" + patient.getId() + ")");
+       System.out.printf(format, "Service", serviceType);
+       System.out.printf(format, "Date", chosenSlot.toLocalDate());
+       System.out.printf(format, "Time", chosenSlot.toLocalTime().format(DateTimeFormatter.ofPattern("HH:mm")));
+       System.out.printf(format, "Duration", duration + " hour(s)");
+       System.out.println(line);
     }
 
     private LocalDate showCalendarAndSelectDate(int duration) {
         LocalDate today = LocalDate.now();
-        System.out.println("\nAvailable Dates (Next 14 days):");
-        System.out.println("==================================");
+        System.out.println("\n📅 Available Dates (Next 14 Days):");
 
-        boolean hasAvailableDates = false;
+        String line = "+------+------------+------------+---------------------+";
+        String format = "| %-4s | %-10s | %-10s | %-19s |\n";
+
+        System.out.println(line);
+        System.out.printf(format, "No.", "Date", "Day", "Available Slots");
+        System.out.println(line);
+
+        LocalDate[] optionDates = new LocalDate[14]; // max 14 entries
         int optionNumber = 1;
 
         for (int i = 0; i < 14; i++) {
             LocalDate date = today.plusDays(i);
             if (hasAvailableSlots(date, duration)) {
-                String dayName = date.getDayOfWeek().toString();
                 String formattedDate = date.format(DateTimeFormatter.ofPattern("yyyy-MM-dd"));
+                String dayName = date.getDayOfWeek().toString(); // keep UPPERCASE
                 int availableSlots = countAvailableSlots(date, duration);
 
-                System.out.printf("%2d. %s (%s) - %d slot(s) available\n",
-                        optionNumber, formattedDate, dayName, availableSlots);
-                hasAvailableDates = true;
+                System.out.printf(format, optionNumber, formattedDate, dayName, availableSlots + " slot(s)");
+                optionDates[optionNumber - 1] = date; // store at index (optionNumber - 1)
                 optionNumber++;
             }
         }
 
-        if (!hasAvailableDates) {
-            System.out.println("No available dates in the next 14 days.");
+        System.out.println(line);
+
+        if (optionNumber == 1) {
+            System.out.println("❌ No available dates in the next 14 days.");
             return null;
         }
 
-        System.out.println("====================================");
         System.out.print("Select date option: ");
 
         try {
             int choice = Integer.parseInt(scanner.nextLine().trim());
 
-            optionNumber = 1;
-            for (int i = 0; i < 14; i++) {
-                LocalDate date = today.plusDays(i);
-                if (hasAvailableSlots(date, duration)) {
-                    if (optionNumber == choice) {
-                        return date;
-                    }
-                    optionNumber++;
-                }
+            if (choice >= 1 && choice < optionNumber && optionDates[choice - 1] != null) {
+                return optionDates[choice - 1];
+            } else {
+                System.out.println("❌ Invalid selection.");
+                return null;
             }
-
-            System.out.println("Invalid selection.");
-            return null;
         } catch (NumberFormatException e) {
-            System.out.println("Invalid input. Please enter a number.");
+            System.out.println("❌ Invalid input. Please enter a number.");
             return null;
         }
     }
 
     private LocalDateTime showAvailableTimeSlotsAndSelect(LocalDate date, int duration, Patient patient, boolean isConsultation, String serviceType) {
-        System.out.println("\nAvailable Time Slots for " + serviceType);
+        System.out.println("\n?Available Time Slots for " + serviceType);
         System.out.println("Date: " + date.format(DateTimeFormatter.ofPattern("yyyy-MM-dd (EEEE)")));
         System.out.println("==========================================================");
+
+        String line = "+------+-------------------+----------------+---------+";
+        String format = "| %-4s | %-17s | %-14s | %-7s |\n";
+
+        System.out.println(line);
+        System.out.printf(format, "No.", "Time Slot", "Doctor", "Room");
+        System.out.println(line);
 
         int slotNumber = 1;
         boolean found = false;
@@ -130,20 +143,20 @@ public class BookingUI {
                 if (doctor != null && doctorControl.isDoctorAvailableForAppointment(doctor, slotStart, duration, consultations, treatments)) {
                     String timeRange = slotStart.format(DateTimeFormatter.ofPattern("HH:mm")) +
                             " - " + slotStart.plusHours(duration).format(DateTimeFormatter.ofPattern("HH:mm"));
-                    System.out.printf("%2d. %s | Dr. %s | Room %d\n",
-                            slotNumber, timeRange, doctor.getName(), doctor.getRoomNumber());
+                    System.out.printf(format, slotNumber, timeRange, "Dr. " + doctor.getName(), doctor.getRoomNumber());
                     slotNumber++;
                     found = true;
                 }
             }
         }
 
+        System.out.println(line);
+
         if (!found) {
             System.out.println("No available slots on this date.");
             return null;
         }
 
-        System.out.println("========================================================");
         System.out.print("Select time slot number: ");
 
         try {
@@ -182,13 +195,14 @@ public class BookingUI {
                     System.out.println("Patient already has a consultation or treatment at this time.");
                     return null;
                 }
-                Consultation c = new Consultation(patient.getId(), patient.getName(), selectedDoctor.getName(), selectedSlot);
-                consultations.add(c);
+
+                consultationControl.addConsultation(patient.getId(), patient.getName(), selectedDoctor.getName(), selectedSlot);
             } else {
                 if (isPatientTimeClash(patient.getId(), selectedSlot, TREATMENT_DURATION)) {
                     System.out.println("Patient already has a consultation or treatment at this time.");
                     return null;
                 }
+
                 treatments.add(new MedicalTreatment(
                         patient.getId(),
                         patient.getName(),
