@@ -1,5 +1,11 @@
 package tarumtclinicmanagementsystem;
 
+import java.io.BufferedReader;
+import java.io.FileReader;
+import java.io.IOException;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
+
 public class TreatmentControl {
     private ClinicADT<MedicalTreatment> allTreatments;
     private ClinicADT<MedicalTreatment> followUpQueue; // FIFO queue
@@ -14,7 +20,7 @@ public class TreatmentControl {
         if (treatment.isFollowUpNeeded()) {
             followUpQueue.enqueue(treatment);
         }
-        System.out.println("✅ Treatment recorded.");
+        System.out.println("Treatment recorded.");
     }
     
     
@@ -22,7 +28,7 @@ public class TreatmentControl {
     public MedicalTreatment processNextFollowUp() {
         if (!followUpQueue.isEmpty()) {
             MedicalTreatment next = followUpQueue.dequeue();
-            System.out.println("🔔 Follow-up for: " + next.getPatientName());
+            System.out.println("Follow-up for: " + next.getPatientName());
             return next;
         } else {
             System.out.println("No follow-up treatments.");
@@ -101,4 +107,5 @@ public class TreatmentControl {
             System.out.println(sorted.get(i));
         }
     }
+    
 }

@@ -67,7 +67,7 @@ public class BookingUI {
 
     private LocalDate showCalendarAndSelectDate(int duration) {
         LocalDate today = LocalDate.now();
-        System.out.println("\n📅 Available Dates (Next 14 Days):");
+        System.out.println("\nAvailable Dates (Next 14 Days):");
 
         String line = "+------+------------+------------+---------------------+";
         String format = "| %-4s | %-10s | %-10s | %-19s |\n";
@@ -95,7 +95,7 @@ public class BookingUI {
         System.out.println(line);
 
         if (optionNumber == 1) {
-            System.out.println("❌ No available dates in the next 14 days.");
+            System.out.println("No available dates in the next 14 days.");
             return null;
         }
 
@@ -107,11 +107,11 @@ public class BookingUI {
             if (choice >= 1 && choice < optionNumber && optionDates[choice - 1] != null) {
                 return optionDates[choice - 1];
             } else {
-                System.out.println("❌ Invalid selection.");
+                System.out.println("Invalid selection.");
                 return null;
             }
         } catch (NumberFormatException e) {
-            System.out.println("❌ Invalid input. Please enter a number.");
+            System.out.println("Invalid input. Please enter a number.");
             return null;
         }
     }

@@ -164,7 +164,7 @@ public class DoctorControl {
             // Set new session
             schedule.setDaySession(targetDay, newSession);
 
-            System.out.println("\n✅ Schedule updated for Dr. " + doctor.getName() + ":");
+            System.out.println("\nSchedule updated for Dr. " + doctor.getName() + ":");
             schedule.printScheduleTable(doctor.getName());
 
             saveToFile(doctorFilePath);
@@ -358,10 +358,10 @@ public class DoctorControl {
                     }
                     writer.write("\n");
                 }
-                System.out.println("✅ Doctor data saved successfully to: " + filePath);
+                System.out.println("Doctor data saved successfully to: " + filePath);
             }
         } catch (IOException e) {
-            System.out.println("❌ Error writing to file: " + filePath + " - " + e.getMessage());
+            System.out.println("Error writing to file: " + filePath + " - " + e.getMessage());
             e.printStackTrace();
         }
     }
@@ -369,7 +369,7 @@ public class DoctorControl {
     public void loadFromFile(String filePath) {
         File file = new File(filePath);
         if (!file.exists()) {
-            System.out.println("📁 No existing doctor data found at: " + filePath + ". Starting fresh.");
+            System.out.println("No existing doctor data found at: " + filePath + ". Starting fresh.");
             return;
         }
 
@@ -401,12 +401,12 @@ public class DoctorControl {
                             doctorList.add(currentDoctor);
                             loadedCount++;
                         } catch (NumberFormatException e) {
-                            System.out.println("❌ Invalid room number in line: " + line);
+                            System.out.println("Invalid room number in line: " + line);
                             currentDoctor = null;
                             currentSchedule = null;
                         }
                     } else {
-                        System.out.println("❌ Invalid doctor data format in line: " + line);
+                        System.out.println("Invalid doctor data format in line: " + line);
                         currentDoctor = null;
                         currentSchedule = null;
                     }
@@ -419,13 +419,13 @@ public class DoctorControl {
                             Session session = Session.valueOf(scheduleParts[1].trim().toUpperCase());
                             currentSchedule.setDaySession(day, session);
                         } catch (IllegalArgumentException e) {
-                            System.out.println("❌ Invalid schedule entry: " + line);
+                            System.out.println("Invalid schedule entry: " + line);
                         }
                     }
                 }
             }
         } catch (IOException e) {
-            System.out.println("❌ Error reading from file: " + filePath + " - " + e.getMessage());
+            System.out.println("Error reading from file: " + filePath + " - " + e.getMessage());
             e.printStackTrace();
         }
     }

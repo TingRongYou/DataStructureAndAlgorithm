@@ -368,7 +368,7 @@ import java.io.FileReader;
             }
 
             if (found.isEmpty()) {
-                System.out.println("❌ No consultations found for doctor: " + doctorName);
+                System.out.println("No consultations found for doctor: " + doctorName);
                 return;
             }
 

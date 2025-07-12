@@ -45,7 +45,7 @@ public class PatientControl {
 
     public void displayAllPatients() {
         int total = patientQueue.size();
-        System.out.println("\n📋 Total Patients: " + total);
+        System.out.println("\nTotal Patients: " + total);
 
         if (total == 0) {
             System.out.println("No patients in the queue.");
@@ -140,7 +140,7 @@ public class PatientControl {
 
         sorted.sort(Comparator.comparing(Patient::getName, String.CASE_INSENSITIVE_ORDER));
 
-        System.out.println("\n📋 Patients Sorted by Name:");
+        System.out.println("\nPatients Sorted by Name:");
         // Define column widths
         final int COL_NO = 4;
         final int COL_ID = 10;
