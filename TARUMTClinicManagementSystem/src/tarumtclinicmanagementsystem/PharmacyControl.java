@@ -191,13 +191,13 @@ public class PharmacyControl {
         try (BufferedReader reader = new BufferedReader(new FileReader(file))) {
             String line;
             while ((line = reader.readLine()) != null) {
-                String[] parts = line.split("\\|");
+                String[] parts = line.split(",", -1); // Fixed: changed from pipe to comma
                 if (parts.length == 5) {
-                    String id = parts[0];
-                    String name = parts[1];
-                    int qty = Integer.parseInt(parts[2]);
-                    String unit = parts[3];
-                    String usage = parts[4];
+                    String id = parts[0].trim();
+                    String name = parts[1].trim();
+                    int qty = Integer.parseInt(parts[2].trim());
+                    String unit = parts[3].trim();
+                    String usage = parts[4].trim();
 
                     medicineList.add(new Medicine(id, name, qty, unit, usage));
                 }

@@ -72,7 +72,7 @@ import java.io.FileReader;
             Doctor selectedDoctor = selectAvailableDoctor(dateTime);
             if (selectedDoctor == null) return;
 
-            addConsultation(selectedPatient.getId(),selectedPatient.getName(),selectedDoctor.getName(),dateTime
+            addConsultation(selectedPatient.getId(),selectedPatient.getName(),selectedDoctor.getName(),selectedDoctor.getId(),dateTime
             );
         }
 
@@ -261,9 +261,9 @@ import java.io.FileReader;
             return start1.isBefore(end2) && end1.isAfter(start2);
         }
 
-        public void addConsultation(String patientId, String patientName, String doctorName, LocalDateTime date) {
+        public void addConsultation(String patientId, String patientName, String doctorName,String doctorId, LocalDateTime date) {
             
-        Consultation consultation = new Consultation(patientId, patientName, doctorName, date);
+        Consultation consultation = new Consultation(patientId, patientName, doctorName, doctorId, date);
         consultations.add(consultation);
         saveConsultationToFile(consultation);
         displayConsultationConfirmation(consultation);
@@ -281,11 +281,12 @@ import java.io.FileReader;
         private void saveConsultationToFile(Consultation consultation) {
             try (FileWriter fw = new FileWriter(consultationFilePath, true)) {
                 DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm");
-                String line = String.format("%d,%s,%s,%s,%s%n",
+                String line = String.format("%d,%s,%s,%s,%s,%s%n",
                         consultation.getId(),
                         consultation.getPatientId(),
                         consultation.getPatientName(),
                         consultation.getDoctorName(),
+                        consultation.getDoctorId(),
                         consultation.getConsultationDate().format(formatter));
                 fw.write(line);
             } catch (IOException e) {
@@ -293,6 +294,7 @@ import java.io.FileReader;
                 e.printStackTrace();
             }
         }
+
 
         public boolean removeConsultationById(int id) {
             for (int i = 0; i < consultations.size(); i++) {
@@ -357,49 +359,51 @@ import java.io.FileReader;
             displayConsultationDetails(found);
         }
 
-        public void searchByDoctor(String doctorName) {
-            ClinicADT<Consultation> found = new MyClinicADT<>();
-
-            for (int i = 0; i < consultations.size(); i++) {
-                Consultation c = consultations.get(i);
-                if (c.getDoctorName().equalsIgnoreCase(doctorName)) {
-                    found.add(c);
-                }
-            }
-
-            if (found.isEmpty()) {
-                System.out.println("No consultations found for doctor: " + doctorName);
+       public void searchByDoctor(Scanner sc, DoctorControl doctorControl) {
+            if (doctorControl.getDoctorCount() == 0) {
+                System.out.println("No doctors registered.");
                 return;
             }
+            // Step 1: Display all doctor details
+            System.out.println("\n=== All Registered Doctors ===");
+            System.out.println("+------------+----------------+--------+------------+------------+------------------+--------------+");
+            System.out.printf("| %-10s | %-14s | %-6s | %-10s | %-10s | %-16s | %-12s |\n",
+                    "Doctor ID", "Name", "Room", "Available", "Gender", "IC Number", "Phone");
+            System.out.println("+------------+----------------+--------+------------+------------+------------------+--------------+");
 
-            System.out.println("\n=== Consultations for Doctor: " + doctorName + " ===");
-            displayConsultationDetails(found);
-        }
+            for (int i = 0; i < doctorControl.getDoctorCount(); i++) {
+                Doctor doc = doctorControl.getDoctorByIndex(i);
+                System.out.printf("| %-10s | %-14s | %-6d | %-10s | %-10s | %-16s | %-12s |\n",
+                        doc.getId(), doc.getName(), doc.getRoomNumber(),
+                        doc.isAvailable() ? "Yes" : "No",
+                        doc.getGender(), doc.getIcNumber(), doc.getPhoneNumber());
+            }
+            System.out.println("+------------+----------------+--------+------------+------------+------------------+--------------+");
 
-        private ClinicADT<Consultation> SearchByPatient(String patientName) {
+            // Step 2: Prompt for Doctor ID
+            System.out.print("Enter Doctor ID to search consultations: ");
+            String doctorId = sc.nextLine().trim();
+
+            Doctor doctor = doctorControl.getDoctorById(doctorId);
+            if (doctor == null) {
+                System.out.println("Doctor ID not found.");
+                return;
+            }
+            // Step 3: Search consultations
             ClinicADT<Consultation> found = new MyClinicADT<>();
-
             for (int i = 0; i < consultations.size(); i++) {
                 Consultation c = consultations.get(i);
-                if (c.getPatientName().equalsIgnoreCase(patientName)) {
+                if (c.getDoctorId().equalsIgnoreCase(doctorId)) {
                     found.add(c);
                 }
             }
-
-            return found;
-        }
-
-        private ClinicADT<Consultation> findConsultationsByDoctor(String doctorName) {
-            ClinicADT<Consultation> found = new MyClinicADT<>();
-
-            for (int i = 0; i < consultations.size(); i++) {
-                Consultation c = consultations.get(i);
-                if (c.getDoctorName().equalsIgnoreCase(doctorName)) {
-                    found.add(c);
-                }
+            // Step 4: Display results
+            if (found.isEmpty()) {
+                System.out.println("No consultations found for Dr. " + doctor.getName() + " (" + doctor.getId() + ").");
+            } else {
+                System.out.println("\n=== Consultations for Dr. " + doctor.getName() + " (" + doctor.getId() + ") ===");
+                displayConsultationDetails(found);
             }
-
-            return found;
         }
 
        private void displayConsultationDetails(ClinicADT<Consultation> consultations) {
@@ -424,7 +428,6 @@ import java.io.FileReader;
                         end.toLocalTime().format(DateTimeFormatter.ofPattern("HH:mm")),
                         CONSULTATION_DURATION + " hr");
             }
-
             System.out.println(line);
         }
 
@@ -438,7 +441,6 @@ import java.io.FileReader;
             for (int i = 0; i < consultations.size(); i++) {
                 sorted.add(consultations.get(i));
             }
-
             sorted.sort(Comparator.comparing(Consultation::getConsultationDate));
 
             System.out.println("\n=== Consultations (Sorted by Date) ===");
@@ -462,7 +464,6 @@ import java.io.FileReader;
                         c.getConsultationDate().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm")),
                         CONSULTATION_DURATION + " hr");
             }
-
             System.out.println(line);
         }
 
@@ -471,7 +472,6 @@ import java.io.FileReader;
                 System.out.println("Cannot check availability for past dates.");
                 return;
             }
-
             System.out.println("\n=== Doctor Availability for " + 
                 date.format(DateTimeFormatter.ofPattern("yyyy-MM-dd (EEEE)")) + " ===");
 
@@ -499,7 +499,6 @@ import java.io.FileReader;
                     System.out.printf(format, doc.getName(), doc.getRoomNumber());
                 }
             }
-
             System.out.println(line);
         }
 
@@ -512,7 +511,6 @@ import java.io.FileReader;
                     sessionDoctors.add(doctor);
                 }
             }
-
             return sessionDoctors;
         }
 
@@ -533,7 +531,6 @@ import java.io.FileReader;
                 System.out.println("No consultation data available.");
                 return;
             }
-
             // Count consultations by session
             int morningCount = 0, afternoonCount = 0, nightCount = 0;
 
@@ -571,7 +568,6 @@ import java.io.FileReader;
                         break;
                     }
                 }
-
                 if (!exists) {
                     Patient p = patientControl.getPatientById(patientId);
                     if (p != null) {
@@ -579,7 +575,6 @@ import java.io.FileReader;
                     }
                 }
             }
-
             return result;
         }
 
@@ -606,7 +601,6 @@ import java.io.FileReader;
                 }
             }
         }
-
         // Rules
         if (isConsultation && (consultationCount > 0 || treatmentCount > 0)) {
             return true;
@@ -618,34 +612,36 @@ import java.io.FileReader;
     }
     
     public void loadConsultationsFromFile() {
-        consultations.clear(); 
+        consultations.clear();
         try (BufferedReader br = new BufferedReader(new FileReader(consultationFilePath))) {
             String line;
             DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm");
-            while ((line = br.readLine()) != null) {
-                // Assuming file format per line:
-                // consultationId,patientName,doctorName,consultationDateTime (yyyy-MM-dd HH:mm)
-                // But you want to also save patientId, so change file format to:
-                // consultationId,patientId,patientName,doctorName,consultationDateTime
-                // Adjust accordingly.
 
+            while ((line = br.readLine()) != null) {
                 String[] parts = line.split(",");
-                if (parts.length < 5) {
+                if (parts.length < 6) {
                     System.out.println("Invalid line in consultations file: " + line);
                     continue;
                 }
 
-                int consultationId = Integer.parseInt(parts[0].trim());
-                String patientId = parts[1].trim();
-                String patientName = parts[2].trim();
-                String doctorName = parts[3].trim();
-                LocalDateTime date = LocalDateTime.parse(parts[4].trim(), formatter);
+                try {
+                    int consultationId = Integer.parseInt(parts[0].trim());
+                    String patientId = parts[1].trim();
+                    String patientName = parts[2].trim();
+                    String doctorName = parts[3].trim();
+                    String doctorId = parts[4].trim();
+                    LocalDateTime consultationDate = LocalDateTime.parse(parts[5].trim(), formatter);
 
-                Consultation consultation = new Consultation(consultationId, patientId, patientName, doctorName, date);
-                consultations.add(consultation);
+                    Consultation consultation = new Consultation(
+                            consultationId, patientId, patientName, doctorName, doctorId, consultationDate);
+                    consultations.add(consultation);
+                } catch (Exception e) {
+                    System.out.println("Error parsing consultation line: " + line);
+                    e.printStackTrace();
+                }
             }
         } catch (IOException e) {
             System.out.println("Error loading consultations: " + e.getMessage());
         }
-    }  
+    }
 }   

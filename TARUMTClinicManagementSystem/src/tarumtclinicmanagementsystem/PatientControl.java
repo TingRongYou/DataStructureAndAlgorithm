@@ -140,7 +140,7 @@ public class PatientControl {
 
         sorted.sort(Comparator.comparing(Patient::getName, String.CASE_INSENSITIVE_ORDER));
 
-        System.out.println("\nPatients Sorted by Name:");
+        System.out.println("\nxPatients Sorted by Name:");
         // Define column widths
         final int COL_NO = 4;
         final int COL_ID = 10;
@@ -179,6 +179,15 @@ public class PatientControl {
     public int getPatientCount() {
         return patientQueue.size();
     }
+    
+        public int getSize() {
+        return patientQueue.size();
+    }
+
+    public Patient getPatient(int index) {
+        return patientQueue.get(index);
+    }
+
 
     private void saveAllToFile() {
         try (FileWriter writer = new FileWriter(filePath)) {

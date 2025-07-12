@@ -14,6 +14,7 @@ public class MedicalTreatment implements Comparable<MedicalTreatment> {
     private LocalDateTime treatmentDateTime;
     private boolean completed;
 
+    // Constructor for creating new treatments (auto ID)
     public MedicalTreatment(String patientId, String patientName, String doctorId,
                             String diagnosis, String prescription,
                             LocalDateTime treatmentDateTime, boolean completed) {
@@ -25,6 +26,25 @@ public class MedicalTreatment implements Comparable<MedicalTreatment> {
         this.prescription = prescription;
         this.treatmentDateTime = treatmentDateTime;
         this.completed = completed;
+    }
+
+    // ✅ Constructor for loading from file (fixed ID)
+    public MedicalTreatment(int treatmentId, String patientId, String patientName, String doctorId,
+                            String diagnosis, String prescription,
+                            LocalDateTime treatmentDateTime, boolean completed) {
+        this.treatmentId = treatmentId;
+        this.patientId = patientId;
+        this.patientName = patientName;
+        this.doctorId = doctorId;
+        this.diagnosis = diagnosis;
+        this.prescription = prescription;
+        this.treatmentDateTime = treatmentDateTime;
+        this.completed = completed;
+
+        // ✅ Ensure counter always stays ahead
+        if (treatmentId >= counter) {
+            counter = treatmentId + 1;
+        }
     }
 
     // Getters

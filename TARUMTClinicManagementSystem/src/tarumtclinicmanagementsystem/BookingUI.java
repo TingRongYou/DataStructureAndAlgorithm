@@ -15,16 +15,18 @@ public class BookingUI {
     private final ClinicADT<Consultation> consultations;
     private final ClinicADT<MedicalTreatment> treatments;
     private final ConsultationControl consultationControl;
+    private final TreatmentControl treatmentControl;
     private final Scanner scanner;
 
     public BookingUI(PatientControl patientControl, DoctorControl doctorControl,
                      ClinicADT<Consultation> consultations, ClinicADT<MedicalTreatment> treatments,
-                     ConsultationControl consultationControl) {
+                     ConsultationControl consultationControl, TreatmentControl treatmentControl ) {
         this.patientControl = patientControl;
         this.doctorControl = doctorControl;
         this.consultations = consultations;
         this.treatments = treatments;
         this.consultationControl = consultationControl;
+        this.treatmentControl = treatmentControl;
         this.scanner = new Scanner(System.in);
     }
 
@@ -196,14 +198,14 @@ public class BookingUI {
                     return null;
                 }
 
-                consultationControl.addConsultation(patient.getId(), patient.getName(), selectedDoctor.getName(), selectedSlot);
+                consultationControl.addConsultation(patient.getId(), patient.getName(), selectedDoctor.getName(), selectedDoctor.getId(), selectedSlot);
             } else {
                 if (isPatientTimeClash(patient.getId(), selectedSlot, TREATMENT_DURATION)) {
                     System.out.println("Patient already has a consultation or treatment at this time.");
                     return null;
                 }
 
-                treatments.add(new MedicalTreatment(
+                treatmentControl.addTreatment(new MedicalTreatment(
                         patient.getId(),
                         patient.getName(),
                         selectedDoctor.getId(),

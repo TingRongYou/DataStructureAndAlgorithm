@@ -9,22 +9,24 @@ public class Consultation implements Comparable<Consultation> {
     private String patientId;         // ✅ Add this
     private String patientName;
     private String doctorName;
+    private String doctorId;
     private LocalDateTime consultationDate;
 
-    // ✅ Updated constructor to include patientId
-    public Consultation(String patientId, String patientName, String doctorName, LocalDateTime consultationDate) {
+    public Consultation(String patientId, String patientName, String doctorName, String doctorId, LocalDateTime consultationDate) {
         this.consultationId = counter++;
         this.patientId = patientId;
         this.patientName = patientName;
         this.doctorName = doctorName;
+        this.doctorId = doctorId;
         this.consultationDate = consultationDate;
     }
     
-    public Consultation(int consultationId, String patientId, String patientName, String doctorName, LocalDateTime consultationDate) {
+    public Consultation(int consultationId, String patientId, String patientName, String doctorName, String doctorId, LocalDateTime consultationDate) {
         this.consultationId = consultationId;
         this.patientId = patientId;
         this.patientName = patientName;
         this.doctorName = doctorName;
+        this.doctorId = doctorId;
         this.consultationDate = consultationDate;
 
         if (consultationId >= counter) {
@@ -46,6 +48,10 @@ public class Consultation implements Comparable<Consultation> {
 
     public String getDoctorName() {
         return doctorName;
+    }
+    
+    public String getDoctorId(){
+        return doctorId;
     }
 
     public LocalDateTime getConsultationDate() {

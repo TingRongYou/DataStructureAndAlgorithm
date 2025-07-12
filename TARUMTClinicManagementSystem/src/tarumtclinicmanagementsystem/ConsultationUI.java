@@ -6,6 +6,7 @@ import java.util.Scanner;
 
 public class ConsultationUI {
     private ConsultationControl consultationControl;
+    private TreatmentControl treatmentControl;
     private Scanner sc;
     private PatientControl patientControl;
     private DoctorControl doctorControl;
@@ -68,7 +69,7 @@ public class ConsultationUI {
         System.out.println("Only available doctors during working hours will be shown");
         System.out.println();
 
-        BookingUI bookingUI = new BookingUI(patientControl, doctorControl, consultations, treatments, consultationControl);
+        BookingUI bookingUI = new BookingUI(patientControl, doctorControl, consultations, treatments, consultationControl, treatmentControl);
         bookingUI.run(true); // true = only allow consultation
     }
 
@@ -95,12 +96,12 @@ public class ConsultationUI {
         ClinicADT<Patient> consultedPatients = consultationControl.getPatientsWithConsultations();
 
         if (consultedPatients.isEmpty()) {
-            System.out.println("❌ No patients with consultations found.");
+            System.out.println("No patients with consultations found.");
             return;
         }
 
         // Step 2: Display the patient table
-        System.out.println("\n📋 Patients with Consultations:");
+        System.out.println("\n?Ptients with Consultations:");
         String format = "| %-10s | %-20s | %-3s | %-6s | %-12s |\n";
         String line = "+------------+----------------------+-----+--------+--------------+";
 
@@ -125,7 +126,7 @@ public class ConsultationUI {
 
         Patient selected = patientControl.getPatientById(inputId);
         if (selected == null) {
-            System.out.println("❌ Invalid Patient ID.");
+            System.out.println("Invalid Patient ID.");
             return;
         }
 
@@ -135,9 +136,7 @@ public class ConsultationUI {
 
     private void searchByDoctor() {
         System.out.println("\n=== Search Consultations by Doctor ===");
-        System.out.print("Enter doctor name: ");
-        String name = sc.nextLine();
-        consultationControl.searchByDoctor(name);
+        consultationControl.searchByDoctor(sc, doctorControl);
     }
 
     private void checkDoctorAvailability() {
@@ -153,7 +152,7 @@ public class ConsultationUI {
                 consultationControl.showDoctorScheduleForDate(date);
                 break;
             } catch (Exception e) {
-                System.out.println("❌ Invalid date format. Please use 'yyyy-MM-dd'.");
+                System.out.println("Invalid date format. Please use 'yyyy-MM-dd'.");
             }
         }
     }
