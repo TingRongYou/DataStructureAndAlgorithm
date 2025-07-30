@@ -1,7 +1,16 @@
-package tarumtclinicmanagementsystem;
+package boundary;
 
+import adt.ClinicADT;
 import java.time.format.DateTimeFormatter;
 import java.util.Scanner;
+import entity.Consultation;
+import control.ConsultationControl;
+import control.DoctorControl;
+import entity.MedicalTreatment;
+import entity.Patient;
+import control.PatientControl;
+import control.TreatmentControl;
+import utility.Validation;
 
 public class TreatmentUI {
     private final TreatmentControl control;
@@ -86,9 +95,16 @@ public class TreatmentUI {
         }
 
         System.out.println(patientLine);
-
-        System.out.print("\nEnter Patient ID: ");
-        String patientId = scanner.nextLine().trim().toUpperCase();
+        
+        String patientId;
+        String error;
+        
+        do{
+            System.out.print("\nEnter Patient ID: ");
+            patientId = scanner.nextLine().trim().toUpperCase();
+            error = Validation.validatePatientId(patientId);
+            if (error != null) System.out.println(error);
+        } while (error != null);
 
         ClinicADT<MedicalTreatment> result = control.getTreatmentsByPatient(patientId);
 

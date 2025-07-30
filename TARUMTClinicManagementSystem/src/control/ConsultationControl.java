@@ -1,5 +1,7 @@
-    package tarumtclinicmanagementsystem;
+package control;
 
+import adt.ClinicADT;
+import adt.MyClinicADT;
 import java.io.BufferedReader;
 import java.io.FileReader;
     import java.io.FileWriter;
@@ -10,6 +12,12 @@ import java.io.FileReader;
     import java.time.format.DateTimeFormatter;
     import java.util.Comparator;
     import java.util.Scanner;
+import entity.Consultation;
+import entity.Doctor;
+import tarumtclinicmanagementsystem.DutySchedule;
+import entity.MedicalTreatment;
+import entity.Patient;
+import tarumtclinicmanagementsystem.Session;
 
     public class ConsultationControl {
         private ClinicADT<Consultation> consultations;
@@ -18,6 +26,11 @@ import java.io.FileReader;
         private Scanner sc;
         private ClinicADT<MedicalTreatment> treatments;
         private String consultationFilePath = "src/textFile/consultations.txt";
+        
+        //validations
+        private static final int MAX_DAILY_CONSULTATIONS_PER_DOCTOR = 8;
+        private static final int MAX_WEEKLY_CONSULTATIONS_PER_PATIENT = 3;
+        private static final int MIN_MINUTES_BETWEEN_CONSULTATIONS = 15;
 
         // Working hours for each session
         private static final LocalTime MORNING_START = LocalTime.of(8, 0);
@@ -643,5 +656,57 @@ import java.io.FileReader;
         } catch (IOException e) {
             System.out.println("Error loading consultations: " + e.getMessage());
         }
+    }
+    
+    //validations
+    private boolean hasDoctorReachedDailyLimit(String doctorId, LocalDate date){
+        int count = 0;
+        for (int i = 0; i < consultations.size(); i++){
+            Consultation c = consultations.get(i);
+            if(c.getDoctorId().equalsIgnoreCase(doctorId)&& c.getConsultationDate().toLocalDate().equals(date)){
+                count++;
+                if (count >= MAX_DAILY_CONSULTATIONS_PER_DOCTOR){
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
+    
+    private boolean hasPatientExceededFrequency(String patientId){
+        LocalDate oneWeekAgo = LocalDate.now().minusDays(7);
+        int count = 0;
+        
+        for (int i = 0; i < consultations.size(); i++){
+            Consultation c = consultations.get(i);
+            if (c.getPatientId().equalsIgnoreCase(patientId) && !c.getConsultationDate().toLocalDate().isBefore(oneWeekAgo)){
+                count++;
+                if (count >= MAX_WEEKLY_CONSULTATIONS_PER_PATIENT){
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
+
+    private boolean hasMinimumGap(Doctor doctor, LocalDateTime newDateTime) {
+        LocalDateTime bufferStart = newDateTime.minusMinutes(MIN_MINUTES_BETWEEN_CONSULTATIONS);
+        LocalDateTime bufferEnd = newDateTime.plusHours(CONSULTATION_DURATION)
+                                            .plusMinutes(MIN_MINUTES_BETWEEN_CONSULTATIONS);
+
+        for (int i = 0; i < consultations.size(); i++) {
+            Consultation c = consultations.get(i);
+            if (c.getDoctorId().equalsIgnoreCase(doctor.getId())) {
+                LocalDateTime existingStart = c.getConsultationDate();
+                LocalDateTime existingEnd = existingStart.plusHours(CONSULTATION_DURATION);
+
+                if ((existingStart.isAfter(bufferStart) && existingStart.isBefore(bufferEnd)) ||
+                    (existingEnd.isAfter(bufferStart) && existingEnd.isBefore(bufferEnd)) ||
+                    (existingStart.isBefore(bufferStart) && existingEnd.isAfter(bufferEnd))) {
+                    return false;
+                }
+            }
+        }
+        return true;
     }
 }   

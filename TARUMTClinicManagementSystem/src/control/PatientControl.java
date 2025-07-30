@@ -1,8 +1,12 @@
-package tarumtclinicmanagementsystem;
+package control;
 
+import adt.ClinicADT;
+import adt.MyClinicADT;
 import java.io.*;
 import java.util.Comparator;
 import java.util.Scanner;
+import entity.Patient;
+import java.time.LocalDate;
 
 public class PatientControl {
     private ClinicADT<Patient> patientQueue;

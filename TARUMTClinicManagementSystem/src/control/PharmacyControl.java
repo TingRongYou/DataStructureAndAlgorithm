@@ -1,7 +1,11 @@
-package tarumtclinicmanagementsystem;
+package control;
 
+import adt.ClinicADT;
+import adt.MyClinicADT;
 import java.io.*;
 import java.util.Scanner;
+import entity.Medicine;
+import java.time.LocalDate;
 
 public class PharmacyControl {
     private final ClinicADT<Medicine> medicineList = new MyClinicADT<>();

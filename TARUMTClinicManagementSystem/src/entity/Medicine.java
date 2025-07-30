@@ -1,4 +1,4 @@
-package tarumtclinicmanagementsystem;
+package entity;
 
 public class Medicine {
     private static int counter = 1000; // Starts at M1000

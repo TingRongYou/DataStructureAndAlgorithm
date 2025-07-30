@@ -1,6 +1,11 @@
-package tarumtclinicmanagementsystem;
+package boundary;
 
 import java.util.Scanner;
+import entity.Medicine;
+import control.PharmacyControl;
+import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
+import utility.Validation;
 
 public class PharmacyUI {
     private final PharmacyControl control = new PharmacyControl();
@@ -41,24 +46,38 @@ public class PharmacyUI {
     }
 
     private void addMedicine() {
-        System.out.print("Medicine Name: ");
-        String name = sc.nextLine();
+        String error;
+        String name; 
+        do {
+            System.out.print("Medicine Name: ");
+            name = sc.nextLine().trim();
+            error = Validation.validateName(name);
+            if(error != null) System.out.println(error);
+        } while (error != null);
+        
 
-        int qty = promptForInt("Quantity: ");
+        int qty; 
+        do {
+            qty = promptForInt("Quantity: ");
+            error = Validation.validateMedicineQuantity(qty);
+            if (error != null) System.out.println(error);
+        } while (error != null);
+        
         String unit;
-
-        while (true) {
+        do {
             System.out.print("Unit (mg/ml/g): ");
             unit = sc.nextLine().trim().toLowerCase();
-            if (unit.equals("mg") || unit.equals("ml") || unit.equals("g")) {
-                break;
-            } else {
-                System.out.println("Invalid unit. Please enter 'mg', 'ml', or 'g'.");
-            }
-        }
-
-        System.out.print("Usage: ");
-        String usage = sc.nextLine();
+            error = Validation.validateMedicineUnit(unit);
+            if (error != null) System.out.println(error);
+        } while (error != null);
+        
+        String usage;
+        do {
+            System.out.print("Usage: ");
+            usage = sc.nextLine().trim();
+            error = Validation.validateMedicineUsage(usage);
+            if (error != null) System.out.println(error);
+        } while (error != null);
 
         Medicine med = new Medicine(name, qty, unit, usage);
         control.addMedicine(med);  // this already prints confirmation and table
@@ -102,12 +121,14 @@ public class PharmacyUI {
             System.out.println("Invalid Medicine ID.");
             return;
         }
-
-        int qty = promptForInt("Quantity to add: ");
-        if (qty <= 0) {
-            System.out.println("Quantity must be positive.");
-            return;
-        }
+        
+        String error;
+        int qty;
+        do {
+            qty = promptForInt("Quantity to add: ");
+            error = Validation.validateMedicineQuantity(qty);
+            if (error != null) System.out.println(error);
+        } while (error != null); 
 
         selected.setQuantity(selected.getQuantity() + qty);
         System.out.println("Medicine restocked: " + qty + " added to " + selected.getName());
@@ -137,11 +158,16 @@ public class PharmacyUI {
         control.printLowStockMedicines(threshold, sc);
     }
 
-    private int promptForInt(String message) {
+    private int promptForInt(String message) { //updated to use validation
         while (true) {
             System.out.print(message);
             try {
-                return Integer.parseInt(sc.nextLine());
+                int value = Integer.parseInt(sc.nextLine());
+                String error = Validation.validateMedicineQuantity(value);
+                if (error == null){
+                    return value;
+                }
+                System.out.println(error);
             } catch (NumberFormatException e) {
                 System.out.println("Please enter a valid number.");
             }

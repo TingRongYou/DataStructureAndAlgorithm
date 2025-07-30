@@ -1,4 +1,4 @@
-package tarumtclinicmanagementsystem;
+package entity;
 
 public class Patient {
     private static int idCounter = 1000;

@@ -7,6 +7,18 @@
  */
 package tarumtclinicmanagementsystem;
 
+import entity.MedicalTreatment;
+import entity.Consultation;
+import control.DoctorControl;
+import control.ConsultationControl;
+import control.PatientControl;
+import boundary.TreatmentUI;
+import boundary.PatientUI;
+import boundary.ConsultationUI;
+import boundary.PharmacyUI;
+import boundary.DoctorUI;
+import adt.ClinicADT;
+import adt.MyClinicADT;
 import java.util.Scanner;
 
 /**

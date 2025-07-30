@@ -1,5 +1,7 @@
-package tarumtclinicmanagementsystem;
+package control;
 
+import adt.ClinicADT;
+import adt.MyClinicADT;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
@@ -7,6 +9,14 @@ import java.time.DayOfWeek;
 import java.time.LocalDateTime;
 import java.util.Comparator;
 import java.util.Scanner;
+import entity.Consultation;
+import entity.Doctor;
+import tarumtclinicmanagementsystem.DutySchedule;
+import entity.MedicalTreatment;
+import tarumtclinicmanagementsystem.Session;
+import static tarumtclinicmanagementsystem.Session.AFTERNOON;
+import static tarumtclinicmanagementsystem.Session.MORNING;
+import static tarumtclinicmanagementsystem.Session.NIGHT;
 
 public class DoctorControl {
     private ClinicADT<Doctor> doctorList;
@@ -38,6 +48,9 @@ public class DoctorControl {
         saveToFile(doctorFilePath);
     }
 
+    public boolean checkRoomAvailability(int room) {
+        return !isRoomOccupied(room);
+    }
     private boolean isRoomOccupied(int roomNumber) {
         for (int i = 0; i < doctorList.size(); i++) {
             if (doctorList.get(i).getRoomNumber() == roomNumber) {
@@ -126,13 +139,13 @@ public class DoctorControl {
             }
 
             System.out.println("Current session on " + originalDay + ": " + schedule.getSessionForDay(originalDay));
-            System.out.print("Do you want to retain the session on the same day? (Y/N): ");
+            System.out.print(String.format("Do you want to maintain the current session on the %s ? (Y/N): " ,originalDay));
             String choice = scanner.nextLine().trim().toUpperCase();
 
             DayOfWeek targetDay = originalDay;
-            if (choice.equals("N")) {
+            if (choice.equals("")) {
                 while (true) {
-                    System.out.print("Enter new day to move session to (e.g. TUESDAY): ");
+                    System.out.print("Enter a new day to modify session on (e.g. TUESDAY): ");
                     String newDayInput = scanner.nextLine().trim().toUpperCase();
                     try {
                         targetDay = DayOfWeek.valueOf(newDayInput);
@@ -169,7 +182,7 @@ public class DoctorControl {
 
             saveToFile(doctorFilePath);
 
-            System.out.print("Do you want to edit another session? (Y/N): ");
+            System.out.print("Edit another session? (Y/N): ");
             String repeat = scanner.nextLine().trim().toUpperCase();
             if (!repeat.equals("Y")) break;
         }

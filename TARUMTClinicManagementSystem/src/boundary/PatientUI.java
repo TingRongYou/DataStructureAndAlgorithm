@@ -1,6 +1,8 @@
-package tarumtclinicmanagementsystem;
+package boundary;
 
 import java.util.Scanner;
+import control.PatientControl;
+import utility.Validation;
 
 public class PatientUI {
     private PatientControl control;
@@ -45,73 +47,62 @@ public class PatientUI {
     }
 
     private void registerPatient() {
-        System.out.print("Enter name: ");
-        String name = scanner.nextLine().trim();
-
-        // Validate name is not empty
-        while (name.isEmpty()) {
-            System.out.print("Name cannot be empty. Enter name: ");
+        String error;
+        String name; 
+        do{
+            System.out.print("Enter name: ");
             name = scanner.nextLine().trim();
-        }
-
+            error = Validation.validateName(name);
+            if(error != null) System.out.println(error);
+        }while(error != null);
+        
         int age;
-        while (true) {
+        do{
             System.out.print("Enter age: ");
-            if (scanner.hasNextInt()) {
-                age = scanner.nextInt();
-                scanner.nextLine(); // Consume newline
-                if (age > 0 && age <= 150) {
-                    break;
-                } else {
-                    System.out.println("Age must be between 1 and 150.");
-                }
-            } else {
-                System.out.println("Invalid age. Please enter a number.");
-                scanner.next(); // Consume invalid input
+            String ageInput = scanner.nextLine().trim();
+            try {
+                age = Integer.parseInt(ageInput);
+                error = Validation.validateAge(age);
+                if (error != null) System.out.println(error);
+            } catch(NumberFormatException e){
+                error = "Please enter a valid number";
+                System.out.println(error);
+                age = -1;
             }
-        }
+        }while (error != null);
 
         String gender;
-        while (true) {
+        do{
             System.out.print("Enter gender (M/F): ");
             gender = scanner.nextLine().trim().toUpperCase();
-            if (gender.equals("M") || gender.equals("F")) {
-                break;
-            } else {
-                System.out.println("Please enter M or F.");
-            }
-        }
-
-        // --- New: Malaysian IC Number Input and Validation ---
+            error = Validation.validateGender(gender);
+            if (error != null) System.out.println(error);
+        } while(error != null);
+        
         String icNumber;
-        while (true) {
+        do {
             System.out.print("Enter Malaysian IC Number (e.g., YYMMDD-XX-XXXX): ");
             icNumber = scanner.nextLine().trim();
-            // Regex for Malaysian IC: YYMMDD-XX-XXXX
-            // ^\\d{6} - starts with 6 digits (YYMMDD)
-            // -       - literal hyphen
-            // \\d{2}  - 2 digits (XX for state code)
-            // -       - literal hyphen
-            // \\d{4}$ - 4 digits (XXXX for serial number)
-            if (icNumber.matches("^\\d{6}-\\d{2}-\\d{4}$")) {
-                break;
-            } else {
-                System.out.println("Invalid Malaysian IC number format. Please use YYMMDD-XX-XXXX.");
+            // First validate IC format
+            error = Validation.validateMalaysianIC(icNumber);
+            if (error != null) {
+                System.out.println("IC format error: " + error);
+                continue;
             }
-        }
-        // --- End of New Section ---
+
+            error = Validation.validateAgeAndICConsistency(age, icNumber);
+            if (error != null) {
+                System.out.println("Age/IC mismatch: " + error);
+            }
+        } while (error != null);
 
         String contact;
-        while (true) {
+        do {
             System.out.print("Enter contact number (Malaysian format - 01xxxxxxxx or 01xxxxxxxxx): ");
             contact = scanner.nextLine().trim();
-            // Regex for Malaysian mobile numbers: 01 followed by 8 or 9 digits
-            if (contact.matches("01\\d{8,9}")) {
-                break;
-            } else {
-                System.out.println("Invalid phone number format. Please use Malaysian format (e.g., 0123456789 or 01234567890).");
-            }
-        }
+            error = Validation.validatePhone(contact);
+            if (error != null) System.out.println(error);
+        }while (error != null); 
 
         // --- Modified: Pass icNumber to PatientControl ---
         control.registerPatient(name, age, gender, icNumber, contact);

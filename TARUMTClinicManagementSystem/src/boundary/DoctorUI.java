@@ -2,7 +2,7 @@
  * Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
  * Click nbfs://nbhost/SystemFileSystem/Templates/Classes/Class.java to edit this template
  */
-package tarumtclinicmanagementsystem;
+package boundary;
 
 /**
  *
@@ -10,6 +10,9 @@ package tarumtclinicmanagementsystem;
  */
 
 import java.util.Scanner;
+import entity.Doctor;
+import control.DoctorControl;
+import utility.Validation;
 
 public class DoctorUI {
     private final DoctorControl doctorControl;
@@ -75,53 +78,71 @@ public class DoctorUI {
 
     // ✅ Input logic should be in UI class
     private void registerDoctor() {
-        System.out.print("Enter Doctor Name: ");
-        String name = scanner.nextLine();
+        String error;
+        String name;
+        
+        do {
+            System.out.print("Enter Doctor Name: ");
+            name = scanner.nextLine();
+            error = Validation.validateName(name);
+            if(error != null) System.out.println(error);
+        } while(error != null);
 
         int room;
-        while (true) {
+        do {
             System.out.print("Enter Room Number (1–10): ");
-            if (scanner.hasNextInt()) {
-                room = scanner.nextInt();
-                scanner.nextLine();
-                if (room >= 1 && room <= 10) break;
-                else System.out.println("Room must be between 1 and 10.");
-            } else {
-                System.out.println("Please enter a valid number for room.");
-                scanner.next();
+            try{
+                room = Integer.parseInt(scanner.nextLine());
+                error = Validation.validateRoomNumber(room);
+                if (error != null) {
+                    System.out.println(error);
+                }else if (!doctorControl.checkRoomAvailability(room)) {
+                    error = "Room " + room + " is currently occupied. Please choose another.";
+                    System.out.println(error);
+                }
+            }catch (NumberFormatException e){
+                error = "Please enter a valid number";
+                System.out.println(error);
+                room = -1;
             }
-        }
+        } while (error != null);
 
         String gender;
-        while (true) {
+        do {
             System.out.print("Enter Gender (M/F): ");
             gender = scanner.nextLine().trim().toUpperCase();
-            if (gender.equals("M") || gender.equals("F")) break;
-            else System.out.println("Invalid gender. Please enter 'M' or 'F'.");
-        }
+            error = Validation.validateGender(gender);
+            if (error != null) System.out.println(error);
+        } while (error != null);
 
         String icNumber;
-        while (true) {
+        do{
             System.out.print("Enter IC Number (format: XXXXXX-XX-XXXX): ");
             icNumber = scanner.nextLine().trim();
-            if (icNumber.matches("\\d{6}-\\d{2}-\\d{4}")) break;
-            else System.out.println("Invalid IC format.");
-        }
+            error = Validation.validateMalaysianIC(icNumber);
+            if(error != null) System.out.println(error);
+        }while(error != null);
 
         String phoneNum;
-        while (true) {
-            System.out.print("Enter Phone Number (starts with 01, 10–11 digits): ");
+        do {
+            System.out.print("Enter Phone Number (e.g., 0123456789): ");
             phoneNum = scanner.nextLine().trim();
-            if (phoneNum.matches("01\\d{8,9}")) break;
-            else System.out.println("Invalid Malaysian phone number.");
-        }
+            error = Validation.validatePhone(phoneNum);
+            if (error != null) System.out.println(error);
+        } while (error != null);
 
         doctorControl.addDoctor(name, room, gender, icNumber, phoneNum);
     }
 
     private void viewDoctorSchedule() {
-        System.out.print("Enter Doctor ID to view schedule table: ");
-        String doctorId = scanner.nextLine().trim().toUpperCase();
+        String doctorId;
+        String error;
+        
+        do{
+            System.out.print("Enter Doctor ID to view schedule table: ");
+            doctorId = scanner.nextLine().trim().toUpperCase();
+            error = Validation.validateDoctorId(doctorId);
+        }while (error != null);
 
         Doctor doctor = doctorControl.getDoctorById(doctorId);
         if (doctor != null) {

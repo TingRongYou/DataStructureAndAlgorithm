@@ -1,10 +1,19 @@
-package tarumtclinicmanagementsystem;
+package boundary;
 
+import adt.ClinicADT;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.time.format.DateTimeFormatter;
 import java.util.Scanner;
+import entity.Consultation;
+import control.ConsultationControl;
+import entity.Doctor;
+import control.DoctorControl;
+import entity.MedicalTreatment;
+import entity.Patient;
+import control.PatientControl;
+import control.TreatmentControl;
 
 public class BookingUI {
     private static final int CONSULTATION_DURATION = 1;

@@ -1,8 +1,17 @@
-package tarumtclinicmanagementsystem;
+package boundary;
 
+import adt.ClinicADT;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.Scanner;
+import entity.Consultation;
+import control.ConsultationControl;
+import control.DoctorControl;
+import entity.MedicalTreatment;
+import entity.Patient;
+import control.PatientControl;
+import control.TreatmentControl;
+import utility.Validation;
 
 public class ConsultationUI {
     private ConsultationControl consultationControl;
@@ -122,7 +131,13 @@ public class ConsultationUI {
 
         // Step 3: Ask for Patient ID
         System.out.print("\nEnter Patient ID to view consultation history: ");
-        String inputId = sc.nextLine().trim().toUpperCase();
+        String inputId;
+        String error;
+        do {
+            inputId = sc.nextLine().trim().toUpperCase();
+            error = Validation.validatePatientId(inputId); 
+            if (error != null) System.out.println(error);
+        } while (error != null);
 
         Patient selected = patientControl.getPatientById(inputId);
         if (selected == null) {

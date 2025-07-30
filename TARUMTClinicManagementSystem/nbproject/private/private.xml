@@ -2,31 +2,6 @@
 <project-private xmlns="http://www.netbeans.org/ns/project-private/1">
     <editor-bookmarks xmlns="http://www.netbeans.org/ns/editor-bookmarks/2" lastBookmarkId="0"/>
     <open-files xmlns="http://www.netbeans.org/ns/projectui-open-files/2">
-        <group>
-            <file>file:/C:/Users/yongc/Desktop/DataStructureAndAlgorithm/TARUMTClinicManagementSystem/src/tarumtclinicmanagementsystem/BookingUI.java</file>
-            <file>file:/C:/Users/yongc/Desktop/DataStructureAndAlgorithm/TARUMTClinicManagementSystem/src/tarumtclinicmanagementsystem/DoctorControl.java</file>
-            <file>file:/C:/Users/yongc/Desktop/DataStructureAndAlgorithm/TARUMTClinicManagementSystem/src/tarumtclinicmanagementsystem/DutySchedule.java</file>
-            <file>file:/C:/Users/yongc/Desktop/DataStructureAndAlgorithm/TARUMTClinicManagementSystem/src/tarumtclinicmanagementsystem/TreatmentUI.java</file>
-            <file>file:/C:/Users/yongc/Desktop/DataStructureAndAlgorithm/TARUMTClinicManagementSystem/src/tarumtclinicmanagementsystem/ConsultationControl.java</file>
-            <file>file:/C:/Users/yongc/Desktop/DataStructureAndAlgorithm/TARUMTClinicManagementSystem/src/textFile/doctor.txt</file>
-            <file>file:/C:/Users/yongc/Desktop/DataStructureAndAlgorithm/TARUMTClinicManagementSystem/src/tarumtclinicmanagementsystem/ConsultationUI.java</file>
-            <file>file:/C:/Users/yongc/Desktop/DataStructureAndAlgorithm/TARUMTClinicManagementSystem/src/tarumtclinicmanagementsystem/TreatmentControl.java</file>
-            <file>file:/C:/Users/yongc/Desktop/DataStructureAndAlgorithm/TARUMTClinicManagementSystem/src/tarumtclinicmanagementsystem/PatientUI.java</file>
-            <file>file:/C:/Users/yongc/Desktop/DataStructureAndAlgorithm/TARUMTClinicManagementSystem/src/textFile/patients.txt</file>
-            <file>file:/C:/Users/yongc/Desktop/DataStructureAndAlgorithm/TARUMTClinicManagementSystem/src/tarumtclinicmanagementsystem/PharmacyUI.java</file>
-            <file>file:/C:/Users/yongc/Desktop/DataStructureAndAlgorithm/TARUMTClinicManagementSystem/src/tarumtclinicmanagementsystem/DoctorUI.java</file>
-            <file>file:/C:/Users/yongc/Desktop/DataStructureAndAlgorithm/TARUMTClinicManagementSystem/src/tarumtclinicmanagementsystem/PharmacyControl.java</file>
-            <file>file:/C:/Users/yongc/Desktop/DataStructureAndAlgorithm/TARUMTClinicManagementSystem/src/tarumtclinicmanagementsystem/PatientControl.java</file>
-            <file>file:/C:/Users/yongc/Desktop/DataStructureAndAlgorithm/TARUMTClinicManagementSystem/src/tarumtclinicmanagementsystem/Session.java</file>
-            <file>file:/C:/Users/yongc/Desktop/DataStructureAndAlgorithm/TARUMTClinicManagementSystem/src/tarumtclinicmanagementsystem/Medicine.java</file>
-            <file>file:/C:/Users/yongc/Desktop/DataStructureAndAlgorithm/TARUMTClinicManagementSystem/src/textFile/consultations.txt</file>
-            <file>file:/C:/Users/yongc/Desktop/DataStructureAndAlgorithm/TARUMTClinicManagementSystem/src/tarumtclinicmanagementsystem/MedicalTreatment.java</file>
-            <file>file:/C:/Users/yongc/Desktop/DataStructureAndAlgorithm/TARUMTClinicManagementSystem/src/tarumtclinicmanagementsystem/MyClinicADT.java</file>
-            <file>file:/C:/Users/yongc/Desktop/DataStructureAndAlgorithm/TARUMTClinicManagementSystem/src/tarumtclinicmanagementsystem/TARUMTClinicManagementSystem.java</file>
-            <file>file:/C:/Users/yongc/Desktop/DataStructureAndAlgorithm/TARUMTClinicManagementSystem/src/tarumtclinicmanagementsystem/Doctor.java</file>
-            <file>file:/C:/Users/yongc/Desktop/DataStructureAndAlgorithm/TARUMTClinicManagementSystem/src/tarumtclinicmanagementsystem/ClinicADT.java</file>
-            <file>file:/C:/Users/yongc/Desktop/DataStructureAndAlgorithm/TARUMTClinicManagementSystem/src/tarumtclinicmanagementsystem/Consultation.java</file>
-            <file>file:/C:/Users/yongc/Desktop/DataStructureAndAlgorithm/TARUMTClinicManagementSystem/src/tarumtclinicmanagementsystem/Patient.java</file>
-        </group>
+        <group/>
     </open-files>
 </project-private>
