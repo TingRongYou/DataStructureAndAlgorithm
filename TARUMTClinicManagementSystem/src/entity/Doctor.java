@@ -1,7 +1,3 @@
-/*
- * Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
- * Click nbfs://nbhost/SystemFileSystem/Templates/Classes/Class.java to edit this template
- */
 package entity;
 
 import tarumtclinicmanagementsystem.DutySchedule;
@@ -17,7 +13,7 @@ public class Doctor {
     private String phoneNumber;
     private DutySchedule dutySchedule;
 
-   // Auto-ID constructor
+    // Constructor for new doctor with auto-generated ID
     public Doctor(String name, int roomNumber, String gender, String icNumber, String phoneNumber, DutySchedule dutySchedule) {
         this.id = "D" + (idCounter++);
         this.name = name;
@@ -28,7 +24,7 @@ public class Doctor {
         this.dutySchedule = dutySchedule;
     }
 
-    // Manual ID (for loading from file)
+    // Constructor for loading doctor from file with manual ID
     public Doctor(String id, String name, int roomNumber, String gender, String icNumber, String phoneNumber, DutySchedule dutySchedule) {
         this.id = id;
         this.name = name;
@@ -38,12 +34,15 @@ public class Doctor {
         this.phoneNumber = phoneNumber;
         this.dutySchedule = dutySchedule;
 
+        // Adjust idCounter to avoid duplicates for new doctors
         try {
             int numeric = Integer.parseInt(id.replaceAll("[^0-9]", ""));
             if (numeric >= idCounter) {
                 idCounter = numeric + 1;
             }
-        } catch (NumberFormatException ignored) {}
+        } catch (NumberFormatException ignored) {
+            // Ignore if ID format is unexpected
+        }
     }
 
     // Getters
@@ -55,23 +54,28 @@ public class Doctor {
     public String getPhoneNumber() { return phoneNumber; }
     public DutySchedule getDutySchedule() { return dutySchedule; }
 
+    // Setters (only phone and duty schedule for now)
+    public void setPhoneNumber(String phoneNumber) {
+        this.phoneNumber = phoneNumber;
+    }
+
+    public void setDutySchedule(DutySchedule dutySchedule) {
+        this.dutySchedule = dutySchedule;
+    }
+
+    // Check if the doctor is currently on duty
     public boolean isAvailable() {
         return dutySchedule.isOnDutyNow();
     }
 
+    // Text representation for display
     @Override
     public String toString() {
         return "Doctor ID: " + id + ", Name: " + name + ", Room: " + roomNumber;
     }
 
+    // String format for saving to file (no duty schedule, store separately if needed)
     public String toFileString() {
         return id + "," + name + "," + roomNumber + "," + gender + "," + icNumber + "," + phoneNumber;
     }
 }
-
-
-
-
-
-
-

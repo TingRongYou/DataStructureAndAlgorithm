@@ -269,9 +269,9 @@ public class BookingUI {
 
     private boolean isPatientTimeClash(String patientId, LocalDateTime newStart, int duration) {
         LocalDateTime newEnd = newStart.plusHours(duration);
-
-        for (int i = 0; i < consultations.size(); i++) {
-            Consultation c = consultations.get(i);
+        
+        // This line of code call iterator for consultations.iterator()
+        for (Consultation c : consultations) {
             if (c.getPatientId().equalsIgnoreCase(patientId)) {
                 LocalDateTime existingStart = c.getConsultationDate();
                 LocalDateTime existingEnd = existingStart.plusHours(CONSULTATION_DURATION);
@@ -281,8 +281,8 @@ public class BookingUI {
             }
         }
 
-        for (int i = 0; i < treatments.size(); i++) {
-            MedicalTreatment t = treatments.get(i);
+        //This line of code call iterator for treatments.iterator()
+        for (MedicalTreatment t : treatments) {
             if (t.getPatientId().equalsIgnoreCase(patientId)) {
                 LocalDateTime existingStart = t.getTreatmentDateTime();
                 LocalDateTime existingEnd = existingStart.plusHours(TREATMENT_DURATION);

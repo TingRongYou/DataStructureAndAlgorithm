@@ -121,14 +121,13 @@ public class TreatmentUI {
 
             DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm");
 
-            for (int i = 0; i < result.size(); i++) {
-                MedicalTreatment t = result.get(i);
+            for (MedicalTreatment t : result) {
                 System.out.printf(format,
-                        t.getTreatmentId(),
-                        t.getPatientName(),
-                        t.getDoctorId(),
-                        t.getTreatmentDateTime().format(formatter),
-                        t.isCompleted() ? "Yes" : "No"
+                    t.getTreatmentId(),
+                    t.getPatientName(),
+                    t.getDoctorId(),
+                    t.getTreatmentDateTime().format(formatter),
+                    t.isCompleted() ? "Yes" : "No"
                 );
             }
             System.out.println(line);

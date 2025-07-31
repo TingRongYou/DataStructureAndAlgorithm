@@ -3,9 +3,8 @@ package boundary;
 import java.util.Scanner;
 import entity.Medicine;
 import control.PharmacyControl;
-import java.time.LocalDate;
-import java.time.format.DateTimeFormatter;
 import utility.Validation;
+import adt.ClinicADT;
 
 public class PharmacyUI {
     private final PharmacyControl control = new PharmacyControl();
@@ -46,32 +45,29 @@ public class PharmacyUI {
     }
 
     private void addMedicine() {
-        String error;
-        String name; 
+        String name, unit, usage, error;
+        int qty;
+
         do {
             System.out.print("Medicine Name: ");
             name = sc.nextLine().trim();
             error = Validation.validateName(name);
-            if(error != null) System.out.println(error);
+            if (error != null) System.out.println(error);
         } while (error != null);
-        
 
-        int qty; 
         do {
             qty = promptForInt("Quantity: ");
             error = Validation.validateMedicineQuantity(qty);
             if (error != null) System.out.println(error);
         } while (error != null);
-        
-        String unit;
+
         do {
             System.out.print("Unit (mg/ml/g): ");
             unit = sc.nextLine().trim().toLowerCase();
             error = Validation.validateMedicineUnit(unit);
             if (error != null) System.out.println(error);
         } while (error != null);
-        
-        String usage;
+
         do {
             System.out.print("Usage: ");
             usage = sc.nextLine().trim();
@@ -79,29 +75,27 @@ public class PharmacyUI {
             if (error != null) System.out.println(error);
         } while (error != null);
 
-        Medicine med = new Medicine(name, qty, unit, usage);
-        control.addMedicine(med);  // this already prints confirmation and table
+        control.addMedicine(new Medicine(name, qty, unit, usage));
     }
 
-   private void dispenseMedicine() {
+    private void dispenseMedicine() {
         if (control.isEmpty()) {
             System.out.println("No medicines available.");
             return;
         }
 
         displaySimpleList();
-
         System.out.print("Enter Medicine ID to dispense: ");
         String id = sc.nextLine().trim().toUpperCase();
-
         Medicine med = control.getMedicineById(id);
+
         if (med == null) {
             System.out.println("Invalid Medicine ID.");
             return;
         }
 
         int qty = promptForInt("Quantity to dispense: ");
-        control.dispenseMedicineById(id, qty);  // ✅ Use ID-based method here
+        control.dispenseMedicineById(id, qty);
     }
 
     private void restockMedicine() {
@@ -110,28 +104,26 @@ public class PharmacyUI {
             return;
         }
 
-        System.out.println("\n=== Select Medicine to Restock ===");
         displaySimpleList();
-
         System.out.print("Enter Medicine ID to restock: ");
         String id = sc.nextLine().trim().toUpperCase();
+        Medicine med = control.getMedicineById(id);
 
-        Medicine selected = control.getMedicineById(id);
-        if (selected == null) {
+        if (med == null) {
             System.out.println("Invalid Medicine ID.");
             return;
         }
-        
-        String error;
+
         int qty;
+        String error;
         do {
             qty = promptForInt("Quantity to add: ");
             error = Validation.validateMedicineQuantity(qty);
             if (error != null) System.out.println(error);
-        } while (error != null); 
+        } while (error != null);
 
-        selected.setQuantity(selected.getQuantity() + qty);
-        System.out.println("Medicine restocked: " + qty + " added to " + selected.getName());
+        med.setQuantity(med.getQuantity() + qty);
+        System.out.println("Restocked successfully. " + qty + " units added to " + med.getName() + ".");
     }
 
     private void removeMedicine() {
@@ -150,7 +142,7 @@ public class PharmacyUI {
             return;
         }
 
-        control.removeMedicineById(med.getId());
+        control.removeMedicineById(id);
     }
 
     private void generateLowStockReport() {
@@ -158,16 +150,11 @@ public class PharmacyUI {
         control.printLowStockMedicines(threshold, sc);
     }
 
-    private int promptForInt(String message) { //updated to use validation
+    private int promptForInt(String message) {
         while (true) {
             System.out.print(message);
             try {
-                int value = Integer.parseInt(sc.nextLine());
-                String error = Validation.validateMedicineQuantity(value);
-                if (error == null){
-                    return value;
-                }
-                System.out.println(error);
+                return Integer.parseInt(sc.nextLine());
             } catch (NumberFormatException e) {
                 System.out.println("Please enter a valid number.");
             }
@@ -175,15 +162,20 @@ public class PharmacyUI {
     }
 
     private void displaySimpleList() {
-        String format = "| %-5s | %-20s | %-8s |\n";
-        String line = "+-------+----------------------+----------+";
+        ClinicADT<Medicine> list = control.getAllMedicines();
 
+        if (list.isEmpty()) {
+            System.out.println("No medicines in stock.");
+            return;
+        }
+
+        String format = "| %-6s | %-20s | %-8s |\n";
+        String line = "+--------+----------------------+----------+";
         System.out.println(line);
         System.out.printf(format, "ID", "Name", "Quantity");
         System.out.println(line);
 
-        for (int i = 0; i < control.getSize(); i++) {
-            Medicine m = control.getMedicineAt(i);
+        for (Medicine m : list) {
             System.out.printf(format, m.getId(), m.getName(), m.getQuantity());
         }
 

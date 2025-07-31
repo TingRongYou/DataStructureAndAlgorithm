@@ -217,8 +217,7 @@ import tarumtclinicmanagementsystem.Session;
             System.out.printf(format, "Doctor ID", "Name", "Room", "Gender", "Phone");
             System.out.println(line);
 
-            for (int i = 0; i < doctors.size(); i++) {
-                Doctor doc = doctors.get(i);
+            for (Doctor doc : doctors) {
                 System.out.printf(format,
                         doc.getId(),
                         doc.getName(),
@@ -230,7 +229,7 @@ import tarumtclinicmanagementsystem.Session;
             System.out.println(line);
         }
 
-        private void displayPatientTable(ClinicADT<Patient> patients) {
+       private void displayPatientTable(ClinicADT<Patient> patients) {
             String format = "| %-10s | %-20s | %-3s | %-6s | %-12s |\n";
             String line = "+------------+----------------------+-----+--------+--------------+";
 
@@ -238,8 +237,7 @@ import tarumtclinicmanagementsystem.Session;
             System.out.printf(format, "Patient ID", "Name", "Age", "Gender", "Contact");
             System.out.println(line);
 
-            for (int i = 0; i < patients.size(); i++) {
-                Patient p = patients.get(i);
+            for (Patient p : patients) { // ✅ Uses your custom ADT's iterator
                 System.out.printf(format,
                         p.getId(),
                         p.getName(),
@@ -254,8 +252,7 @@ import tarumtclinicmanagementsystem.Session;
         private boolean isDoctorBooked(String doctorName, LocalDateTime dateTime) {
             LocalDateTime consultationEnd = dateTime.plusHours(CONSULTATION_DURATION);
 
-            for (int i = 0; i < consultations.size(); i++) {
-                Consultation consultation = consultations.get(i);
+            for (Consultation consultation : consultations) {
                 if (consultation.getDoctorName().equalsIgnoreCase(doctorName)) {
                     LocalDateTime existingStart = consultation.getConsultationDate();
                     LocalDateTime existingEnd = existingStart.plusHours(CONSULTATION_DURATION);
@@ -266,6 +263,7 @@ import tarumtclinicmanagementsystem.Session;
                     }
                 }
             }
+
             return false;
         }
 
@@ -515,15 +513,15 @@ import tarumtclinicmanagementsystem.Session;
             System.out.println(line);
         }
 
-        private ClinicADT<Doctor> getAvailableDoctorsForSession(LocalDateTime date, Session session) {
+       private ClinicADT<Doctor> getAvailableDoctorsForSession(LocalDateTime date, Session session) {
             ClinicADT<Doctor> sessionDoctors = new MyClinicADT<>();
 
-            for (int i = 0; i < doctorControl.getDoctorCount(); i++) {
-                Doctor doctor = doctorControl.getDoctorByIndex(i);
+            for (Doctor doctor : doctorControl.getAllDoctors()) { //Iterator from ClinicADT
                 if (doctor != null && isDoctorOnDuty(doctor, date, session)) {
                     sessionDoctors.add(doctor);
                 }
             }
+
             return sessionDoctors;
         }
 

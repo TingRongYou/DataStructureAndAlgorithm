@@ -1,2 +1,0 @@
-1,P1001,gg,D1003,To be diagnosed during appointment,To be prescribed during appointment,2025-07-14 10:00,false
-2,P1003,zhongli,D1000,To be diagnosed during appointment,To be prescribed during appointment,2025-07-27 09:00,false

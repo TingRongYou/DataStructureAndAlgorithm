@@ -5,12 +5,12 @@ import control.PatientControl;
 import utility.Validation;
 
 public class PatientUI {
-    private PatientControl control;
-    private Scanner scanner;
+    private final PatientControl control;
+    private final Scanner scanner;
 
     public PatientUI(PatientControl control) {
         this.control = control;
-        scanner = new Scanner(System.in);
+        this.scanner = new Scanner(System.in);
     }
 
     public void run() {
@@ -48,42 +48,42 @@ public class PatientUI {
 
     private void registerPatient() {
         String error;
-        String name; 
-        do{
+        String name;
+
+        do {
             System.out.print("Enter name: ");
             name = scanner.nextLine().trim();
             error = Validation.validateName(name);
-            if(error != null) System.out.println(error);
-        }while(error != null);
-        
+            if (error != null) System.out.println(error);
+        } while (error != null);
+
         int age;
-        do{
+        do {
             System.out.print("Enter age: ");
             String ageInput = scanner.nextLine().trim();
             try {
                 age = Integer.parseInt(ageInput);
                 error = Validation.validateAge(age);
                 if (error != null) System.out.println(error);
-            } catch(NumberFormatException e){
-                error = "Please enter a valid number";
+            } catch (NumberFormatException e) {
+                error = "Please enter a valid number.";
                 System.out.println(error);
                 age = -1;
             }
-        }while (error != null);
+        } while (error != null);
 
         String gender;
-        do{
+        do {
             System.out.print("Enter gender (M/F): ");
             gender = scanner.nextLine().trim().toUpperCase();
             error = Validation.validateGender(gender);
             if (error != null) System.out.println(error);
-        } while(error != null);
-        
+        } while (error != null);
+
         String icNumber;
         do {
             System.out.print("Enter Malaysian IC Number (e.g., YYMMDD-XX-XXXX): ");
             icNumber = scanner.nextLine().trim();
-            // First validate IC format
             error = Validation.validateMalaysianIC(icNumber);
             if (error != null) {
                 System.out.println("IC format error: " + error);
@@ -98,13 +98,12 @@ public class PatientUI {
 
         String contact;
         do {
-            System.out.print("Enter contact number (Malaysian format - 01xxxxxxxx or 01xxxxxxxxx): ");
+            System.out.print("Enter contact number (e.g., 0123456789 or 01123456789): ");
             contact = scanner.nextLine().trim();
             error = Validation.validatePhone(contact);
             if (error != null) System.out.println(error);
-        }while (error != null); 
+        } while (error != null);
 
-        // --- Modified: Pass icNumber to PatientControl ---
         control.registerPatient(name, age, gender, icNumber, contact);
     }
 }

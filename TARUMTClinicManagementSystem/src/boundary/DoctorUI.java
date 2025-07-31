@@ -1,18 +1,10 @@
-/*
- * Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
- * Click nbfs://nbhost/SystemFileSystem/Templates/Classes/Class.java to edit this template
- */
 package boundary;
-
-/**
- *
- * @author Acer
- */
 
 import java.util.Scanner;
 import entity.Doctor;
 import control.DoctorControl;
 import utility.Validation;
+import adt.ClinicADT;
 
 public class DoctorUI {
     private final DoctorControl doctorControl;
@@ -40,67 +32,63 @@ public class DoctorUI {
 
             while (!scanner.hasNextInt()) {
                 System.out.print("Invalid input. Please enter a number: ");
-                scanner.next(); 
+                scanner.next();
             }
             choice = scanner.nextInt();
-            scanner.nextLine(); 
+            scanner.nextLine();
 
             switch (choice) {
                 case 1 -> registerDoctor();
                 case 2 -> {
-                    doctorControl.displayAllDoctors();
+                    displayAllDoctors();
                     System.out.print("Enter Doctor ID to remove: ");
                     String doctorID = scanner.nextLine().trim().toUpperCase();
                     doctorControl.removeDoctorById(doctorID);
                 }
-                case 3 -> doctorControl.displayAllDoctors();
+                case 3 -> displayAllDoctors();
                 case 4 -> {
-                    doctorControl.displayAllDoctors();
+                    displayAllDoctors();
                     viewDoctorSchedule();
                 }
                 case 5 -> {
-                    doctorControl.displayAllDoctors();
+                    displayAllDoctors();
                     System.out.print("Enter Doctor ID to update schedule: ");
                     String doctorId = scanner.nextLine().trim().toUpperCase();
-                    doctorControl.updateDoctorScheduleById(doctorId, scanner); // Pass scanner too
+                    doctorControl.updateDoctorScheduleById(doctorId, scanner);
                 }
                 case 6 -> System.out.println("Total doctors: " + doctorControl.getDoctorCount());
                 case 7 -> doctorControl.printDoctorsSortedByName();
-                case 8 -> {
-                    doctorControl.printAvailableDoctors();
-                    break;
-                }
+                case 8 -> doctorControl.printAvailableDoctors();
                 case 0 -> System.out.println("Exiting Doctor Management.");
                 default -> System.out.println("Invalid choice.");
             }
         } while (choice != 0);
     }
 
-    // ✅ Input logic should be in UI class
     private void registerDoctor() {
         String error;
         String name;
-        
+
         do {
             System.out.print("Enter Doctor Name: ");
             name = scanner.nextLine();
             error = Validation.validateName(name);
-            if(error != null) System.out.println(error);
-        } while(error != null);
+            if (error != null) System.out.println(error);
+        } while (error != null);
 
         int room;
         do {
             System.out.print("Enter Room Number (1–10): ");
-            try{
+            try {
                 room = Integer.parseInt(scanner.nextLine());
                 error = Validation.validateRoomNumber(room);
                 if (error != null) {
                     System.out.println(error);
-                }else if (!doctorControl.checkRoomAvailability(room)) {
+                } else if (!doctorControl.checkRoomAvailability(room)) {
                     error = "Room " + room + " is currently occupied. Please choose another.";
                     System.out.println(error);
                 }
-            }catch (NumberFormatException e){
+            } catch (NumberFormatException e) {
                 error = "Please enter a valid number";
                 System.out.println(error);
                 room = -1;
@@ -116,12 +104,12 @@ public class DoctorUI {
         } while (error != null);
 
         String icNumber;
-        do{
+        do {
             System.out.print("Enter IC Number (format: XXXXXX-XX-XXXX): ");
             icNumber = scanner.nextLine().trim();
             error = Validation.validateMalaysianIC(icNumber);
-            if(error != null) System.out.println(error);
-        }while(error != null);
+            if (error != null) System.out.println(error);
+        } while (error != null);
 
         String phoneNum;
         do {
@@ -137,21 +125,50 @@ public class DoctorUI {
     private void viewDoctorSchedule() {
         String doctorId;
         String error;
-        
-        do{
+        Doctor doctor = null;
+
+        do {
             System.out.print("Enter Doctor ID to view schedule table: ");
             doctorId = scanner.nextLine().trim().toUpperCase();
             error = Validation.validateDoctorId(doctorId);
-        }while (error != null);
+            if (error == null) {
+                doctor = doctorControl.getDoctorById(doctorId);
+                if (doctor == null) {
+                    error = "Doctor ID not found.";
+                }
+            }
+            if (error != null) System.out.println(error);
+        } while (error != null);
 
-        Doctor doctor = doctorControl.getDoctorById(doctorId);
-        if (doctor != null) {
-            System.out.println();
-            doctor.getDutySchedule().printScheduleTable(doctor.getName());
-        } else {
-            System.out.println("Doctor ID not found.");
+        System.out.println();
+        doctor.getDutySchedule().printScheduleTable(doctor.getName());
+    }
+
+    private void displayAllDoctors() {
+        ClinicADT<Doctor> allDoctors = doctorControl.getAllDoctors();
+        if (allDoctors.isEmpty()) {
+            System.out.println("No doctors found.");
+            return;
         }
+
+        String format = "| %-8s | %-20s | %-6s | %-15s | %-12s | %-4s |\n";
+        String line = "+----------+----------------------+--------+-----------------+--------------+------+";;
+
+        System.out.println("\nRegistered Doctors:");
+        System.out.println(line);
+        System.out.printf(format, "DoctorID", "Name", "Gender", "IC Number", "Phone", "Room");
+        System.out.println(line);
+
+        for (Doctor d : allDoctors) { // uses iterator()
+            System.out.printf(format,
+                    d.getId(),
+                    d.getName(),
+                    d.getGender(),
+                    d.getIcNumber(),
+                    d.getPhoneNumber(),
+                    d.getRoomNumber());
+        }
+
+        System.out.println(line);
     }
 }
-
-

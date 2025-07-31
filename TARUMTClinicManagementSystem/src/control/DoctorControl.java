@@ -9,6 +9,7 @@ import java.time.DayOfWeek;
 import java.time.LocalDateTime;
 import java.util.Comparator;
 import java.util.Scanner;
+import java.util.Iterator;
 import entity.Consultation;
 import entity.Doctor;
 import tarumtclinicmanagementsystem.DutySchedule;
@@ -44,16 +45,17 @@ public class DoctorControl {
 
         System.out.println("Doctor registered:");
         System.out.println(doctor);
-        
+
         saveToFile(doctorFilePath);
     }
 
     public boolean checkRoomAvailability(int room) {
         return !isRoomOccupied(room);
     }
+
     private boolean isRoomOccupied(int roomNumber) {
-        for (int i = 0; i < doctorList.size(); i++) {
-            if (doctorList.get(i).getRoomNumber() == roomNumber) {
+        for (Doctor doc : doctorList) {
+            if (doc.getRoomNumber() == roomNumber) {
                 return true;
             }
         }
@@ -80,8 +82,12 @@ public class DoctorControl {
 
         return schedule;
     }
+    
+    public ClinicADT<Doctor> getAllDoctors() {
+        return doctorList;
+    }
 
-    public void displayAllDoctors() {
+   public void displayAllDoctors() {
         if (doctorList.isEmpty()) {
             System.out.println("No doctors available.");
             return;
@@ -92,8 +98,9 @@ public class DoctorControl {
                           "Doctor ID", "Name", "Room", "Available", "Gender", "IC Number", "Phone");
         System.out.println("+------------+----------------+--------+------------+------------+------------------+--------------+");
 
-        for (int i = 0; i < doctorList.size(); i++) {
-            Doctor doc = doctorList.get(i);
+        Iterator<Doctor> iterator = doctorList.iterator();
+        while (iterator.hasNext()) {
+            Doctor doc = iterator.next();
             System.out.printf("| %-10s | %-14s | %-6d | %-10s | %-10s | %-16s | %-12s |\n",
                               doc.getId(), doc.getName(), doc.getRoomNumber(),
                               doc.isAvailable() ? "Yes" : "No",
@@ -101,17 +108,20 @@ public class DoctorControl {
         }
 
         System.out.println("+------------+----------------+--------+------------+------------+------------------+--------------+");
-    }
+    }   
 
     public void removeDoctorById(String doctorId) {
-        for (int i = 0; i < doctorList.size(); i++) {
-            Doctor doc = doctorList.get(i);
+        Iterator<Doctor> iterator = doctorList.iterator();
+        int index = 0;
+        while (iterator.hasNext()) {
+            Doctor doc = iterator.next();
             if (doc.getId().equalsIgnoreCase(doctorId)) {
-                doctorList.remove(i);
+                doctorList.remove(index);
                 System.out.println("Doctor removed: " + doc.getName() + " (ID: " + doc.getId() + ")");
                 saveToFile(doctorFilePath);
                 return;
             }
+            index++;
         }
         System.out.println("Doctor ID not found. No doctor removed.");
     }
@@ -169,12 +179,10 @@ public class DoctorControl {
                 }
             }
 
-            // Clear original day session if moved to a new day
             if (!originalDay.equals(targetDay)) {
                 schedule.setDaySession(originalDay, Session.REST);
             }
 
-            // Set new session
             schedule.setDaySession(targetDay, newSession);
 
             System.out.println("\nSchedule updated for Dr. " + doctor.getName() + ":");
@@ -196,9 +204,9 @@ public class DoctorControl {
     }
 
     public Doctor getDoctorById(String id) {
-        for (int i = 0; i < doctorList.size(); i++) {
-            if (doctorList.get(i).getId().equalsIgnoreCase(id)) {
-                return doctorList.get(i);
+        for (Doctor doc : doctorList) {
+            if (doc.getId().equalsIgnoreCase(id)) {
+                return doc;
             }
         }
         return null;
@@ -215,8 +223,8 @@ public class DoctorControl {
         }
 
         ClinicADT<Doctor> sorted = new MyClinicADT<>();
-        for (int i = 0; i < doctorList.size(); i++) {
-            sorted.add(doctorList.get(i));
+        for (Doctor doc : doctorList) {
+            sorted.add(doc);
         }
 
         sorted.sort(Comparator.comparing(Doctor::getName, String::compareToIgnoreCase));
@@ -226,8 +234,7 @@ public class DoctorControl {
                           "Doctor ID", "Name", "Room", "Available", "Gender", "IC Number", "Phone");
         System.out.println("+------------+----------------+--------+------------+------------+------------------+--------------+");
 
-        for (int i = 0; i < sorted.size(); i++) {
-            Doctor doc = sorted.get(i);
+        for (Doctor doc : sorted) {
             System.out.printf("| %-10s | %-14s | %-6d | %-10s | %-10s | %-16s | %-12s |\n",
                               doc.getId(), doc.getName(), doc.getRoomNumber(),
                               doc.isAvailable() ? "Yes" : "No",
@@ -236,23 +243,21 @@ public class DoctorControl {
 
         System.out.println("+------------+----------------+--------+------------+------------+------------------+--------------+");
     }
-    
-    // Fixed: Added separate method for basic availability check
+
     public boolean isDoctorAvailable(Doctor doctor, LocalDateTime startTime, int durationHours) {
         if (doctor == null) {
             return false;
         }
-        
+
         DayOfWeek dayOfWeek = startTime.getDayOfWeek();
         Session sessionForDay = doctor.getDutySchedule().getSessionForDay(dayOfWeek);
-        
+
         if (sessionForDay == Session.REST) {
             return false;
         }
-        
+
         int hour = startTime.getHour();
-        
-        // Check if the start time and duration fit within the doctor's session
+
         switch (sessionForDay) {
             case MORNING:
                 return hour >= 8 && (hour + durationHours) <= 12;
@@ -265,7 +270,6 @@ public class DoctorControl {
         }
     }
 
-    // Fixed: Renamed method to avoid confusion with the basic availability check
     public boolean isDoctorAvailableForAppointment(
         Doctor doctor,
         LocalDateTime startTime,
@@ -274,36 +278,32 @@ public class DoctorControl {
         ClinicADT<MedicalTreatment> treatments) {
 
         if (!isDoctorAvailable(doctor, startTime, durationHours)) {
-            return false; // Not within working session
+            return false;
         }
 
         LocalDateTime endTime = startTime.plusHours(durationHours);
 
-        // Check consultations
-        for (int i = 0; i < consultations.size(); i++) {
-            Consultation c = consultations.get(i);
+        for (Consultation c : consultations) {
             if (c.getDoctorName().equalsIgnoreCase(doctor.getName())) {
                 LocalDateTime cStart = c.getConsultationDate();
                 LocalDateTime cEnd = cStart.plusHours(1);
                 if (startTime.isBefore(cEnd) && endTime.isAfter(cStart)) {
-                    return false; // Overlaps
+                    return false;
                 }
             }
         }
 
-        // Check treatments
-        for (int i = 0; i < treatments.size(); i++) {
-            MedicalTreatment t = treatments.get(i);
+        for (MedicalTreatment t : treatments) {
             if (t.getDoctorId().equalsIgnoreCase(doctor.getId())) {
                 LocalDateTime tStart = t.getTreatmentDateTime();
                 LocalDateTime tEnd = tStart.plusHours(2);
                 if (startTime.isBefore(tEnd) && endTime.isAfter(tStart)) {
-                    return false; // Overlaps
+                    return false;
                 }
             }
         }
 
-        return true; // Available
+        return true;
     }
 
     public void printAvailableDoctors() {
@@ -314,8 +314,7 @@ public class DoctorControl {
                           "Doctor ID", "Name", "Room", "Available", "Gender", "IC Number", "Phone");
         System.out.println("+------------+----------------+--------+------------+------------+------------------+--------------+");
 
-        for (int i = 0; i < doctorList.size(); i++) {
-            Doctor doc = doctorList.get(i);
+        for (Doctor doc : doctorList) {
             if (doc.isAvailable()) {
                 System.out.printf("| %-10s | %-14s | %-6d | %-10s | %-10s | %-16s | %-12s |\n",
                                   doc.getId(), doc.getName(), doc.getRoomNumber(),
@@ -330,19 +329,18 @@ public class DoctorControl {
 
         System.out.println("+------------+----------------+--------+------------+------------+------------------+--------------+");
     }
-    
+
     public void printAvailableDoctorsOn(LocalDateTime startTime, int durationHours) {
         System.out.println("=== Available Doctors at " + startTime + " ===");
         boolean found = false;
-        
-        for (int i = 0; i < doctorList.size(); i++) {
-            Doctor doc = doctorList.get(i);
+
+        for (Doctor doc : doctorList) {
             if (isDoctorAvailable(doc, startTime, durationHours)) {
                 System.out.printf("Doctor: %s (%s), Room: %d\n", doc.getName(), doc.getId(), doc.getRoomNumber());
                 found = true;
             }
         }
-        
+
         if (!found) {
             System.out.println("No doctors available at the specified time.");
         }
@@ -350,7 +348,6 @@ public class DoctorControl {
 
     private void saveToFile(String filePath) {
         try {
-            // Create directory if it doesn't exist
             File file = new File(filePath);
             File parentDir = file.getParentFile();
             if (parentDir != null && !parentDir.exists()) {
@@ -360,10 +357,8 @@ public class DoctorControl {
                 }
             }
 
-            // Write to file
             try (FileWriter writer = new FileWriter(filePath)) {
-                for (int i = 0; i < doctorList.size(); i++) {
-                    Doctor doc = doctorList.get(i);
+                for (Doctor doc : doctorList) {
                     writer.write(doc.toFileString() + "\n");
                     DutySchedule schedule = doc.getDutySchedule();
                     for (DayOfWeek day : DayOfWeek.values()) {
@@ -379,79 +374,65 @@ public class DoctorControl {
         }
     }
 
-    public void loadFromFile(String filePath) {
-        File file = new File(filePath);
-        if (!file.exists()) {
-            System.out.println("No existing doctor data found at: " + filePath + ". Starting fresh.");
-            return;
-        }
+        public void loadFromFile(String filePath) {
+            File file = new File(filePath);
+            if (!file.exists()) {
+                System.out.println("No existing doctor data found at: " + filePath + ". Starting fresh.");
+                return;
+            }
 
-        try (Scanner fileScanner = new Scanner(file)) {
-            Doctor currentDoctor = null;
-            DutySchedule currentSchedule = null;
-            int loadedCount = 0;
+            try (Scanner fileScanner = new Scanner(file)) {
+                Doctor currentDoctor = null;
+                DutySchedule currentSchedule = null;
+                int loadedCount = 0;
 
-            while (fileScanner.hasNextLine()) {
-                String line = fileScanner.nextLine();
-                if (line.trim().isEmpty()) {
-                    continue;
-                }
+                while (fileScanner.hasNextLine()) {
+                    String line = fileScanner.nextLine();
+                    if (line.trim().isEmpty()) {
+                        continue;
+                    }
 
-                if (!line.startsWith("  ")) {
-                    // Doctor data line
-                    String[] parts = line.split(",", -1);
-                    if (parts.length >= 6) {
-                        try {
-                            String id = parts[0].trim();
-                            String name = parts[1].trim();
-                            int room = Integer.parseInt(parts[2].trim());
-                            String gender = parts[3].trim();
-                            String ic = parts[4].trim();
-                            String phone = parts[5].trim();
+                    if (!line.startsWith("  ")) {
+                        String[] parts = line.split(",", -1);
+                        if (parts.length >= 6) {
+                            try {
+                                String id = parts[0].trim();
+                                String name = parts[1].trim();
+                                int room = Integer.parseInt(parts[2].trim());
+                                String gender = parts[3].trim();
+                                String ic = parts[4].trim();
+                                String phone = parts[5].trim();
 
-                            currentSchedule = new DutySchedule();
-                            currentDoctor = new Doctor(id, name, room, gender, ic, phone, currentSchedule);
-                            doctorList.add(currentDoctor);
-                            loadedCount++;
-                        } catch (NumberFormatException e) {
-                            System.out.println("Invalid room number in line: " + line);
+                                currentSchedule = new DutySchedule();
+                                currentDoctor = new Doctor(id, name, room, gender, ic, phone, currentSchedule);
+                                doctorList.add(currentDoctor);
+                                loadedCount++;
+                            } catch (NumberFormatException e) {
+                                System.out.println("Invalid room number in line: " + line);
+                                currentDoctor = null;
+                                currentSchedule = null;
+                            }
+                        } else {
+                            System.out.println("Invalid doctor data format in line: " + line);
                             currentDoctor = null;
                             currentSchedule = null;
                         }
-                    } else {
-                        System.out.println("Invalid doctor data format in line: " + line);
-                        currentDoctor = null;
-                        currentSchedule = null;
-                    }
-                } else if (currentSchedule != null && currentDoctor != null) {
-                    // Schedule data line
-                    String[] scheduleParts = line.trim().split(":\\s*", 2);
-                    if (scheduleParts.length == 2) {
-                        try {
-                            DayOfWeek day = DayOfWeek.valueOf(scheduleParts[0].trim().toUpperCase());
-                            Session session = Session.valueOf(scheduleParts[1].trim().toUpperCase());
-                            currentSchedule.setDaySession(day, session);
-                        } catch (IllegalArgumentException e) {
-                            System.out.println("Invalid schedule entry: " + line);
+                    } else if (currentSchedule != null && currentDoctor != null) {
+                        String[] scheduleParts = line.trim().split(":\\s*", 2);
+                        if (scheduleParts.length == 2) {
+                            try {
+                                DayOfWeek day = DayOfWeek.valueOf(scheduleParts[0].trim().toUpperCase());
+                                Session session = Session.valueOf(scheduleParts[1].trim().toUpperCase());
+                                currentSchedule.setDaySession(day, session);
+                            } catch (IllegalArgumentException e) {
+                                System.out.println("Invalid schedule entry: " + line);
+                            }
                         }
                     }
                 }
+            } catch (IOException e) {
+                System.out.println("Error reading from file: " + filePath + " - " + e.getMessage());
+                e.printStackTrace();
             }
-        } catch (IOException e) {
-            System.out.println("Error reading from file: " + filePath + " - " + e.getMessage());
-            e.printStackTrace();
         }
-    }
-
-    public void saveAllData() {
-        saveToFile(doctorFilePath);
-    }
-
-    public String getFilePath() {
-        return doctorFilePath;
-    }
-
-    public boolean fileExists() {
-        return new File(doctorFilePath).exists();
-    }
-} 
+}

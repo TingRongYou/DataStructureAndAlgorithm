@@ -5,6 +5,7 @@ import adt.MyClinicADT;
 import java.io.*;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
+import java.util.Iterator;
 import entity.MedicalTreatment;
 
 public class TreatmentControl {
@@ -15,7 +16,6 @@ public class TreatmentControl {
     public TreatmentControl(ClinicADT<MedicalTreatment> treatments) {
         this.allTreatments = treatments;
         this.followUpQueue = new MyClinicADT<>();
-
         loadTreatmentsFromFile();
     }
 
@@ -41,8 +41,9 @@ public class TreatmentControl {
 
     public ClinicADT<MedicalTreatment> getTreatmentsByPatient(String patientId) {
         ClinicADT<MedicalTreatment> result = new MyClinicADT<>();
-        for (int i = 0; i < allTreatments.size(); i++) {
-            MedicalTreatment t = allTreatments.get(i);
+        Iterator<MedicalTreatment> it = allTreatments.iterator();
+        while (it.hasNext()) {
+            MedicalTreatment t = it.next();
             if (t.getPatientId().equalsIgnoreCase(patientId)) {
                 result.add(t);
             }
@@ -94,8 +95,9 @@ public class TreatmentControl {
         }
 
         ClinicADT<MedicalTreatment> sorted = new MyClinicADT<>();
-        for (int i = 0; i < allTreatments.size(); i++) {
-            sorted.add(allTreatments.get(i));
+        Iterator<MedicalTreatment> it = allTreatments.iterator();
+        while (it.hasNext()) {
+            sorted.add(it.next());
         }
 
         // Bubble sort by treatment date
@@ -120,8 +122,9 @@ public class TreatmentControl {
 
         DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm");
 
-        for (int i = 0; i < sorted.size(); i++) {
-            MedicalTreatment t = sorted.get(i);
+        Iterator<MedicalTreatment> sortedIt = sorted.iterator();
+        while (sortedIt.hasNext()) {
+            MedicalTreatment t = sortedIt.next();
             System.out.printf(format,
                     t.getTreatmentId(),
                     t.getPatientId(),

@@ -12,6 +12,7 @@ import entity.Patient;
 import control.PatientControl;
 import control.TreatmentControl;
 import utility.Validation;
+import java.util.Iterator;
 
 public class ConsultationUI {
     private ConsultationControl consultationControl;
@@ -22,16 +23,16 @@ public class ConsultationUI {
     private ClinicADT<Consultation> consultations;
     private ClinicADT<MedicalTreatment> treatments;
 
-   public ConsultationUI(PatientControl patientControl, DoctorControl doctorControl,
-                       ClinicADT<Consultation> consultations, ClinicADT<MedicalTreatment> treatments) {
-    this.patientControl = patientControl;
-    this.doctorControl = doctorControl;
-    this.consultations = consultations;
-    this.treatments = treatments;
-    this.consultationControl = new ConsultationControl(patientControl, doctorControl, consultations, treatments);
-    this.sc = new Scanner(System.in);
-    
-    consultationControl.loadConsultationsFromFile();
+    public ConsultationUI(PatientControl patientControl, DoctorControl doctorControl,
+                          ClinicADT<Consultation> consultations, ClinicADT<MedicalTreatment> treatments) {
+        this.patientControl = patientControl;
+        this.doctorControl = doctorControl;
+        this.consultations = consultations;
+        this.treatments = treatments;
+        this.consultationControl = new ConsultationControl(patientControl, doctorControl, consultations, treatments);
+        this.sc = new Scanner(System.in);
+
+        consultationControl.loadConsultationsFromFile();
     }
 
     public void run() {
@@ -85,7 +86,6 @@ public class ConsultationUI {
     private void removeConsultation() {
         System.out.println("\n=== Remove Consultation ===");
 
-        // Show current consultations first
         consultationControl.listConsultations();
 
         if (consultationControl.getTotalConsultations() == 0) {
@@ -98,57 +98,71 @@ public class ConsultationUI {
         consultationControl.removeConsultationById(id);
     }
 
-    private void searchByPatient() {
+   private void searchByPatient() {
         System.out.println("\n=== Search Consultations by Patient ===");
 
-        // Step 1: Fetch all patients who have at least one consultation
-        ClinicADT<Patient> consultedPatients = consultationControl.getPatientsWithConsultations();
-
-        if (consultedPatients.isEmpty()) {
-            System.out.println("No patients with consultations found.");
+        Iterator<Patient> patientIt = patientControl.getAllPatients().iterator();
+        if (!patientIt.hasNext()) {
+            System.out.println("No registered patients found.");
             return;
         }
 
-        // Step 2: Display the patient table
-        System.out.println("\n?Ptients with Consultations:");
-        String format = "| %-10s | %-20s | %-3s | %-6s | %-12s |\n";
-        String line = "+------------+----------------------+-----+--------+--------------+";
+        // 1. Display table of all patients
+        System.out.println("+------------+----------------------+--------------+--------------+-----+--------+");
+        System.out.printf("| %-10s | %-20s | %-12s | %-12s | %-3s | %-6s |\n", 
+                          "Patient ID", "Name", "IC Number", "Phone", "Age", "Gender");
+        System.out.println("+------------+----------------------+--------------+--------------+-----+--------+");
 
-        System.out.println(line);
-        System.out.printf(format, "Patient ID", "Name", "Age", "Gender", "Contact");
-        System.out.println(line);
-
-        for (int i = 0; i < consultedPatients.size(); i++) {
-            Patient p = consultedPatients.get(i);
-            System.out.printf(format,
-                    p.getId(),
-                    p.getName(),
-                    p.getAge(),
-                    p.getGender(),
-                    p.getContact());
+        while (patientIt.hasNext()) {
+            Patient p = patientIt.next();
+            System.out.printf("| %-10s | %-20s | %-12s | %-12s | %-3d | %-6s |\n",
+                    p.getId(), p.getName(), p.getIcNumber(), p.getContact(), p.getAge(), p.getGender());
         }
-        System.out.println(line);
+        System.out.println("+------------+----------------------+--------------+--------------+-----+--------+");
 
-        // Step 3: Ask for Patient ID
-        System.out.print("\nEnter Patient ID to view consultation history: ");
-        String inputId;
-        String error;
-        do {
-            inputId = sc.nextLine().trim().toUpperCase();
-            error = Validation.validatePatientId(inputId); 
-            if (error != null) System.out.println(error);
-        } while (error != null);
+        // 2. Prompt for input
+        System.out.print("Enter Patient ID to view consultation history: ");
+        String patientId = sc.nextLine().trim();
 
-        Patient selected = patientControl.getPatientById(inputId);
-        if (selected == null) {
-            System.out.println("Invalid Patient ID.");
+        // 3. Validate and get patient
+        Patient selectedPatient = patientControl.getPatientById(patientId);
+        if (selectedPatient == null) {
+            System.out.println("Patient ID not found.");
             return;
         }
 
-        // Step 4: Show consultations for selected patient
-        consultationControl.searchByPatient(selected.getName());
+        // 4. Search consultations for the patient
+        boolean found = false;
+        Iterator<Consultation> consultIt = consultations.iterator();
+
+        System.out.println("\n--- Consultation History for " + selectedPatient.getName() + " ---");
+        System.out.println("+--------------+----------------------+------------------------+");
+        System.out.printf("| %-12s | %-20s | %-22s |\n", "Consult ID", "Doctor", "Date");
+        System.out.println("+--------------+----------------------+------------------------+");
+
+        while (consultIt.hasNext()) {
+            Consultation c = consultIt.next();
+
+            // More robust string comparison
+            if (c.getPatientId() != null && 
+                c.getPatientId().trim().equalsIgnoreCase(patientId.trim())) {
+
+                DateTimeFormatter fmt = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm");
+                String dateStr = (c.getConsultationDate() != null)
+                        ? c.getConsultationDate().format(fmt)
+                        : "N/A";
+                System.out.printf("| %-12d | %-20s | %-22s |\n",
+                        c.getId(), c.getDoctorName(), dateStr);
+                found = true;
+            }
+        }
+
+        if (!found) {
+            System.out.println("| No consultations found for this patient.                       |");
+        }
+
+        System.out.println("+--------------+----------------------+------------------------+");
     }
-
     private void searchByDoctor() {
         System.out.println("\n=== Search Consultations by Doctor ===");
         consultationControl.searchByDoctor(sc, doctorControl);
@@ -161,7 +175,6 @@ public class ConsultationUI {
             try {
                 System.out.print("Enter date to check (yyyy-MM-dd): ");
                 String input = sc.nextLine().trim();
-                DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd");
                 LocalDateTime date = LocalDateTime.parse(input + " 00:00", DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm"));
 
                 consultationControl.showDoctorScheduleForDate(date);

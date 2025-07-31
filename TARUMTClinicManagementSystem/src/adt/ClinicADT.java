@@ -8,7 +8,7 @@ package adt;
  *
  * @author Acer
  */
-public interface ClinicADT<T> {
+public interface ClinicADT<T> extends Iterable <T> {
 
     // --- List-like operations ---
     void add(T item);                  // Add to end

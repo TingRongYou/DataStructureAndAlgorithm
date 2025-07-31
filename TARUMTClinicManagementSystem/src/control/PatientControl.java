@@ -2,11 +2,12 @@ package control;
 
 import adt.ClinicADT;
 import adt.MyClinicADT;
+import entity.Patient;
+
 import java.io.*;
 import java.util.Comparator;
+import java.util.Iterator;
 import java.util.Scanner;
-import entity.Patient;
-import java.time.LocalDate;
 
 public class PatientControl {
     private ClinicADT<Patient> patientQueue;
@@ -56,10 +57,7 @@ public class PatientControl {
             return;
         }
 
-        ClinicADT<Patient> temp = new MyClinicADT<>();
-        int position = 1;
-
-        // Define column widths
+        // Column formatting
         final int COL_NO = 4;
         final int COL_ID = 10;
         final int COL_NAME = 25;
@@ -68,53 +66,44 @@ public class PatientControl {
         final int COL_IC = 15;
         final int COL_CONTACT = 16;
 
-        // Create dynamic separator
         String separator = "+" + "-".repeat(COL_NO + 2) + "+"
-                                 + "-".repeat(COL_ID + 2) + "+"
-                                 + "-".repeat(COL_NAME + 2) + "+"
-                                 + "-".repeat(COL_AGE + 2) + "+"
-                                 + "-".repeat(COL_GENDER + 2) + "+"
-                                 + "-".repeat(COL_IC + 2) + "+"
-                                 + "-".repeat(COL_CONTACT + 2) + "+";
+                               + "-".repeat(COL_ID + 2) + "+"
+                               + "-".repeat(COL_NAME + 2) + "+"
+                               + "-".repeat(COL_AGE + 2) + "+"
+                               + "-".repeat(COL_GENDER + 2) + "+"
+                               + "-".repeat(COL_IC + 2) + "+"
+                               + "-".repeat(COL_CONTACT + 2) + "+";
 
         // Header
         System.out.println(separator);
         System.out.printf("| %-" + COL_NO + "s | %-" + COL_ID + "s | %-" + COL_NAME + "s | %-" + COL_AGE + "s | %-" + COL_GENDER + "s | %-" + COL_IC + "s | %-" + COL_CONTACT + "s |\n",
-                          "No.", "ID", "Name", "Age", "Gender", "IC Number", "Contact");
+                "No.", "ID", "Name", "Age", "Gender", "IC Number", "Contact");
         System.out.println(separator);
 
-        // Rows
-        while (!patientQueue.isEmpty()) {
-            Patient p = patientQueue.dequeue();
+        // Using Iterator
+        Iterator<Patient> iterator = patientQueue.iterator();
+        int position = 1;
+        while (iterator.hasNext()) {
+            Patient p = iterator.next();
             System.out.printf("| %-" + COL_NO + "d | %-" + COL_ID + "s | %-" + COL_NAME + "s | %-" + COL_AGE + "d | %-" + COL_GENDER + "s | %-" + COL_IC + "s | %-" + COL_CONTACT + "s |\n",
-                              position, p.getId(), p.getName(), p.getAge(), p.getGender(), p.getIcNumber(), p.getContact());
-            temp.enqueue(p);
-            position++;
+                    position++, p.getId(), p.getName(), p.getAge(), p.getGender(), p.getIcNumber(), p.getContact());
         }
 
-        // Footer
         System.out.println(separator);
-
-        // Restore queue
-        while (!temp.isEmpty()) {
-            patientQueue.enqueue(temp.dequeue());
-        }
     }
 
     public Patient getPatientById(String id) {
         ClinicADT<Patient> temp = new MyClinicADT<>();
         Patient found = null;
 
-        // Search and temporarily remove patients from the queue
         while (!patientQueue.isEmpty()) {
             Patient p = patientQueue.dequeue();
             if (found == null && p.getId().equalsIgnoreCase(id)) {
-                found = p; // Found the patient
+                found = p;
             }
-            temp.enqueue(p); // Keep all patients
+            temp.enqueue(p);
         }
 
-        // Restore the original queue
         while (!temp.isEmpty()) {
             patientQueue.enqueue(temp.dequeue());
         }
@@ -137,15 +126,13 @@ public class PatientControl {
             temp.enqueue(p);
         }
 
-        // Restore original queue
         while (!temp.isEmpty()) {
             patientQueue.enqueue(temp.dequeue());
         }
 
         sorted.sort(Comparator.comparing(Patient::getName, String.CASE_INSENSITIVE_ORDER));
 
-        System.out.println("\nxPatients Sorted by Name:");
-        // Define column widths
+        // Display
         final int COL_NO = 4;
         final int COL_ID = 10;
         final int COL_NAME = 25;
@@ -154,44 +141,42 @@ public class PatientControl {
         final int COL_IC = 15;
         final int COL_CONTACT = 16;
 
-        // Create dynamic separator
         String separator = "+" + "-".repeat(COL_NO + 2) + "+"
-                                 + "-".repeat(COL_ID + 2) + "+"
-                                 + "-".repeat(COL_NAME + 2) + "+"
-                                 + "-".repeat(COL_AGE + 2) + "+"
-                                 + "-".repeat(COL_GENDER + 2) + "+"
-                                 + "-".repeat(COL_IC + 2) + "+"
-                                 + "-".repeat(COL_CONTACT + 2) + "+";
+                               + "-".repeat(COL_ID + 2) + "+"
+                               + "-".repeat(COL_NAME + 2) + "+"
+                               + "-".repeat(COL_AGE + 2) + "+"
+                               + "-".repeat(COL_GENDER + 2) + "+"
+                               + "-".repeat(COL_IC + 2) + "+"
+                               + "-".repeat(COL_CONTACT + 2) + "+";
 
-        // Header
+        System.out.println("\nPatients Sorted by Name:");
         System.out.println(separator);
         System.out.printf("| %-" + COL_NO + "s | %-" + COL_ID + "s | %-" + COL_NAME + "s | %-" + COL_AGE + "s | %-" + COL_GENDER + "s | %-" + COL_IC + "s | %-" + COL_CONTACT + "s |\n",
-                          "No.", "ID", "Name", "Age", "Gender", "IC Number", "Contact");
+                "No.", "ID", "Name", "Age", "Gender", "IC Number", "Contact");
         System.out.println(separator);
 
-        // Rows
-        for (int i = 0; i < sorted.size(); i++) {
-            Patient p = sorted.get(i);
+        Iterator<Patient> iterator = sorted.iterator();
+        int index = 1;
+        while (iterator.hasNext()) {
+            Patient p = iterator.next();
             System.out.printf("| %-" + COL_NO + "d | %-" + COL_ID + "s | %-" + COL_NAME + "s | %-" + COL_AGE + "d | %-" + COL_GENDER + "s | %-" + COL_IC + "s | %-" + COL_CONTACT + "s |\n",
-                              (i + 1), p.getId(), p.getName(), p.getAge(), p.getGender(), p.getIcNumber(), p.getContact());
+                    index++, p.getId(), p.getName(), p.getAge(), p.getGender(), p.getIcNumber(), p.getContact());
         }
 
-        // Footer
         System.out.println(separator);
     }
 
     public int getPatientCount() {
         return patientQueue.size();
     }
-    
-        public int getSize() {
+
+    public int getSize() {
         return patientQueue.size();
     }
 
     public Patient getPatient(int index) {
         return patientQueue.get(index);
     }
-
 
     private void saveAllToFile() {
         try (FileWriter writer = new FileWriter(filePath)) {
@@ -246,15 +231,13 @@ public class PatientControl {
                         System.out.println("Invalid ID format in file: " + id);
                     }
                 } else {
-                    System.out.println("Skipping malformed line in patient file (expected 6 parts): " + line);
+                    System.out.println("Skipping malformed line in patient file: " + line);
                 }
             }
 
             Patient.setIdCounter(maxId);
-        } catch (IOException e) {
+        } catch (IOException | NumberFormatException e) {
             System.out.println("Error reading patients from file: " + e.getMessage());
-        } catch (NumberFormatException e) {
-            System.out.println("Error parsing patient data from file: " + e.getMessage());
         }
     }
 

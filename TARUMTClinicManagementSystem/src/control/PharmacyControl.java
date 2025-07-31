@@ -2,17 +2,18 @@ package control;
 
 import adt.ClinicADT;
 import adt.MyClinicADT;
-import java.io.*;
-import java.util.Scanner;
 import entity.Medicine;
-import java.time.LocalDate;
+
+import java.io.*;
+import java.util.Iterator;
+import java.util.Scanner;
 
 public class PharmacyControl {
     private final ClinicADT<Medicine> medicineList = new MyClinicADT<>();
-    private final String medicineFilePath = "src/textFile/medicine.txt"; 
+    private final String medicineFilePath = "src/textFile/medicine.txt";
 
     public PharmacyControl() {
-        loadFromFile(); // Load medicines when system starts
+        loadFromFile();
     }
 
     public void addMedicine(Medicine med) {
@@ -32,10 +33,10 @@ public class PharmacyControl {
                 return true;
             } else {
                 System.out.println("Not enough stock.");
-                return false;
             }
+        } else {
+            System.out.println("Medicine not found.");
         }
-        System.out.println("Medicine not found.");
         return false;
     }
 
@@ -52,14 +53,16 @@ public class PharmacyControl {
     }
 
     public boolean removeMedicineById(String id) {
-        for (int i = 0; i < medicineList.size(); i++) {
-            if (medicineList.get(i).getId().equalsIgnoreCase(id)) {
-                String name = medicineList.get(i).getName();
-                medicineList.remove(i);
-                System.out.println("Medicine removed: " + name);
+        Iterator<Medicine> it = medicineList.iterator();
+        int index = 0;
+        while (it.hasNext()) {
+            if (it.next().getId().equalsIgnoreCase(id)) {
+                medicineList.remove(index);
+                System.out.println("Medicine removed: " + id);
                 saveToFile();
                 return true;
             }
+            index++;
         }
         System.out.println("Medicine not found.");
         return false;
@@ -72,8 +75,9 @@ public class PharmacyControl {
         }
 
         printHeader();
-        for (int i = 0; i < medicineList.size(); i++) {
-            System.out.println(medicineList.get(i));
+        Iterator<Medicine> it = medicineList.iterator();
+        while (it.hasNext()) {
+            System.out.println(it.next());
         }
         printLine();
     }
@@ -83,8 +87,10 @@ public class PharmacyControl {
 
         boolean found = false;
         printHeader();
-        for (int i = 0; i < medicineList.size(); i++) {
-            Medicine m = medicineList.get(i);
+
+        Iterator<Medicine> it = medicineList.iterator();
+        while (it.hasNext()) {
+            Medicine m = it.next();
             if (m.getQuantity() <= threshold) {
                 System.out.println(m);
                 found = true;
@@ -111,7 +117,7 @@ public class PharmacyControl {
                     if (qty > 0) {
                         m.setQuantity(m.getQuantity() + qty);
                         saveToFile();
-                        System.out.println( qty + " units added to " + m.getName() + ".");
+                        System.out.println(qty + " units added to " + m.getName() + ".");
                     } else {
                         System.out.println("Quantity must be greater than 0.");
                     }
@@ -132,11 +138,12 @@ public class PharmacyControl {
         }
 
         ClinicADT<Medicine> sorted = new MyClinicADT<>();
-        for (int i = 0; i < medicineList.size(); i++) {
-            sorted.add(medicineList.get(i));
+        Iterator<Medicine> it = medicineList.iterator();
+        while (it.hasNext()) {
+            sorted.add(it.next());
         }
 
-        // Bubble sort
+        // Bubble sort on name
         for (int i = 0; i < sorted.size() - 1; i++) {
             for (int j = 0; j < sorted.size() - 1 - i; j++) {
                 Medicine m1 = sorted.get(j);
@@ -150,8 +157,9 @@ public class PharmacyControl {
 
         System.out.println("\n=== All Medicines (Sorted by Name) ===");
         printHeader();
-        for (int i = 0; i < sorted.size(); i++) {
-            System.out.println(sorted.get(i));
+        Iterator<Medicine> sortedIt = sorted.iterator();
+        while (sortedIt.hasNext()) {
+            System.out.println(sortedIt.next());
         }
         printLine();
     }
@@ -174,12 +182,11 @@ public class PharmacyControl {
         printLine();
     }
 
-    // === File Saving/Loading ===
-
     private void saveToFile() {
         try (PrintWriter writer = new PrintWriter(new FileWriter(medicineFilePath))) {
-            for (int i = 0; i < medicineList.size(); i++) {
-                Medicine m = medicineList.get(i);
+            Iterator<Medicine> it = medicineList.iterator();
+            while (it.hasNext()) {
+                Medicine m = it.next();
                 writer.printf("%s,%s,%d,%s,%s%n",
                         m.getId(), m.getName(), m.getQuantity(), m.getUnit(), m.getUsage());
             }
@@ -195,14 +202,13 @@ public class PharmacyControl {
         try (BufferedReader reader = new BufferedReader(new FileReader(file))) {
             String line;
             while ((line = reader.readLine()) != null) {
-                String[] parts = line.split(",", -1); // Fixed: changed from pipe to comma
+                String[] parts = line.split(",", -1);
                 if (parts.length == 5) {
                     String id = parts[0].trim();
                     String name = parts[1].trim();
                     int qty = Integer.parseInt(parts[2].trim());
                     String unit = parts[3].trim();
                     String usage = parts[4].trim();
-
                     medicineList.add(new Medicine(id, name, qty, unit, usage));
                 }
             }
@@ -213,12 +219,18 @@ public class PharmacyControl {
 
     // === Accessors ===
     public Medicine getMedicineById(String id) {
-        for (int i = 0; i < medicineList.size(); i++) {
-            if (medicineList.get(i).getId().equalsIgnoreCase(id)) {
-                return medicineList.get(i);
+        Iterator<Medicine> it = medicineList.iterator();
+        while (it.hasNext()) {
+            Medicine m = it.next();
+            if (m.getId().equalsIgnoreCase(id)) {
+                return m;
             }
         }
         return null;
+    }
+
+    public ClinicADT<Medicine> getAllMedicines() {
+        return medicineList;
     }
 
     public Medicine getMedicineAt(int index) {

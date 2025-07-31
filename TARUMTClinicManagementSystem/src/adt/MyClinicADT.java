@@ -5,13 +5,15 @@
 package adt;
 
 import java.util.Comparator;
+import java.util.Iterator;
+import java.util.NoSuchElementException;
 
 /**
  *
  * @author Acer
  */
 
-public class MyClinicADT<T> implements ClinicADT<T> {
+public class MyClinicADT<T> implements ClinicADT<T>, Iterable<T> {
     private Object[] data;
     private int size;
     private static final int INITIAL_CAPACITY = 10;
@@ -144,5 +146,22 @@ public class MyClinicADT<T> implements ClinicADT<T> {
             }
         }
     }
-}
 
+    @Override
+    public Iterator<T> iterator() {
+        return new Iterator<T>() {
+            private int currentIndex = 0;
+
+            @Override
+            public boolean hasNext() {
+                return currentIndex < size;
+            }
+
+            @Override
+            public T next() {
+                if (!hasNext()) throw new NoSuchElementException();
+                return (T) data[currentIndex++];
+            }
+        };
+    }
+}
