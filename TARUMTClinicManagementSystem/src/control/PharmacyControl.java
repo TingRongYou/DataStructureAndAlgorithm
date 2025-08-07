@@ -7,42 +7,67 @@ import entity.Medicine;
 import java.io.*;
 import java.util.Iterator;
 import java.util.Scanner;
+import utility.Validation;
 
 public class PharmacyControl {
     private final ClinicADT<Medicine> medicineList = new MyClinicADT<>();
     private final String medicineFilePath = "src/textFile/medicine.txt";
-
+    
     public PharmacyControl() {
         loadFromFile();
     }
 
     public void addMedicine(Medicine med) {
-        medicineList.add(med);
-        saveToFile();
-        System.out.println("\nMedicine added successfully!\n");
-        printSingleMedicine(med);
+    // Validation
+    String nameError = Validation.validateMedicineName(med.getName());
+    String qtyError = Validation.validateMedicineQuantity(med.getQuantity());
+    String unitError = Validation.validateMedicineUnit(med.getUnit());
+    String usageError = Validation.validateMedicineUsage(med.getUsage());
+
+    if (nameError != null || qtyError != null || unitError != null || usageError != null) {
+        System.out.println("Failed to add medicine due to validation errors:");
+        if (nameError != null) System.out.println(" - " + nameError);
+        if (qtyError != null) System.out.println(" - " + qtyError);
+        if (unitError != null) System.out.println(" - " + unitError);
+        if (usageError != null) System.out.println(" - " + usageError);
+        return;
     }
 
-    public boolean dispenseMedicineById(String id, int amount) {
+    medicineList.add(med);
+    saveToFile();
+    System.out.println("\nMedicine added successfully!\n");
+    printSingleMedicine(med);
+}
+
+
+   public boolean dispenseMedicineById(String id, int amount) {
         Medicine m = getMedicineById(id);
         if (m != null) {
-            if (m.getQuantity() >= amount) {
-                m.setQuantity(m.getQuantity() - amount);
-                System.out.println(amount + " units of " + m.getName() + " dispensed.");
-                saveToFile();
-                return true;
-            } else {
-                System.out.println("Not enough stock.");
+            String error = Validation.validateDispenseQuantity(m.getQuantity(), amount);
+            if (error != null) {
+                System.out.println(error);
+                return false;
             }
+
+            m.setQuantity(m.getQuantity() - amount);
+            System.out.println(amount + " units of " + m.getName() + " dispensed.");
+            saveToFile();
+            return true;
         } else {
             System.out.println("Medicine not found.");
         }
         return false;
     }
 
-    public boolean restockMedicineById(String id, int amount) {
+   public boolean restockMedicineById(String id, int amount) {
         Medicine m = getMedicineById(id);
         if (m != null) {
+            String qtyError = Validation.validateMedicineQuantity(amount);
+            if (qtyError != null) {
+                System.out.println(qtyError);
+                return false;
+            }
+
             m.setQuantity(m.getQuantity() + amount);
             System.out.println("Medicine restocked: " + amount + " added to " + m.getName());
             saveToFile();
@@ -50,7 +75,7 @@ public class PharmacyControl {
         }
         System.out.println("Medicine not found.");
         return false;
-    }
+    }   
 
     public boolean removeMedicineById(String id) {
         Iterator<Medicine> it = medicineList.iterator();
@@ -114,13 +139,15 @@ public class PharmacyControl {
                 System.out.print("Enter quantity to add: ");
                 try {
                     int qty = Integer.parseInt(sc.nextLine());
-                    if (qty > 0) {
+                   String qtyError = Validation.validateMedicineQuantity(qty);
+                    if (qtyError == null) {
                         m.setQuantity(m.getQuantity() + qty);
                         saveToFile();
                         System.out.println(qty + " units added to " + m.getName() + ".");
                     } else {
-                        System.out.println("Quantity must be greater than 0.");
-                    }
+    System.out.println(qtyError);
+}
+
                 } catch (NumberFormatException e) {
                     System.out.println("Invalid quantity input.");
                 }

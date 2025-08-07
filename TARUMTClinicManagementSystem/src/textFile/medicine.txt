@@ -1,2 +1,3 @@
 M1000,dd,0,g,ff
-M1001,ff,5,g,ff
+M1001,ff,7,g,ff
+M1002,optive fusion,5,g,5

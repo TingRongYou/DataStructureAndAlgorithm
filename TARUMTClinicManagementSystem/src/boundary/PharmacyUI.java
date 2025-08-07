@@ -85,6 +85,7 @@ public class PharmacyUI {
         }
 
         displaySimpleList();
+
         System.out.print("Enter Medicine ID to dispense: ");
         String id = sc.nextLine().trim().toUpperCase();
         Medicine med = control.getMedicineById(id);
@@ -94,7 +95,16 @@ public class PharmacyUI {
             return;
         }
 
-        int qty = promptForInt("Quantity to dispense: ");
+        int qty;
+        String error;
+        do {
+            qty = promptForInt("Quantity to dispense: ");
+            error = Validation.validateDispenseQuantity(med.getQuantity(), qty);
+            if (error != null) {
+                System.out.println(error);
+            }
+        } while (error != null);
+
         control.dispenseMedicineById(id, qty);
     }
 

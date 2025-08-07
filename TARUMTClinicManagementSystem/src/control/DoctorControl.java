@@ -149,11 +149,22 @@ public class DoctorControl {
             }
 
             System.out.println("Current session on " + originalDay + ": " + schedule.getSessionForDay(originalDay));
-            System.out.print(String.format("Do you want to maintain the current session on the %s ? (Y/N): " ,originalDay));
+            System.out.print(String.format("Do you want to maintain the current session on %s? (Y/N): ", originalDay));
             String choice = scanner.nextLine().trim().toUpperCase();
 
+            if (choice.equals("Y")) {
+                System.out.println("No changes made for " + originalDay + ".");
+                System.out.print("Edit another session? (Y/N): ");
+                String repeat = scanner.nextLine().trim().toUpperCase();
+                if (!repeat.equals("Y")) break;
+                else continue;
+            }
+
+            // Ask if user wants to update a different day instead
             DayOfWeek targetDay = originalDay;
-            if (choice.equals("")) {
+            System.out.print("Do you want to modify a different day instead of " + originalDay + "? (Y/N): ");
+            String changeDayChoice = scanner.nextLine().trim().toUpperCase();
+            if (changeDayChoice.equals("Y")) {
                 while (true) {
                     System.out.print("Enter a new day to modify session on (e.g. TUESDAY): ");
                     String newDayInput = scanner.nextLine().trim().toUpperCase();
