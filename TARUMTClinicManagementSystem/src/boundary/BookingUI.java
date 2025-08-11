@@ -42,16 +42,21 @@ public class BookingUI {
     public void run(boolean isConsultation) {
         System.out.println("\nRegistered Patients:");
         patientControl.displayAllPatients();
+        String patientId;
+        Patient patient;
+        while(true){
+            System.out.print("\nEnter Patient ID from the list (or 0 to cancel): ");
+            patientId = scanner.nextLine().trim();
+            
+            if (patientId.equals("0")) return;
 
-        System.out.print("\nEnter Patient ID from the list: ");
-        String patientId = scanner.nextLine().trim();
-        Patient patient = patientControl.getPatientById(patientId);
+            patient = patientControl.getPatientById(patientId);
 
-        if (patient == null) {
-            System.out.println("Patient not found.");
-            return;
+            if (patient != null) {
+                break;
+            }
+            System.out.println("Patient not found. Please try again."); 
         }
-
         int duration = isConsultation ? CONSULTATION_DURATION : TREATMENT_DURATION;
         String serviceType = isConsultation ? "Consultation" : "Medical Treatment";
 
@@ -110,20 +115,23 @@ public class BookingUI {
             return null;
         }
 
-        System.out.print("Select date option: ");
+        while (true) {
+            System.out.print("Select date option (or 0 to cancel): ");
 
-        try {
-            int choice = Integer.parseInt(scanner.nextLine().trim());
+            try {
+                int choice = Integer.parseInt(scanner.nextLine().trim());
 
-            if (choice >= 1 && choice < optionNumber && optionDates[choice - 1] != null) {
-                return optionDates[choice - 1];
-            } else {
-                System.out.println("Invalid selection.");
-                return null;
+                if (choice == 0) {
+                    return null; // user cancelled
+                }
+                if (choice >= 1 && choice < optionNumber && optionDates[choice - 1] != null) {
+                    return optionDates[choice - 1]; // valid selection → exit method
+                }
+
+                System.out.println("Invalid selection. Please try again.\n");
+            } catch (NumberFormatException e) {
+                System.out.println("Invalid input. Please enter a number.\n");
             }
-        } catch (NumberFormatException e) {
-            System.out.println("Invalid input. Please enter a number.");
-            return null;
         }
     }
 
@@ -168,53 +176,63 @@ public class BookingUI {
             return null;
         }
 
-        System.out.print("Select time slot number: ");
+        while (true) {
+            System.out.print("Select time slot number (or 0 to cancel): ");
 
-        try {
-            int choice = Integer.parseInt(scanner.nextLine().trim());
-            slotNumber = 1;
-            LocalDateTime selectedSlot = null;
-            Doctor selectedDoctor = null;
+            try {
+                int choice = Integer.parseInt(scanner.nextLine().trim());
+                if (choice == 0) return null; // cancel option
 
-            for (int hour = 8; hour <= 22 - duration; hour++) {
-                if (hour == 12) continue;
+                slotNumber = 1;
+                LocalDateTime selectedSlot = null;
+                Doctor selectedDoctor = null;
 
-                LocalDateTime slotStart = LocalDateTime.of(date, LocalTime.of(hour, 0));
-                if (slotStart.isBefore(LocalDateTime.now())) continue;
+                for (int hour = 8; hour <= 22 - duration; hour++) {
+                    if (hour == 12) continue;
 
-                for (int i = 0; i < doctorControl.getDoctorCount(); i++) {
-                    Doctor doctor = doctorControl.getDoctorByIndex(i);
-                    if (doctor != null && doctorControl.isDoctorAvailableForAppointment(doctor, slotStart, duration, consultations, treatments)) {
-                        if (slotNumber == choice) {
-                            selectedSlot = slotStart;
-                            selectedDoctor = doctor;
-                            break;
+                    LocalDateTime slotStart = LocalDateTime.of(date, LocalTime.of(hour, 0));
+                    if (slotStart.isBefore(LocalDateTime.now())) continue;
+
+                    for (int i = 0; i < doctorControl.getDoctorCount(); i++) {
+                        Doctor doctor = doctorControl.getDoctorByIndex(i);
+                        if (doctor != null && doctorControl.isDoctorAvailableForAppointment(doctor, slotStart, duration, consultations, treatments)) {
+                            if (slotNumber == choice) {
+                                selectedSlot = slotStart;
+                                selectedDoctor = doctor;
+                                break;
+                            }
+                            slotNumber++;
                         }
-                        slotNumber++;
                     }
-                }
-                if (selectedSlot != null) break;
-            }
-
-            if (selectedSlot == null || selectedDoctor == null) {
-                System.out.println("Invalid selection or slot no longer available.");
-                return null;
-            }
-
-            if (isConsultation) {
-                if (isPatientTimeClash(patient.getId(), selectedSlot, CONSULTATION_DURATION)) {
-                    System.out.println("Patient already has a consultation or treatment at this time.");
-                    return null;
+                    if (selectedSlot != null) break;
                 }
 
-                consultationControl.addConsultation(patient.getId(), patient.getName(), selectedDoctor.getName(), selectedDoctor.getId(), selectedSlot);
-            } else {
-                if (isPatientTimeClash(patient.getId(), selectedSlot, TREATMENT_DURATION)) {
-                    System.out.println("Patient already has a consultation or treatment at this time.");
-                    return null;
+                if (selectedSlot == null || selectedDoctor == null) {
+                    System.out.println("Invalid selection or slot no longer available. Please try again.\n");
+                    continue; // retry instead of return
                 }
 
-                treatmentControl.addTreatment(new MedicalTreatment(
+                // Check patient clashes
+                if (isConsultation) {
+                    if (isPatientTimeClash(patient.getId(), selectedSlot, CONSULTATION_DURATION)) {
+                        System.out.println("Patient already has a consultation or treatment at this time.\n");
+                        continue; // retry
+                    }
+
+                    consultationControl.addConsultation(
+                        patient.getId(),
+                        patient.getName(),
+                        selectedDoctor.getName(),
+                        selectedDoctor.getId(),
+                        selectedSlot
+                    );
+                } else {
+                    if (isPatientTimeClash(patient.getId(), selectedSlot, TREATMENT_DURATION)) {
+                        System.out.println("Patient already has a consultation or treatment at this time.\n");
+                        continue; // retry
+                    }
+
+                    treatmentControl.addTreatment(new MedicalTreatment(
                         patient.getId(),
                         patient.getName(),
                         selectedDoctor.getId(),
@@ -222,17 +240,18 @@ public class BookingUI {
                         "To be prescribed during appointment",
                         selectedSlot,
                         false
-                ));
+                    ));
+                }
+
+                System.out.println("Booked with Dr. " + selectedDoctor.getName() + " in Room " + selectedDoctor.getRoomNumber());
+                return selectedSlot; // exit after success
+
+            } catch (NumberFormatException e) {
+                System.out.println("Invalid input. Please enter a number.");
             }
-
-            System.out.println("Booked with Dr. " + selectedDoctor.getName() + " in Room " + selectedDoctor.getRoomNumber());
-            return selectedSlot;
-
-        } catch (NumberFormatException e) {
-            System.out.println("Invalid input. Please enter a number.");
-            return null;
         }
     }
+
 
     private boolean hasAvailableSlots(LocalDate date, int duration) {
         for (int hour = 8; hour <= 22 - duration; hour++) {

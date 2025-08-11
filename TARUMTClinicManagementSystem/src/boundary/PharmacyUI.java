@@ -48,31 +48,51 @@ public class PharmacyUI {
         String name, unit, usage, error;
         int qty;
 
+        // Medicine Name
         do {
-            System.out.print("Medicine Name: ");
+            System.out.print("Medicine Name (or 0 to cancel): ");
             name = sc.nextLine().trim();
+            if (name.equals("0")) {
+                System.out.println("Operation cancelled.");
+                return;
+            }
             error = Validation.validateName(name);
-            if (error != null) System.out.println(error);
+            if (error != null) System.out.println(error + "\n");
         } while (error != null);
 
+        // Quantity
         do {
-            qty = promptForInt("Quantity: ");
+            qty = promptForInt("Quantity (or 0 to cancel): ");
+            if (qty == 0) {
+                System.out.println("Operation cancelled.");
+                return;
+            }
             error = Validation.validateMedicineQuantity(qty);
-            if (error != null) System.out.println(error);
+            if (error != null) System.out.println(error + "\n");
         } while (error != null);
 
+        // Unit
         do {
-            System.out.print("Unit (mg/ml/g): ");
+            System.out.print("Unit (mg/ml/g) (or 0 to cancel): ");
             unit = sc.nextLine().trim().toLowerCase();
+            if (unit.equals("0")) {
+                System.out.println("Operation cancelled.");
+                return;
+            }
             error = Validation.validateMedicineUnit(unit);
-            if (error != null) System.out.println(error);
+            if (error != null) System.out.println(error + "\n");
         } while (error != null);
 
+        // Usage
         do {
-            System.out.print("Usage: ");
+            System.out.print("Usage (or 0 to cancel): ");
             usage = sc.nextLine().trim();
+            if (usage.equals("0")) {
+                System.out.println("Operation cancelled.");
+                return;
+            }
             error = Validation.validateMedicineUsage(usage);
-            if (error != null) System.out.println(error);
+            if (error != null) System.out.println(error + "\n");
         } while (error != null);
 
         control.addMedicine(new Medicine(name, qty, unit, usage));
@@ -85,20 +105,34 @@ public class PharmacyUI {
         }
 
         displaySimpleList();
+        
+        String id;
+        Medicine med;
+        while (true) {
+            System.out.print("Enter Medicine ID to dispense (or 0 to cancel): ");
+            id = sc.nextLine().trim().toUpperCase();
 
-        System.out.print("Enter Medicine ID to dispense: ");
-        String id = sc.nextLine().trim().toUpperCase();
-        Medicine med = control.getMedicineById(id);
+            if (id.equals("0")) {
+                System.out.println("Operation cancelled.");
+                return;
+            }
 
-        if (med == null) {
-            System.out.println("Invalid Medicine ID.");
-            return;
+            med = control.getMedicineById(id);
+            if (med == null) {
+                System.out.println("Invalid Medicine ID. Please try again.\n");
+            } else {
+                break;  // valid ID found, exit loop
+            }
         }
 
         int qty;
         String error;
         do {
-            qty = promptForInt("Quantity to dispense: ");
+            qty = promptForInt("Quantity to dispense (or 0 to cancel): ");
+            if (qty == 0) {
+                System.out.println("Operation cancelled.");
+                return;
+            }
             error = Validation.validateDispenseQuantity(med.getQuantity(), qty);
             if (error != null) {
                 System.out.println(error);
@@ -115,21 +149,35 @@ public class PharmacyUI {
         }
 
         displaySimpleList();
-        System.out.print("Enter Medicine ID to restock: ");
-        String id = sc.nextLine().trim().toUpperCase();
-        Medicine med = control.getMedicineById(id);
+        
+        String id;
+        Medicine med;
+        while(true){
+            System.out.print("Enter Medicine ID to restock (or 0 to cancel): ");
+            id = sc.nextLine().trim().toUpperCase();
+            if (id.equals("0")) {
+                System.out.println("Operation cancelled.");
+                return;
+            }
 
-        if (med == null) {
-            System.out.println("Invalid Medicine ID.");
-            return;
+            med = control.getMedicineById(id);
+            if (med == null) {
+                System.out.println("Invalid Medicine ID.\n");
+            }
+            else {
+                break;
+            }
         }
-
         int qty;
         String error;
         do {
-            qty = promptForInt("Quantity to add: ");
+            qty = promptForInt("Quantity to add (or 0 to cancel): ");
+            if (qty == 0) {
+                System.out.println("Operation cancelled.");
+                return;
+            }
             error = Validation.validateMedicineQuantity(qty);
-            if (error != null) System.out.println(error);
+            if (error != null) System.out.println(error + "\n");
         } while (error != null);
 
         med.setQuantity(med.getQuantity() + qty);
@@ -143,21 +191,45 @@ public class PharmacyUI {
         }
 
         displaySimpleList();
-        System.out.print("Enter Medicine ID to remove: ");
-        String id = sc.nextLine().trim().toUpperCase();
 
-        Medicine med = control.getMedicineById(id);
-        if (med == null) {
-            System.out.println("Invalid Medicine ID.");
-            return;
+        String id;
+        Medicine med;
+        while (true) {
+            System.out.print("Enter Medicine ID to dispense (or 0 to cancel): ");
+            id = sc.nextLine().trim().toUpperCase();
+
+            if (id.equals("0")) {
+                System.out.println("Operation cancelled.");
+                return;
+            }
+
+            med = control.getMedicineById(id);
+            if (med == null) {
+                System.out.println("Invalid Medicine ID. Please try again.\n");
+            } else {
+                break;  // valid ID found, exit loop
+            }
         }
-
         control.removeMedicineById(id);
     }
 
     private void generateLowStockReport() {
-        int threshold = promptForInt("Enter low stock threshold (e.g., 5): ");
-        control.printLowStockMedicines(threshold, sc);
+        while (true) {
+             int threshold = promptForInt("Enter low stock threshold (e.g., 5) or 0 to cancel: ");
+
+             if (threshold == 0) {
+                 System.out.println("Operation cancelled.");
+                 return;
+             }
+
+             if (threshold < 0) {
+                 System.out.println("Please enter a positive number or 0 to cancel.");
+                 continue;
+             }
+
+             control.printLowStockMedicines(threshold, sc);
+             break;
+         }
     }
 
     private int promptForInt(String message) {
@@ -166,7 +238,7 @@ public class PharmacyUI {
             try {
                 return Integer.parseInt(sc.nextLine());
             } catch (NumberFormatException e) {
-                System.out.println("Please enter a valid number.");
+                System.out.println("Please enter a valid number.\n");
             }
         }
     }

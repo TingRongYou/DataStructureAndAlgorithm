@@ -92,11 +92,30 @@ public class ConsultationUI {
             return;
         }
 
-        System.out.print("Enter Consultation ID to remove: ");
-        int id = sc.nextInt();
-        sc.nextLine();
-        consultationControl.removeConsultationById(id);
+        while (true) {
+            try {
+                System.out.print("Enter Consultation ID to remove (or 0 to cancel): ");
+                int id = sc.nextInt();
+                sc.nextLine(); // consume newline
+
+                if (id == 0) {
+                    System.out.println("Removal cancelled.");
+                    break;
+                }
+
+                boolean removed = consultationControl.removeConsultationById(id);
+                if (removed) {
+                    System.out.println("Consultation removed successfully.");
+                    break; // exit loop after success
+                }
+
+            } catch (Exception e) {
+                System.out.println("Invalid input. Please enter a valid number.\n");
+                sc.nextLine(); // clear invalid input
+            }
+        }
     }
+
 
    private void searchByPatient() {
         System.out.println("\n=== Search Consultations by Patient ===");
@@ -119,10 +138,23 @@ public class ConsultationUI {
                     p.getId(), p.getName(), p.getIcNumber(), p.getContact(), p.getAge(), p.getGender());
         }
         System.out.println("+------------+----------------------+--------------+--------------+-----+--------+");
-
+        
+        String patientId;
         // 2. Prompt for input
-        System.out.print("Enter Patient ID to view consultation history: ");
-        String patientId = sc.nextLine().trim();
+        while(true){
+            System.out.print("Enter Patient ID to view consultation history (or 0 to cancel): ");
+            patientId = sc.nextLine().trim();
+
+            if (patientId.equals("0")) {
+                System.out.println("Operation cancelled.");
+                return;
+            }
+            if (patientControl.getPatientById(patientId) == null) {
+                System.out.println("Patient ID not found. Please try again\n.");
+            } else {
+                break;  // valid patientId found, exit the loop
+            }
+        }
 
         // 3. Validate and get patient
         Patient selectedPatient = patientControl.getPatientById(patientId);
@@ -172,13 +204,18 @@ public class ConsultationUI {
         System.out.println("\n=== Check Doctor Availability ===");
 
         while (true) {
-            try {
-                System.out.print("Enter date to check (yyyy-MM-dd): ");
-                String input = sc.nextLine().trim();
-                LocalDateTime date = LocalDateTime.parse(input + " 00:00", DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm"));
+            System.out.print("Enter date to check (yyyy-MM-dd) or 0 to cancel: ");
+            String input = sc.nextLine().trim();
 
-                consultationControl.showDoctorScheduleForDate(date);
+            if (input.equals("0")) {
+                System.out.println("Operation cancelled.");
                 break;
+            }
+
+            try {
+                LocalDateTime date = LocalDateTime.parse(input + " 00:00", DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm"));
+                consultationControl.showDoctorScheduleForDate(date);
+                break;  // success, exit loop
             } catch (Exception e) {
                 System.out.println("Invalid date format. Please use 'yyyy-MM-dd'.");
             }

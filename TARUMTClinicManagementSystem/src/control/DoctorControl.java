@@ -134,76 +134,69 @@ public class DoctorControl {
         }
 
         DutySchedule schedule = doctor.getDutySchedule();
-        System.out.println("\nCurrent schedule for Dr. " + doctor.getName() + ":");
-        schedule.printScheduleTable(doctor.getName());
 
         while (true) {
-            System.out.print("\nEnter the day to modify (e.g. MONDAY): ");
+            System.out.println("\nCurrent schedule for Dr. " + doctor.getName() + ":");
+            schedule.printScheduleTable(doctor.getName());
+
+            // Ask for day
+            System.out.print("\nEnter the day to modify (e.g. MONDAY) or 0 to cancel: ");
             String dayInput = scanner.nextLine().trim().toUpperCase();
-            DayOfWeek originalDay;
+            if (dayInput.equals("0")) {
+                System.out.println("Update cancelled.");
+                return;
+            }
+
+            DayOfWeek day;
             try {
-                originalDay = DayOfWeek.valueOf(dayInput);
+                day = DayOfWeek.valueOf(dayInput);
             } catch (IllegalArgumentException e) {
-                System.out.println("Invalid day. Please enter a valid day (e.g., MONDAY).");
+                System.out.println("Invalid day. Try again.\n");
                 continue;
             }
 
-            System.out.println("Current session on " + originalDay + ": " + schedule.getSessionForDay(originalDay));
-            System.out.print(String.format("Do you want to maintain the current session on %s? (Y/N): ", originalDay));
-            String choice = scanner.nextLine().trim().toUpperCase();
+            // Show current session
+            System.out.println("Current session on " + day + ": " + schedule.getSessionForDay(day));
 
-            if (choice.equals("Y")) {
-                System.out.println("No changes made for " + originalDay + ".");
-                System.out.print("Edit another session? (Y/N): ");
-                String repeat = scanner.nextLine().trim().toUpperCase();
-                if (!repeat.equals("Y")) break;
-                else continue;
+            // Confirm change
+            String choice;
+            while (true) {
+                System.out.print(String.format("Do you want to make changes on %s? (Y/N or 0 to cancel): ", day));
+                choice = scanner.nextLine().trim().toUpperCase();
+                if (choice.equals("Y") || choice.equals("N") || choice.equals("0")) break;
+                System.out.println("Invalid input. Please enter Y, N, or 0.\n");
             }
 
-            // Ask if user wants to update a different day instead
-            DayOfWeek targetDay = originalDay;
-            System.out.print("Do you want to modify a different day instead of " + originalDay + "? (Y/N): ");
-            String changeDayChoice = scanner.nextLine().trim().toUpperCase();
-            if (changeDayChoice.equals("Y")) {
-                while (true) {
-                    System.out.print("Enter a new day to modify session on (e.g. TUESDAY): ");
-                    String newDayInput = scanner.nextLine().trim().toUpperCase();
-                    try {
-                        targetDay = DayOfWeek.valueOf(newDayInput);
-                        break;
-                    } catch (IllegalArgumentException e) {
-                        System.out.println("Invalid day. Try again.");
-                    }
-                }
+            if (choice.equals("0")) {
+                System.out.println("Update cancelled.");
+                return;
             }
+            if (choice.equals("N")) continue; // skip to next day
 
+            // Ask for new session
             Session newSession;
             while (true) {
-                System.out.println("Available sessions: MORNING, AFTERNOON, NIGHT, REST");
-                System.out.print("Enter new session for " + targetDay + ": ");
+                System.out.println("Available sessions: MORNING, AFTERNOON, NIGHT, REST (or 0 to cancel)");
+                System.out.print("Enter new session for " + day + ": ");
                 String sessionInput = scanner.nextLine().trim().toUpperCase();
+                if (sessionInput.equals("0")) return;
                 try {
                     newSession = Session.valueOf(sessionInput);
                     break;
                 } catch (IllegalArgumentException e) {
-                    System.out.println("Invalid session. Try again.");
+                    System.out.println("Invalid session. Try again.\n");
                 }
             }
 
-            if (!originalDay.equals(targetDay)) {
-                schedule.setDaySession(originalDay, Session.REST);
-            }
-
-            schedule.setDaySession(targetDay, newSession);
-
+            // Update schedule
+            schedule.setDaySession(day, newSession);
+            saveToFile(doctorFilePath);
             System.out.println("\nSchedule updated for Dr. " + doctor.getName() + ":");
             schedule.printScheduleTable(doctor.getName());
 
-            saveToFile(doctorFilePath);
-
+            // Ask to repeat
             System.out.print("Edit another session? (Y/N): ");
-            String repeat = scanner.nextLine().trim().toUpperCase();
-            if (!repeat.equals("Y")) break;
+            if (!scanner.nextLine().trim().equalsIgnoreCase("Y")) break;
         }
     }
 

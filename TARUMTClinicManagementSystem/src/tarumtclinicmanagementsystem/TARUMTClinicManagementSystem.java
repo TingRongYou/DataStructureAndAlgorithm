@@ -35,7 +35,7 @@ public class TARUMTClinicManagementSystem {
                 patientControl, doctorControl, consultations, treatments);
 
         Scanner scanner = new Scanner(System.in);
-        int choice;
+        int choice = -1;
 
         // === Main Menu Loop ===
         do {
@@ -48,14 +48,14 @@ public class TARUMTClinicManagementSystem {
             System.out.println("0. Exit");
             System.out.print("Enter choice: ");
 
-            // Input validation
-            while (!scanner.hasNextInt()) {
-                System.out.print("Invalid input. Please enter a number: ");
-                scanner.next();
+            if (!scanner.hasNextInt()) {
+                System.out.println("Invalid input. Please enter a number.");
+                scanner.nextLine();
+                continue;
             }
             choice = scanner.nextInt();
             scanner.nextLine(); // consume newline
-
+            
             // === Menu Selection ===
             switch (choice) {
                 case 1 -> new PatientUI(patientControl).run();

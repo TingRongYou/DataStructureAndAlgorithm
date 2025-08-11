@@ -282,7 +282,7 @@ import tarumtclinicmanagementsystem.Session;
 
 
         private void displayConsultationConfirmation(Consultation consultation) {
-            System.out.println("Consultation added successfully!");
+            System.out.println("\nConsultation added successfully!");
             System.out.println(consultation);
             System.out.println("Duration: " + CONSULTATION_DURATION + " hour (ends at " + 
                              consultation.getConsultationDate().plusHours(CONSULTATION_DURATION)
@@ -316,7 +316,7 @@ import tarumtclinicmanagementsystem.Session;
                     return true;
                 }
             }
-            System.out.println("Consultation not found.");
+            System.out.println("Consultation ID not found.");
             return false;
         }
 
@@ -392,14 +392,24 @@ import tarumtclinicmanagementsystem.Session;
             System.out.println("+------------+----------------+--------+------------+------------+------------------+--------------+");
 
             // Step 2: Prompt for Doctor ID
-            System.out.print("Enter Doctor ID to search consultations: ");
-            String doctorId = sc.nextLine().trim();
+            Doctor doctor = null;
+            String doctorId;
+            while(true){
+                System.out.print("Enter Doctor ID to search consultations (or 0 to cancel): ");
+                doctorId = sc.nextLine().trim();
 
-            Doctor doctor = doctorControl.getDoctorById(doctorId);
-            if (doctor == null) {
-                System.out.println("Doctor ID not found.");
-                return;
+                if (doctorId.equals("0")) {
+                    System.out.println("Operation cancelled.");
+                    return;
+                }
+                doctor = doctorControl.getDoctorById(doctorId);
+                if (doctor == null) {
+                    System.out.println("Doctor ID not found.\n");
+                }else {
+                    break;  // valid doctorId found, exit the loop
+                }
             }
+            
             // Step 3: Search consultations
             ClinicADT<Consultation> found = new MyClinicADT<>();
             for (int i = 0; i < consultations.size(); i++) {

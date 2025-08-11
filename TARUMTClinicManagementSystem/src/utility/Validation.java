@@ -181,8 +181,8 @@ public class Validation {
     }
 
     public static String validateDoctorId(String id){
-        if(isNullOrEmpty(id)) return "Doctor ID cannot be empty";
-        if(!isValidDoctorId(id)) return "Invalid Doctor ID format. Should be in DXXXX format";
+        if(isNullOrEmpty(id)) return "Doctor ID cannot be empty\n";
+        if(!isValidDoctorId(id)) return "Invalid Doctor ID format. Should be in DXXXX format\n";
         return null;
     }
 

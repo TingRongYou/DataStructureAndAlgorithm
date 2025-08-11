@@ -14,7 +14,7 @@ public class PatientUI {
     }
 
     public void run() {
-        int choice;
+        int choice = -1;
         do {
             System.out.println("\n====== Patient Management ======");
             System.out.println("1. Register New Patient");
@@ -26,10 +26,12 @@ public class PatientUI {
             System.out.println("0. Exit");
             System.out.print("Enter your choice: ");
 
-            while (!scanner.hasNextInt()) {
-                System.out.print("Invalid input. Enter a number: ");
-                scanner.next();
+            if (!scanner.hasNextInt()) {
+                System.out.println("Invalid input. Please enter a number.");
+                scanner.nextLine();
+                continue;
             }
+            
             choice = scanner.nextInt();
             scanner.nextLine(); // Consume newline
 
@@ -50,60 +52,72 @@ public class PatientUI {
         String error;
         String name;
 
+        // ===== Name =====
         do {
-            System.out.print("Enter name: ");
+            System.out.print("Enter name (or 0 to cancel): ");
             name = scanner.nextLine().trim();
+            if (name.equals("0")) return; // cancel registration
             error = Validation.validateName(name);
-            if (error != null) System.out.println(error);
+            if (error != null) System.out.println(error + "\n");
         } while (error != null);
 
+        // ===== Age =====
         int age;
         do {
-            System.out.print("Enter age: ");
+            System.out.print("Enter age (or 0 to cancel): ");
             String ageInput = scanner.nextLine().trim();
+            if (ageInput.equals("0")) return;
             try {
                 age = Integer.parseInt(ageInput);
                 error = Validation.validateAge(age);
-                if (error != null) System.out.println(error);
+                if (error != null) System.out.println(error + "\n");
             } catch (NumberFormatException e) {
                 error = "Please enter a valid number.";
-                System.out.println(error);
+                System.out.println(error + "\n");
                 age = -1;
             }
         } while (error != null);
 
+        // ===== Gender =====
         String gender;
         do {
-            System.out.print("Enter gender (M/F): ");
+            System.out.print("Enter gender (M/F) (or 0 to cancel): ");
             gender = scanner.nextLine().trim().toUpperCase();
+            if (gender.equals("0")) return;
             error = Validation.validateGender(gender);
-            if (error != null) System.out.println(error);
+            if (error != null) System.out.println(error + "\n");
         } while (error != null);
 
+        // ===== IC Number =====
         String icNumber;
         do {
-            System.out.print("Enter Malaysian IC Number (e.g., YYMMDD-XX-XXXX): ");
+            System.out.print("Enter Malaysian IC Number (e.g., YYMMDD-XX-XXXX) (or 0 to cancel): ");
             icNumber = scanner.nextLine().trim();
+            if (icNumber.equals("0")) return;
+
             error = Validation.validateMalaysianIC(icNumber);
             if (error != null) {
-                System.out.println("IC format error: " + error);
+                System.out.println("IC format error: " + error + "\n");
                 continue;
             }
 
             error = Validation.validateAgeAndICConsistency(age, icNumber);
             if (error != null) {
-                System.out.println("Age/IC mismatch: " + error);
+                System.out.println("Age/IC mismatch: " + error + "\n");
             }
         } while (error != null);
 
+        // ===== Contact Number =====
         String contact;
         do {
-            System.out.print("Enter contact number (e.g., 0123456789 or 01123456789): ");
+            System.out.print("Enter contact number (e.g., 0123456789 or 01123456789) (or 0 to cancel): ");
             contact = scanner.nextLine().trim();
+            if (contact.equals("0")) return;
             error = Validation.validatePhone(contact);
-            if (error != null) System.out.println(error);
+            if (error != null) System.out.println(error + "\n");
         } while (error != null);
 
+        // ===== Register =====
         control.registerPatient(name, age, gender, icNumber, contact);
     }
 }

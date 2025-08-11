@@ -98,12 +98,21 @@ public class TreatmentUI {
         
         String patientId;
         String error;
-        
-        do{
-            System.out.print("\nEnter Patient ID: ");
+
+        do {
+            System.out.print("\nEnter Patient ID (or 0 to cancel): ");
             patientId = scanner.nextLine().trim().toUpperCase();
+
+            if (patientId.equals("0")) {
+                System.out.println("Operation cancelled.");
+                patientId = null;  // or return/throw depending on context
+                break;
+            }
+
             error = Validation.validatePatientId(patientId);
-            if (error != null) System.out.println(error);
+            if (error != null) {
+                System.out.println(error);
+            }
         } while (error != null);
 
         ClinicADT<MedicalTreatment> result = control.getTreatmentsByPatient(patientId);
