@@ -29,7 +29,7 @@ public class BookingUI {
 
     public BookingUI(PatientControl patientControl, DoctorControl doctorControl,
                      ClinicADT<Consultation> consultations, ClinicADT<MedicalTreatment> treatments,
-                     ConsultationControl consultationControl, TreatmentControl treatmentControl ) {
+                     ConsultationControl consultationControl, TreatmentControl treatmentControl) {
         this.patientControl = patientControl;
         this.doctorControl = doctorControl;
         this.consultations = consultations;
@@ -52,11 +52,11 @@ public class BookingUI {
 
             patient = patientControl.getPatientById(patientId);
 
-            if (patient != null) {
-                break;
-            }
+            if (patient != null) break;
+
             System.out.println("Patient not found. Please try again."); 
         }
+
         int duration = isConsultation ? CONSULTATION_DURATION : TREATMENT_DURATION;
         String serviceType = isConsultation ? "Consultation" : "Medical Treatment";
 
@@ -66,19 +66,19 @@ public class BookingUI {
         LocalDateTime chosenSlot = showAvailableTimeSlotsAndSelect(selectedDate, duration, patient, isConsultation, serviceType);
         if (chosenSlot == null) return;
 
-       System.out.println("\nBooking Confirmation:");
-       String line = "+------------+--------------------------+";
-       String format = "| %-10s | %-24s |\n";
+        System.out.println("\nBooking Confirmation:");
+        String line = "+------------+--------------------------+";
+        String format = "| %-10s | %-24s |\n";
 
-       System.out.println(line);
-       System.out.printf(format, "Field", "Details");
-       System.out.println(line);
-       System.out.printf(format, "Patient", patient.getName() + " (" + patient.getId() + ")");
-       System.out.printf(format, "Service", serviceType);
-       System.out.printf(format, "Date", chosenSlot.toLocalDate());
-       System.out.printf(format, "Time", chosenSlot.toLocalTime().format(DateTimeFormatter.ofPattern("HH:mm")));
-       System.out.printf(format, "Duration", duration + " hour(s)");
-       System.out.println(line);
+        System.out.println(line);
+        System.out.printf(format, "Field", "Details");
+        System.out.println(line);
+        System.out.printf(format, "Patient", patient.getName() + " (" + patient.getId() + ")");
+        System.out.printf(format, "Service", serviceType);
+        System.out.printf(format, "Date", chosenSlot.toLocalDate());
+        System.out.printf(format, "Time", chosenSlot.toLocalTime().format(DateTimeFormatter.ofPattern("HH:mm")));
+        System.out.printf(format, "Duration", duration + " hour(s)");
+        System.out.println(line);
     }
 
     private LocalDate showCalendarAndSelectDate(int duration) {
@@ -92,18 +92,18 @@ public class BookingUI {
         System.out.printf(format, "No.", "Date", "Day", "Available Slots");
         System.out.println(line);
 
-        LocalDate[] optionDates = new LocalDate[14]; // max 14 entries
+        LocalDate[] optionDates = new LocalDate[14]; 
         int optionNumber = 1;
 
         for (int i = 0; i < 14; i++) {
             LocalDate date = today.plusDays(i);
             if (hasAvailableSlots(date, duration)) {
                 String formattedDate = date.format(DateTimeFormatter.ofPattern("yyyy-MM-dd"));
-                String dayName = date.getDayOfWeek().toString(); // keep UPPERCASE
+                String dayName = date.getDayOfWeek().toString();
                 int availableSlots = countAvailableSlots(date, duration);
 
                 System.out.printf(format, optionNumber, formattedDate, dayName, availableSlots + " slot(s)");
-                optionDates[optionNumber - 1] = date; // store at index (optionNumber - 1)
+                optionDates[optionNumber - 1] = date;
                 optionNumber++;
             }
         }
@@ -120,14 +120,10 @@ public class BookingUI {
 
             try {
                 int choice = Integer.parseInt(scanner.nextLine().trim());
-
-                if (choice == 0) {
-                    return null; // user cancelled
-                }
+                if (choice == 0) return null;
                 if (choice >= 1 && choice < optionNumber && optionDates[choice - 1] != null) {
-                    return optionDates[choice - 1]; // valid selection → exit method
+                    return optionDates[choice - 1];
                 }
-
                 System.out.println("Invalid selection. Please try again.\n");
             } catch (NumberFormatException e) {
                 System.out.println("Invalid input. Please enter a number.\n");
@@ -136,7 +132,7 @@ public class BookingUI {
     }
 
     private LocalDateTime showAvailableTimeSlotsAndSelect(LocalDate date, int duration, Patient patient, boolean isConsultation, String serviceType) {
-        System.out.println("\n?Available Time Slots for " + serviceType);
+        System.out.println("\nAvailable Time Slots for " + serviceType);
         System.out.println("Date: " + date.format(DateTimeFormatter.ofPattern("yyyy-MM-dd (EEEE)")));
         System.out.println("==========================================================");
 
@@ -151,18 +147,29 @@ public class BookingUI {
         boolean found = false;
         LocalDateTime now = LocalDateTime.now();
 
+        // Map slot number to doctor + time
+        class Slot {
+            LocalDateTime time;
+            Doctor doctor;
+            Slot(LocalDateTime t, Doctor d) { time = t; doctor = d; }
+        }
+        java.util.List<Slot> slotList = new java.util.ArrayList<>();
+
+        ClinicADT.MyIterator<Doctor> doctorIter;
+
         for (int hour = 8; hour <= 22 - duration; hour++) {
             if (hour == 12) continue;
-
             LocalDateTime slotStart = LocalDateTime.of(date, LocalTime.of(hour, 0));
             if (slotStart.isBefore(now)) continue;
 
-            for (int i = 0; i < doctorControl.getDoctorCount(); i++) {
-                Doctor doctor = doctorControl.getDoctorByIndex(i);
-                if (doctor != null && doctorControl.isDoctorAvailableForAppointment(doctor, slotStart, duration, consultations, treatments)) {
+            doctorIter = doctorControl.getAllDoctors().iterator();
+            while (doctorIter.hasNext()) {
+                Doctor doctor = doctorIter.next();
+                if (doctorControl.isDoctorAvailableForAppointment(doctor, slotStart, duration, consultations, treatments)) {
                     String timeRange = slotStart.format(DateTimeFormatter.ofPattern("HH:mm")) +
                             " - " + slotStart.plusHours(duration).format(DateTimeFormatter.ofPattern("HH:mm"));
                     System.out.printf(format, slotNumber, timeRange, "Dr. " + doctor.getName(), doctor.getRoomNumber());
+                    slotList.add(new Slot(slotStart, doctor));
                     slotNumber++;
                     found = true;
                 }
@@ -170,7 +177,6 @@ public class BookingUI {
         }
 
         System.out.println(line);
-
         if (!found) {
             System.out.println("No available slots on this date.");
             return null;
@@ -181,70 +187,43 @@ public class BookingUI {
 
             try {
                 int choice = Integer.parseInt(scanner.nextLine().trim());
-                if (choice == 0) return null; // cancel option
+                if (choice == 0) return null;
 
-                slotNumber = 1;
-                LocalDateTime selectedSlot = null;
-                Doctor selectedDoctor = null;
-
-                for (int hour = 8; hour <= 22 - duration; hour++) {
-                    if (hour == 12) continue;
-
-                    LocalDateTime slotStart = LocalDateTime.of(date, LocalTime.of(hour, 0));
-                    if (slotStart.isBefore(LocalDateTime.now())) continue;
-
-                    for (int i = 0; i < doctorControl.getDoctorCount(); i++) {
-                        Doctor doctor = doctorControl.getDoctorByIndex(i);
-                        if (doctor != null && doctorControl.isDoctorAvailableForAppointment(doctor, slotStart, duration, consultations, treatments)) {
-                            if (slotNumber == choice) {
-                                selectedSlot = slotStart;
-                                selectedDoctor = doctor;
-                                break;
-                            }
-                            slotNumber++;
-                        }
-                    }
-                    if (selectedSlot != null) break;
+                if (choice < 1 || choice > slotList.size()) {
+                    System.out.println("Invalid selection. Please try again.");
+                    continue;
                 }
 
-                if (selectedSlot == null || selectedDoctor == null) {
-                    System.out.println("Invalid selection or slot no longer available. Please try again.\n");
-                    continue; // retry instead of return
-                }
+                Slot selected = slotList.get(choice - 1);
 
                 // Check patient clashes
-                if (isConsultation) {
-                    if (isPatientTimeClash(patient.getId(), selectedSlot, CONSULTATION_DURATION)) {
-                        System.out.println("Patient already has a consultation or treatment at this time.\n");
-                        continue; // retry
-                    }
+                if (isPatientTimeClash(patient.getId(), selected.time, duration)) {
+                    System.out.println("Patient already has a consultation or treatment at this time.\n");
+                    continue;
+                }
 
+                if (isConsultation) {
                     consultationControl.addConsultation(
                         patient.getId(),
                         patient.getName(),
-                        selectedDoctor.getName(),
-                        selectedDoctor.getId(),
-                        selectedSlot
+                        selected.doctor.getName(),
+                        selected.doctor.getId(),
+                        selected.time
                     );
                 } else {
-                    if (isPatientTimeClash(patient.getId(), selectedSlot, TREATMENT_DURATION)) {
-                        System.out.println("Patient already has a consultation or treatment at this time.\n");
-                        continue; // retry
-                    }
-
                     treatmentControl.addTreatment(new MedicalTreatment(
                         patient.getId(),
                         patient.getName(),
-                        selectedDoctor.getId(),
+                        selected.doctor.getId(),
                         "To be diagnosed during appointment",
                         "To be prescribed during appointment",
-                        selectedSlot,
+                        selected.time,
                         false
                     ));
                 }
 
-                System.out.println("Booked with Dr. " + selectedDoctor.getName() + " in Room " + selectedDoctor.getRoomNumber());
-                return selectedSlot; // exit after success
+                System.out.println("Booked with Dr. " + selected.doctor.getName() + " in Room " + selected.doctor.getRoomNumber());
+                return selected.time;
 
             } catch (NumberFormatException e) {
                 System.out.println("Invalid input. Please enter a number.");
@@ -252,16 +231,19 @@ public class BookingUI {
         }
     }
 
-
     private boolean hasAvailableSlots(LocalDate date, int duration) {
+        LocalDateTime now = LocalDateTime.now();
+        ClinicADT.MyIterator<Doctor> doctorIter;
+
         for (int hour = 8; hour <= 22 - duration; hour++) {
             if (hour == 12) continue;
             LocalDateTime slotStart = LocalDateTime.of(date, LocalTime.of(hour, 0));
-            if (slotStart.isBefore(LocalDateTime.now())) continue;
+            if (slotStart.isBefore(now)) continue;
 
-            for (int i = 0; i < doctorControl.getDoctorCount(); i++) {
-                Doctor doctor = doctorControl.getDoctorByIndex(i);
-                if (doctor != null && doctorControl.isDoctorAvailableForAppointment(doctor, slotStart, duration, consultations, treatments)) {
+            doctorIter = doctorControl.getAllDoctors().iterator();
+            while (doctorIter.hasNext()) {
+                Doctor doctor = doctorIter.next();
+                if (doctorControl.isDoctorAvailableForAppointment(doctor, slotStart, duration, consultations, treatments)) {
                     return true;
                 }
             }
@@ -271,14 +253,18 @@ public class BookingUI {
 
     private int countAvailableSlots(LocalDate date, int duration) {
         int count = 0;
+        LocalDateTime now = LocalDateTime.now();
+        ClinicADT.MyIterator<Doctor> doctorIter;
+
         for (int hour = 8; hour <= 22 - duration; hour++) {
             if (hour == 12) continue;
             LocalDateTime slotStart = LocalDateTime.of(date, LocalTime.of(hour, 0));
-            if (slotStart.isBefore(LocalDateTime.now())) continue;
+            if (slotStart.isBefore(now)) continue;
 
-            for (int i = 0; i < doctorControl.getDoctorCount(); i++) {
-                Doctor doctor = doctorControl.getDoctorByIndex(i);
-                if (doctor != null && doctorControl.isDoctorAvailableForAppointment(doctor, slotStart, duration, consultations, treatments)) {
+            doctorIter = doctorControl.getAllDoctors().iterator();
+            while (doctorIter.hasNext()) {
+                Doctor doctor = doctorIter.next();
+                if (doctorControl.isDoctorAvailableForAppointment(doctor, slotStart, duration, consultations, treatments)) {
                     count++;
                 }
             }
@@ -288,9 +274,10 @@ public class BookingUI {
 
     private boolean isPatientTimeClash(String patientId, LocalDateTime newStart, int duration) {
         LocalDateTime newEnd = newStart.plusHours(duration);
-        
-        // This line of code call iterator for consultations.iterator()
-        for (Consultation c : consultations) {
+
+        ClinicADT.MyIterator<Consultation> itC = consultations.iterator();
+        while (itC.hasNext()) {
+            Consultation c = itC.next();
             if (c.getPatientId().equalsIgnoreCase(patientId)) {
                 LocalDateTime existingStart = c.getConsultationDate();
                 LocalDateTime existingEnd = existingStart.plusHours(CONSULTATION_DURATION);
@@ -300,8 +287,9 @@ public class BookingUI {
             }
         }
 
-        //This line of code call iterator for treatments.iterator()
-        for (MedicalTreatment t : treatments) {
+        ClinicADT.MyIterator<MedicalTreatment> itT = treatments.iterator();
+        while (itT.hasNext()) {
+            MedicalTreatment t = itT.next();
             if (t.getPatientId().equalsIgnoreCase(patientId)) {
                 LocalDateTime existingStart = t.getTreatmentDateTime();
                 LocalDateTime existingEnd = existingStart.plusHours(TREATMENT_DURATION);

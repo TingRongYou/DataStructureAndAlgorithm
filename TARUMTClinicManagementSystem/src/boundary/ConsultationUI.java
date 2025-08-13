@@ -1,18 +1,18 @@
 package boundary;
 
 import adt.ClinicADT;
+import entity.Consultation;
+import entity.Doctor;
+import entity.MedicalTreatment;
+import entity.Patient;
+import control.ConsultationControl;
+import control.DoctorControl;
+import control.PatientControl;
+import control.TreatmentControl;
+
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.Scanner;
-import entity.Consultation;
-import control.ConsultationControl;
-import control.DoctorControl;
-import entity.MedicalTreatment;
-import entity.Patient;
-import control.PatientControl;
-import control.TreatmentControl;
-import utility.Validation;
-import java.util.Iterator;
 
 public class ConsultationUI {
     private ConsultationControl consultationControl;
@@ -31,7 +31,6 @@ public class ConsultationUI {
         this.treatments = treatments;
         this.consultationControl = new ConsultationControl(patientControl, doctorControl, consultations, treatments);
         this.sc = new Scanner(System.in);
-
         consultationControl.loadConsultationsFromFile();
     }
 
@@ -74,10 +73,8 @@ public class ConsultationUI {
 
     private void addConsultation() {
         System.out.println("\n=== Add New Consultation ===");
-        System.out.println("This will guide you through scheduling a consultation");
-        System.out.println("Each consultation is 1 hour long");
-        System.out.println("Only available doctors during working hours will be shown");
-        System.out.println();
+        System.out.println("Each consultation is 1 hour long.");
+        System.out.println("Only available doctors during working hours will be shown.\n");
 
         BookingUI bookingUI = new BookingUI(patientControl, doctorControl, consultations, treatments, consultationControl, treatmentControl);
         bookingUI.run(true); // true = only allow consultation
@@ -85,12 +82,9 @@ public class ConsultationUI {
 
     private void removeConsultation() {
         System.out.println("\n=== Remove Consultation ===");
-
         consultationControl.listConsultations();
 
-        if (consultationControl.getTotalConsultations() == 0) {
-            return;
-        }
+        if (consultationControl.getTotalConsultations() == 0) return;
 
         while (true) {
             try {
@@ -106,30 +100,31 @@ public class ConsultationUI {
                 boolean removed = consultationControl.removeConsultationById(id);
                 if (removed) {
                     System.out.println("Consultation removed successfully.");
-                    break; // exit loop after success
+                    break;
+                } else {
+                    System.out.println("Consultation ID not found. Try again.");
                 }
 
             } catch (Exception e) {
-                System.out.println("Invalid input. Please enter a valid number.\n");
+                System.out.println("Invalid input. Please enter a valid number.");
                 sc.nextLine(); // clear invalid input
             }
         }
     }
 
-
-   private void searchByPatient() {
+    private void searchByPatient() {
         System.out.println("\n=== Search Consultations by Patient ===");
 
-        Iterator<Patient> patientIt = patientControl.getAllPatients().iterator();
+        ClinicADT.MyIterator<Patient> patientIt = patientControl.getAllPatients().iterator();
         if (!patientIt.hasNext()) {
             System.out.println("No registered patients found.");
             return;
         }
 
-        // 1. Display table of all patients
+        // Display patients
         System.out.println("+------------+----------------------+--------------+--------------+-----+--------+");
-        System.out.printf("| %-10s | %-20s | %-12s | %-12s | %-3s | %-6s |\n", 
-                          "Patient ID", "Name", "IC Number", "Phone", "Age", "Gender");
+        System.out.printf("| %-10s | %-20s | %-12s | %-12s | %-3s | %-6s |\n",
+                "Patient ID", "Name", "IC Number", "Phone", "Age", "Gender");
         System.out.println("+------------+----------------------+--------------+--------------+-----+--------+");
 
         while (patientIt.hasNext()) {
@@ -138,10 +133,9 @@ public class ConsultationUI {
                     p.getId(), p.getName(), p.getIcNumber(), p.getContact(), p.getAge(), p.getGender());
         }
         System.out.println("+------------+----------------------+--------------+--------------+-----+--------+");
-        
+
         String patientId;
-        // 2. Prompt for input
-        while(true){
+        while (true) {
             System.out.print("Enter Patient ID to view consultation history (or 0 to cancel): ");
             patientId = sc.nextLine().trim();
 
@@ -149,23 +143,19 @@ public class ConsultationUI {
                 System.out.println("Operation cancelled.");
                 return;
             }
+
             if (patientControl.getPatientById(patientId) == null) {
-                System.out.println("Patient ID not found. Please try again\n.");
+                System.out.println("Patient ID not found. Please try again.");
             } else {
-                break;  // valid patientId found, exit the loop
+                break;
             }
         }
 
-        // 3. Validate and get patient
         Patient selectedPatient = patientControl.getPatientById(patientId);
-        if (selectedPatient == null) {
-            System.out.println("Patient ID not found.");
-            return;
-        }
+        if (selectedPatient == null) return;
 
-        // 4. Search consultations for the patient
         boolean found = false;
-        Iterator<Consultation> consultIt = consultations.iterator();
+        ClinicADT.MyIterator<Consultation> consultIt = consultations.iterator();
 
         System.out.println("\n--- Consultation History for " + selectedPatient.getName() + " ---");
         System.out.println("+--------------+----------------------+------------------------+");
@@ -174,11 +164,7 @@ public class ConsultationUI {
 
         while (consultIt.hasNext()) {
             Consultation c = consultIt.next();
-
-            // More robust string comparison
-            if (c.getPatientId() != null && 
-                c.getPatientId().trim().equalsIgnoreCase(patientId.trim())) {
-
+            if (c.getPatientId() != null && c.getPatientId().trim().equalsIgnoreCase(patientId.trim())) {
                 DateTimeFormatter fmt = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm");
                 String dateStr = (c.getConsultationDate() != null)
                         ? c.getConsultationDate().format(fmt)
@@ -195,9 +181,73 @@ public class ConsultationUI {
 
         System.out.println("+--------------+----------------------+------------------------+");
     }
+
     private void searchByDoctor() {
         System.out.println("\n=== Search Consultations by Doctor ===");
-        consultationControl.searchByDoctor(sc, doctorControl);
+
+        ClinicADT.MyIterator<Doctor> doctorIt = doctorControl.getAllDoctors().iterator();
+        if (!doctorIt.hasNext()) {
+            System.out.println("No registered doctors found.");
+            return;
+        }
+
+        // Display doctors
+        System.out.println("+------------+----------------+--------+");
+        System.out.printf("| %-10s | %-14s | %-6s |\n", "Doctor ID", "Name", "Room");
+        System.out.println("+------------+----------------+--------+");
+
+        while (doctorIt.hasNext()) {
+            Doctor d = doctorIt.next();
+            System.out.printf("| %-10s | %-14s | %-6d |\n", d.getId(), d.getName(), d.getRoomNumber());
+        }
+        System.out.println("+------------+----------------+--------+");
+
+        String doctorId;
+        while (true) {
+            System.out.print("Enter Doctor ID to view consultations (or 0 to cancel): ");
+            doctorId = sc.nextLine().trim();
+
+            if (doctorId.equals("0")) {
+                System.out.println("Operation cancelled.");
+                return;
+            }
+
+            if (doctorControl.getDoctorById(doctorId) == null) {
+                System.out.println("Doctor ID not found. Please try again.");
+            } else {
+                break;
+            }
+        }
+
+        Doctor selectedDoctor = doctorControl.getDoctorById(doctorId);
+        if (selectedDoctor == null) return;
+
+        boolean found = false;
+        ClinicADT.MyIterator<Consultation> consultIt = consultations.iterator();
+
+        System.out.println("\n--- Consultations for Dr. " + selectedDoctor.getName() + " ---");
+        System.out.println("+--------------+----------------------+------------------------+");
+        System.out.printf("| %-12s | %-20s | %-22s |\n", "Consult ID", "Patient", "Date");
+        System.out.println("+--------------+----------------------+------------------------+");
+
+        while (consultIt.hasNext()) {
+            Consultation c = consultIt.next();
+            if (c.getDoctorName() != null && c.getDoctorName().trim().equalsIgnoreCase(selectedDoctor.getName().trim())) {
+                DateTimeFormatter fmt = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm");
+                String dateStr = (c.getConsultationDate() != null)
+                        ? c.getConsultationDate().format(fmt)
+                        : "N/A";
+                System.out.printf("| %-12d | %-20s | %-22s |\n",
+                        c.getId(), c.getPatientName(), dateStr);
+                found = true;
+            }
+        }
+
+        if (!found) {
+            System.out.println("| No consultations found for this doctor.                    |");
+        }
+
+        System.out.println("+--------------+----------------------+------------------------+");
     }
 
     private void checkDoctorAvailability() {
@@ -215,7 +265,7 @@ public class ConsultationUI {
             try {
                 LocalDateTime date = LocalDateTime.parse(input + " 00:00", DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm"));
                 consultationControl.showDoctorScheduleForDate(date);
-                break;  // success, exit loop
+                break;
             } catch (Exception e) {
                 System.out.println("Invalid date format. Please use 'yyyy-MM-dd'.");
             }
@@ -224,7 +274,6 @@ public class ConsultationUI {
 
     private void showWorkingHours() {
         System.out.println("=== Clinic Working Hours ===\n");
-
         System.out.println("+---------------------------------------------+");
         System.out.println("|                Shift Timings                |");
         System.out.println("+---------------------------------------------+");

@@ -3,44 +3,43 @@ package control;
 import adt.ClinicADT;
 import adt.MyClinicADT;
 import entity.Medicine;
-
 import java.io.*;
-import java.util.Iterator;
 import java.util.Scanner;
 import utility.Validation;
 
 public class PharmacyControl {
     private final ClinicADT<Medicine> medicineList = new MyClinicADT<>();
     private final String medicineFilePath = "src/textFile/medicine.txt";
-    
+
     public PharmacyControl() {
         loadFromFile();
     }
 
+    // --- Add Medicine ---
     public void addMedicine(Medicine med) {
-    // Validation
-    String nameError = Validation.validateMedicineName(med.getName());
-    String qtyError = Validation.validateMedicineQuantity(med.getQuantity());
-    String unitError = Validation.validateMedicineUnit(med.getUnit());
-    String usageError = Validation.validateMedicineUsage(med.getUsage());
+        // Validation
+        String nameError = Validation.validateMedicineName(med.getName());
+        String qtyError = Validation.validateMedicineQuantity(med.getQuantity());
+        String unitError = Validation.validateMedicineUnit(med.getUnit());
+        String usageError = Validation.validateMedicineUsage(med.getUsage());
 
-    if (nameError != null || qtyError != null || unitError != null || usageError != null) {
-        System.out.println("Failed to add medicine due to validation errors:");
-        if (nameError != null) System.out.println(" - " + nameError);
-        if (qtyError != null) System.out.println(" - " + qtyError);
-        if (unitError != null) System.out.println(" - " + unitError);
-        if (usageError != null) System.out.println(" - " + usageError);
-        return;
+        if (nameError != null || qtyError != null || unitError != null || usageError != null) {
+            System.out.println("Failed to add medicine due to validation errors:");
+            if (nameError != null) System.out.println(" - " + nameError);
+            if (qtyError != null) System.out.println(" - " + qtyError);
+            if (unitError != null) System.out.println(" - " + unitError);
+            if (usageError != null) System.out.println(" - " + usageError);
+            return;
+        }
+
+        medicineList.add(med);
+        saveToFile();
+        System.out.println("\nMedicine added successfully!\n");
+        printSingleMedicine(med);
     }
 
-    medicineList.add(med);
-    saveToFile();
-    System.out.println("\nMedicine added successfully!\n");
-    printSingleMedicine(med);
-}
-
-
-   public boolean dispenseMedicineById(String id, int amount) {
+    // --- Dispense Medicine ---
+    public boolean dispenseMedicineById(String id, int amount) {
         Medicine m = getMedicineById(id);
         if (m != null) {
             String error = Validation.validateDispenseQuantity(m.getQuantity(), amount);
@@ -48,7 +47,6 @@ public class PharmacyControl {
                 System.out.println(error);
                 return false;
             }
-
             m.setQuantity(m.getQuantity() - amount);
             System.out.println(amount + " units of " + m.getName() + " dispensed.");
             saveToFile();
@@ -59,7 +57,8 @@ public class PharmacyControl {
         return false;
     }
 
-   public boolean restockMedicineById(String id, int amount) {
+    // --- Restock Medicine ---
+    public boolean restockMedicineById(String id, int amount) {
         Medicine m = getMedicineById(id);
         if (m != null) {
             String qtyError = Validation.validateMedicineQuantity(amount);
@@ -67,7 +66,6 @@ public class PharmacyControl {
                 System.out.println(qtyError);
                 return false;
             }
-
             m.setQuantity(m.getQuantity() + amount);
             System.out.println("Medicine restocked: " + amount + " added to " + m.getName());
             saveToFile();
@@ -75,10 +73,11 @@ public class PharmacyControl {
         }
         System.out.println("Medicine not found.");
         return false;
-    }   
+    }
 
+    // --- Remove Medicine ---
     public boolean removeMedicineById(String id) {
-        Iterator<Medicine> it = medicineList.iterator();
+        ClinicADT.MyIterator<Medicine> it = medicineList.iterator();
         int index = 0;
         while (it.hasNext()) {
             if (it.next().getId().equalsIgnoreCase(id)) {
@@ -93,27 +92,27 @@ public class PharmacyControl {
         return false;
     }
 
+    // --- Display All Stock ---
     public void displayStock() {
         if (medicineList.isEmpty()) {
             System.out.println("No medicines in stock.");
             return;
         }
-
         printHeader();
-        Iterator<Medicine> it = medicineList.iterator();
+        ClinicADT.MyIterator<Medicine> it = medicineList.iterator();
         while (it.hasNext()) {
             System.out.println(it.next());
         }
         printLine();
     }
 
+    // --- Print Low Stock and Restock Prompt ---
     public void printLowStockMedicines(int threshold, Scanner sc) {
         System.out.println("\n=== Medicines Low In Stock (≤ " + threshold + ") ===");
-
         boolean found = false;
         printHeader();
 
-        Iterator<Medicine> it = medicineList.iterator();
+        ClinicADT.MyIterator<Medicine> it = medicineList.iterator();
         while (it.hasNext()) {
             Medicine m = it.next();
             if (m.getQuantity() <= threshold) {
@@ -122,42 +121,42 @@ public class PharmacyControl {
             }
         }
 
-        if (found) {
-            printLine();
-            System.out.print("\nDo you want to restock any medicine? (y/n): ");
-            String ans = sc.nextLine().trim().toLowerCase();
-            if (ans.equals("y")) {
-                System.out.print("Enter Medicine ID to restock: ");
-                String id = sc.nextLine().trim().toUpperCase();
-
-                Medicine m = getMedicineById(id);
-                if (m == null) {
-                    System.out.println("Invalid Medicine ID.");
-                    return;
-                }
-
-                System.out.print("Enter quantity to add: ");
-                try {
-                    int qty = Integer.parseInt(sc.nextLine());
-                   String qtyError = Validation.validateMedicineQuantity(qty);
-                    if (qtyError == null) {
-                        m.setQuantity(m.getQuantity() + qty);
-                        saveToFile();
-                        System.out.println(qty + " units added to " + m.getName() + ".");
-                    } else {
-    System.out.println(qtyError);
-}
-
-                } catch (NumberFormatException e) {
-                    System.out.println("Invalid quantity input.");
-                }
-            }
-        } else {
+        if (!found) {
             System.out.println("|       All medicines are sufficiently stocked.       |");
             printLine();
+            return;
+        }
+
+        printLine();
+        System.out.print("\nDo you want to restock any medicine? (y/n): ");
+        String ans = sc.nextLine().trim().toLowerCase();
+        if (!ans.equals("y")) return;
+
+        System.out.print("Enter Medicine ID to restock: ");
+        String id = sc.nextLine().trim().toUpperCase();
+        Medicine m = getMedicineById(id);
+        if (m == null) {
+            System.out.println("Invalid Medicine ID.");
+            return;
+        }
+
+        System.out.print("Enter quantity to add: ");
+        try {
+            int qty = Integer.parseInt(sc.nextLine());
+            String qtyError = Validation.validateMedicineQuantity(qty);
+            if (qtyError == null) {
+                m.setQuantity(m.getQuantity() + qty);
+                saveToFile();
+                System.out.println(qty + " units added to " + m.getName() + ".");
+            } else {
+                System.out.println(qtyError);
+            }
+        } catch (NumberFormatException e) {
+            System.out.println("Invalid quantity input.");
         }
     }
 
+    // --- Print All Medicines Sorted by Name ---
     public void printAllMedicinesSortedByName() {
         if (medicineList.isEmpty()) {
             System.out.println("No medicines available.");
@@ -165,12 +164,12 @@ public class PharmacyControl {
         }
 
         ClinicADT<Medicine> sorted = new MyClinicADT<>();
-        Iterator<Medicine> it = medicineList.iterator();
+        ClinicADT.MyIterator<Medicine> it = medicineList.iterator();
         while (it.hasNext()) {
             sorted.add(it.next());
         }
 
-        // Bubble sort on name
+        // Bubble sort by name
         for (int i = 0; i < sorted.size() - 1; i++) {
             for (int j = 0; j < sorted.size() - 1 - i; j++) {
                 Medicine m1 = sorted.get(j);
@@ -184,13 +183,14 @@ public class PharmacyControl {
 
         System.out.println("\n=== All Medicines (Sorted by Name) ===");
         printHeader();
-        Iterator<Medicine> sortedIt = sorted.iterator();
+        ClinicADT.MyIterator<Medicine> sortedIt = sorted.iterator();
         while (sortedIt.hasNext()) {
             System.out.println(sortedIt.next());
         }
         printLine();
     }
 
+    // --- Helper Methods ---
     private void printHeader() {
         String format = "| %-5s | %-20s | %-8s | %-8s | %-30s |%n";
         String line = "+-------+----------------------+----------+----------+--------------------------------+";
@@ -209,9 +209,10 @@ public class PharmacyControl {
         printLine();
     }
 
+    // --- File Operations ---
     private void saveToFile() {
         try (PrintWriter writer = new PrintWriter(new FileWriter(medicineFilePath))) {
-            Iterator<Medicine> it = medicineList.iterator();
+            ClinicADT.MyIterator<Medicine> it = medicineList.iterator();
             while (it.hasNext()) {
                 Medicine m = it.next();
                 writer.printf("%s,%s,%d,%s,%s%n",
@@ -244,14 +245,12 @@ public class PharmacyControl {
         }
     }
 
-    // === Accessors ===
+    // --- Accessors ---
     public Medicine getMedicineById(String id) {
-        Iterator<Medicine> it = medicineList.iterator();
+        ClinicADT.MyIterator<Medicine> it = medicineList.iterator();
         while (it.hasNext()) {
             Medicine m = it.next();
-            if (m.getId().equalsIgnoreCase(id)) {
-                return m;
-            }
+            if (m.getId().equalsIgnoreCase(id)) return m;
         }
         return null;
     }

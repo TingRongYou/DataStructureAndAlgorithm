@@ -4,9 +4,9 @@ import adt.ClinicADT;
 import adt.MyClinicADT;
 import entity.Patient;
 
-import java.io.*;
-import java.util.Comparator;
-import java.util.Iterator;
+import java.io.File;
+import java.io.FileWriter;
+import java.io.IOException;
 import java.util.Scanner;
 
 public class PatientControl {
@@ -74,14 +74,12 @@ public class PatientControl {
                                + "-".repeat(COL_IC + 2) + "+"
                                + "-".repeat(COL_CONTACT + 2) + "+";
 
-        // Header
         System.out.println(separator);
         System.out.printf("| %-" + COL_NO + "s | %-" + COL_ID + "s | %-" + COL_NAME + "s | %-" + COL_AGE + "s | %-" + COL_GENDER + "s | %-" + COL_IC + "s | %-" + COL_CONTACT + "s |\n",
                 "No.", "ID", "Name", "Age", "Gender", "IC Number", "Contact");
         System.out.println(separator);
 
-        // Using Iterator
-        Iterator<Patient> iterator = patientQueue.iterator();
+        ClinicADT.MyIterator<Patient> iterator = patientQueue.iterator();
         int position = 1;
         while (iterator.hasNext()) {
             Patient p = iterator.next();
@@ -93,22 +91,12 @@ public class PatientControl {
     }
 
     public Patient getPatientById(String id) {
-        ClinicADT<Patient> temp = new MyClinicADT<>();
-        Patient found = null;
-
-        while (!patientQueue.isEmpty()) {
-            Patient p = patientQueue.dequeue();
-            if (found == null && p.getId().equalsIgnoreCase(id)) {
-                found = p;
-            }
-            temp.enqueue(p);
+        ClinicADT.MyIterator<Patient> iter = patientQueue.iterator();
+        while (iter.hasNext()) {
+            Patient p = iter.next();
+            if (p.getId().equalsIgnoreCase(id)) return p;
         }
-
-        while (!temp.isEmpty()) {
-            patientQueue.enqueue(temp.dequeue());
-        }
-
-        return found;
+        return null;
     }
 
     public void printAllPatientsSortedByName() {
@@ -117,22 +105,22 @@ public class PatientControl {
             return;
         }
 
+        // Copy all patients into a new ClinicADT
         ClinicADT<Patient> sorted = new MyClinicADT<>();
-        ClinicADT<Patient> temp = new MyClinicADT<>();
-
-        while (!patientQueue.isEmpty()) {
-            Patient p = patientQueue.dequeue();
-            sorted.add(p);
-            temp.enqueue(p);
+        ClinicADT.MyIterator<Patient> iter = patientQueue.iterator();
+        while (iter.hasNext()) {
+            sorted.add(iter.next());
         }
 
-        while (!temp.isEmpty()) {
-            patientQueue.enqueue(temp.dequeue());
-        }
+        // Sort using custom comparator (ignore case)
+        sorted.sort(new ClinicADT.MyComparator<Patient>() {
+            @Override
+            public int compare(Patient p1, Patient p2) {
+                return p1.getName().compareToIgnoreCase(p2.getName());
+            }
+        });
 
-        sorted.sort(Comparator.comparing(Patient::getName, String.CASE_INSENSITIVE_ORDER));
-
-        // Display
+        // Column formatting
         final int COL_NO = 4;
         final int COL_ID = 10;
         final int COL_NAME = 25;
@@ -155,16 +143,17 @@ public class PatientControl {
                 "No.", "ID", "Name", "Age", "Gender", "IC Number", "Contact");
         System.out.println(separator);
 
-        Iterator<Patient> iterator = sorted.iterator();
+        iter = sorted.iterator();
         int index = 1;
-        while (iterator.hasNext()) {
-            Patient p = iterator.next();
+        while (iter.hasNext()) {
+            Patient p = iter.next();
             System.out.printf("| %-" + COL_NO + "d | %-" + COL_ID + "s | %-" + COL_NAME + "s | %-" + COL_AGE + "d | %-" + COL_GENDER + "s | %-" + COL_IC + "s | %-" + COL_CONTACT + "s |\n",
                     index++, p.getId(), p.getName(), p.getAge(), p.getGender(), p.getIcNumber(), p.getContact());
         }
 
         System.out.println(separator);
     }
+
 
     public int getPatientCount() {
         return patientQueue.size();
@@ -180,16 +169,10 @@ public class PatientControl {
 
     private void saveAllToFile() {
         try (FileWriter writer = new FileWriter(filePath)) {
-            ClinicADT<Patient> temp = new MyClinicADT<>();
-
-            while (!patientQueue.isEmpty()) {
-                Patient p = patientQueue.dequeue();
+            ClinicADT.MyIterator<Patient> iter = patientQueue.iterator();
+            while (iter.hasNext()) {
+                Patient p = iter.next();
                 writer.write(p.toFileString() + "\n");
-                temp.enqueue(p);
-            }
-
-            while (!temp.isEmpty()) {
-                patientQueue.enqueue(temp.dequeue());
             }
         } catch (IOException e) {
             System.out.println("Failed to save patients: " + e.getMessage());
@@ -243,18 +226,10 @@ public class PatientControl {
 
     public ClinicADT<Patient> getAllPatients() {
         ClinicADT<Patient> allPatients = new MyClinicADT<>();
-        ClinicADT<Patient> temp = new MyClinicADT<>();
-
-        while (!patientQueue.isEmpty()) {
-            Patient p = patientQueue.dequeue();
-            allPatients.add(p);
-            temp.enqueue(p);
+        ClinicADT.MyIterator<Patient> iter = patientQueue.iterator();
+        while (iter.hasNext()) {
+            allPatients.add(iter.next());
         }
-
-        while (!temp.isEmpty()) {
-            patientQueue.enqueue(temp.dequeue());
-        }
-
         return allPatients;
     }
 }

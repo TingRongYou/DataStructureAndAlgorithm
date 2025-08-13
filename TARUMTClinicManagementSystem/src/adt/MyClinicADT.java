@@ -1,19 +1,6 @@
-/*
- * Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
- * Click nbfs://nbhost/SystemFileSystem/Templates/Classes/Class.java to edit this template
- */
 package adt;
 
-import java.util.Comparator;
-import java.util.Iterator;
-import java.util.NoSuchElementException;
-
-/**
- *
- * @author Acer
- */
-
-public class MyClinicADT<T> implements ClinicADT<T>, Iterable<T> {
+public class MyClinicADT<T> implements ClinicADT<T> {
     private Object[] data;
     private int size;
     private static final int INITIAL_CAPACITY = 10;
@@ -26,13 +13,12 @@ public class MyClinicADT<T> implements ClinicADT<T>, Iterable<T> {
     private void ensureCapacity() {
         if (size >= data.length) {
             Object[] newData = new Object[data.length * 2];
-            for (int i = 0; i < size; i++) {
-                newData[i] = data[i];
-            }
+            System.arraycopy(data, 0, newData, 0, size);
             data = newData;
         }
     }
 
+    // ---------------- List-like operations ----------------
     @Override
     public void add(T item) {
         ensureCapacity();
@@ -43,9 +29,7 @@ public class MyClinicADT<T> implements ClinicADT<T>, Iterable<T> {
     public void add(int index, T item) {
         if (index < 0 || index > size) throw new IndexOutOfBoundsException();
         ensureCapacity();
-        for (int i = size; i > index; i--) {
-            data[i] = data[i - 1];
-        }
+        System.arraycopy(data, index, data, index + 1, size - index);
         data[index] = item;
         size++;
     }
@@ -68,9 +52,8 @@ public class MyClinicADT<T> implements ClinicADT<T>, Iterable<T> {
     public T remove(int index) {
         if (index < 0 || index >= size) throw new IndexOutOfBoundsException();
         T removed = (T) data[index];
-        for (int i = index; i < size - 1; i++) {
-            data[i] = data[i + 1];
-        }
+        int numMoved = size - index - 1;
+        if (numMoved > 0) System.arraycopy(data, index + 1, data, index, numMoved);
         data[--size] = null;
         return removed;
     }
@@ -87,10 +70,10 @@ public class MyClinicADT<T> implements ClinicADT<T>, Iterable<T> {
 
     @Override
     public int indexOf(T item) {
-        for (int i = 0; i < size; i++) {
-            if (data[i].equals(item)) {
-                return i;
-            }
+        if (item == null) {
+            for (int i = 0; i < size; i++) if (data[i] == null) return i;
+        } else {
+            for (int i = 0; i < size; i++) if (item.equals(data[i])) return i;
         }
         return -1;
     }
@@ -100,68 +83,79 @@ public class MyClinicADT<T> implements ClinicADT<T>, Iterable<T> {
         return indexOf(item) != -1;
     }
 
+    // ---------------- Queue-like operations ----------------
     @Override
-    public void enqueue(T item) {
-        add(item);
-    }
+    public void enqueue(T item) { add(item); }
 
     @Override
     public T dequeue() {
+        if (isEmpty()) throw new RuntimeException("Queue is empty");
         return remove(0);
     }
 
     @Override
     public T peek() {
+        if (isEmpty()) throw new RuntimeException("Queue is empty");
         return get(0);
     }
 
+    // ---------------- Utility operations ----------------
     @Override
-    public int size() {
-        return size;
-    }
+    public int size() { return size; }
 
     @Override
-    public boolean isEmpty() {
-        return size == 0;
-    }
+    public boolean isEmpty() { return size == 0; }
 
     @Override
     public void clear() {
-        for (int i = 0; i < size; i++) {
-            data[i] = null;
-        }
+        for (int i = 0; i < size; i++) data[i] = null;
         size = 0;
     }
 
+    // ---------------- Sorting ----------------
     @Override
-    public void sort(Comparator<T> comparator) {
+    public void sort(MyComparator<T> comparator) {
+        if (comparator == null) throw new IllegalArgumentException("Comparator cannot be null");
         for (int i = 0; i < size - 1; i++) {
+            boolean swapped = false;
             for (int j = 0; j < size - i - 1; j++) {
                 T a = (T) data[j];
                 T b = (T) data[j + 1];
                 if (comparator.compare(a, b) > 0) {
                     data[j] = b;
                     data[j + 1] = a;
+                    swapped = true;
                 }
             }
+            if (!swapped) break;
         }
     }
 
+    // ---------------- Iterator ----------------
     @Override
-    public Iterator<T> iterator() {
-        return new Iterator<T>() {
+    public MyIterator<T> iterator() {
+        return new MyIterator<T>() {
             private int currentIndex = 0;
-
             @Override
-            public boolean hasNext() {
-                return currentIndex < size;
-            }
-
+            public boolean hasNext() { return currentIndex < size; }
             @Override
             public T next() {
-                if (!hasNext()) throw new NoSuchElementException();
+                if (!hasNext()) throw new RuntimeException("No more elements");
                 return (T) data[currentIndex++];
             }
         };
+    }
+
+    // ---------------- toString ----------------
+    @Override
+    public String toString() {
+        if (size == 0) return "[]";
+        StringBuilder sb = new StringBuilder("[");
+        for (int i = 0; i < size; i++) {
+            sb.append(data[i]);
+            if (i < size - 1) sb.append(", ");
+        }
+        sb.append("]");
+        return sb.toString();
     }
 }

@@ -2,11 +2,10 @@ package control;
 
 import adt.ClinicADT;
 import adt.MyClinicADT;
+import entity.MedicalTreatment;
 import java.io.*;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
-import java.util.Iterator;
-import entity.MedicalTreatment;
 
 public class TreatmentControl {
     private final ClinicADT<MedicalTreatment> allTreatments;
@@ -19,6 +18,7 @@ public class TreatmentControl {
         loadTreatmentsFromFile();
     }
 
+    // --- Add Treatment ---
     public void addTreatment(MedicalTreatment treatment) {
         allTreatments.add(treatment);
         if (treatment.isFollowUpNeeded()) {
@@ -28,6 +28,7 @@ public class TreatmentControl {
         System.out.println("Treatment recorded.");
     }
 
+    // --- Process Follow-Up ---
     public MedicalTreatment processNextFollowUp() {
         if (!followUpQueue.isEmpty()) {
             MedicalTreatment next = followUpQueue.dequeue();
@@ -39,9 +40,10 @@ public class TreatmentControl {
         }
     }
 
+    // --- Get Treatments by Patient ---
     public ClinicADT<MedicalTreatment> getTreatmentsByPatient(String patientId) {
         ClinicADT<MedicalTreatment> result = new MyClinicADT<>();
-        Iterator<MedicalTreatment> it = allTreatments.iterator();
+        ClinicADT.MyIterator<MedicalTreatment> it = allTreatments.iterator();
         while (it.hasNext()) {
             MedicalTreatment t = it.next();
             if (t.getPatientId().equalsIgnoreCase(patientId)) {
@@ -51,6 +53,7 @@ public class TreatmentControl {
         return result;
     }
 
+    // --- Print Follow-Up Queue ---
     public void printFollowUpQueue() {
         System.out.println("\n=== Follow-Up Queue ===");
         if (followUpQueue.isEmpty()) {
@@ -59,7 +62,7 @@ public class TreatmentControl {
         }
 
         ClinicADT<MedicalTreatment> temp = new MyClinicADT<>();
-        String format = "| %-12s | %-10s | %-15s | %-10s | %-17s | %-9s |\n";
+        String format = "| %-12s | %-10s | %-15s | %-10s | %-17s | %-9s |%n";
         String line = "+--------------+------------+-----------------+------------+-------------------+-----------+";
 
         System.out.println(line);
@@ -88,6 +91,7 @@ public class TreatmentControl {
         }
     }
 
+    // --- Print All Treatments Sorted by Date ---
     public void printAllTreatmentsSortedByDate() {
         if (allTreatments.isEmpty()) {
             System.out.println("No treatments to display.");
@@ -95,7 +99,7 @@ public class TreatmentControl {
         }
 
         ClinicADT<MedicalTreatment> sorted = new MyClinicADT<>();
-        Iterator<MedicalTreatment> it = allTreatments.iterator();
+        ClinicADT.MyIterator<MedicalTreatment> it = allTreatments.iterator();
         while (it.hasNext()) {
             sorted.add(it.next());
         }
@@ -112,7 +116,7 @@ public class TreatmentControl {
             }
         }
 
-        String format = "| %-12s | %-10s | %-15s | %-10s | %-17s | %-9s |\n";
+        String format = "| %-12s | %-10s | %-15s | %-10s | %-17s | %-9s |%n";
         String line = "+--------------+------------+-----------------+------------+-------------------+-----------+";
 
         System.out.println("\n=== All Treatments (Sorted by Date) ===");
@@ -121,8 +125,7 @@ public class TreatmentControl {
         System.out.println(line);
 
         DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm");
-
-        Iterator<MedicalTreatment> sortedIt = sorted.iterator();
+        ClinicADT.MyIterator<MedicalTreatment> sortedIt = sorted.iterator();
         while (sortedIt.hasNext()) {
             MedicalTreatment t = sortedIt.next();
             System.out.printf(format,
@@ -138,6 +141,7 @@ public class TreatmentControl {
         System.out.println(line);
     }
 
+    // --- Save Treatment to File ---
     private void saveTreatmentToFile(MedicalTreatment treatment) {
         try (FileWriter fw = new FileWriter(treatmentFilePath, true)) {
             DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm");
@@ -157,6 +161,7 @@ public class TreatmentControl {
         }
     }
 
+    // --- Load Treatments from File ---
     public void loadTreatmentsFromFile() {
         allTreatments.clear();
         followUpQueue.clear();

@@ -5,6 +5,8 @@ import entity.Doctor;
 import control.DoctorControl;
 import utility.Validation;
 import adt.ClinicADT;
+import java.time.DayOfWeek;
+import tarumtclinicmanagementsystem.Session;
 
 public class DoctorUI {
     private final DoctorControl doctorControl;
@@ -39,51 +41,10 @@ public class DoctorUI {
 
             switch (choice) {
                 case 1 -> registerDoctor();
-                case 2 -> {
-                    boolean validDoctor;
-                    do {
-                        displayAllDoctors();
-                        System.out.print("Enter Doctor ID to remove (or 0 to cancel): ");
-                        String doctorID = scanner.nextLine().trim().toUpperCase();
-
-                        if (doctorID.equals("0")) {
-                            System.out.println("Removal cancelled.");
-                            break; // Exit this case
-                        }
-
-                        validDoctor = doctorControl.getDoctorById(doctorID) != null;
-                        if (!validDoctor) {
-                            System.out.println("Doctor ID not found. Please try again.");
-                        } else {
-                            doctorControl.removeDoctorById(doctorID);
-                        }
-                    } while (!validDoctor);
-                }
+                case 2 -> removeDoctor();
                 case 3 -> displayAllDoctors();
-                case 4 -> {
-                    displayAllDoctors();
-                    viewDoctorSchedule();
-                }
-                case 5 -> {
-                    boolean validDoctor;
-                    do {
-                        displayAllDoctors();
-                        System.out.print("Enter Doctor ID to update schedule (or 0 to cancel): ");
-                        String doctorId = scanner.nextLine().trim().toUpperCase();
-
-                        if (doctorId.equals("0")) {
-                            System.out.println("Update cancelled.");
-                            break;
-                        }
-
-                        validDoctor = doctorControl.getDoctorById(doctorId) != null;
-                        if (!validDoctor) {
-                            System.out.println("Doctor ID not found. Please try again.");
-                        } else {
-                            doctorControl.updateDoctorScheduleById(doctorId, scanner);
-                        }
-                    } while (!validDoctor);
-                }
+                case 4 -> viewDoctorSchedule();
+                case 5 -> updateDoctorSchedule();
                 case 6 -> System.out.println("Total doctors: " + doctorControl.getDoctorCount());
                 case 7 -> doctorControl.printDoctorsSortedByName();
                 case 8 -> doctorControl.printAvailableDoctors();
@@ -106,25 +67,35 @@ public class DoctorUI {
             if (error != null) System.out.println(error + "\n");
         } while (error != null);
 
-        // ===== Room Number =====
-        int room;
+        // ===== Room Number (auto-assign if blank) =====
+        int room = -1;
         do {
-            System.out.print("Enter Room Number (1–10) (or 0 to cancel): ");
+            System.out.print("Enter Room Number (1–10) (press Enter to auto-assign, 0 to cancel): ");
             String roomInput = scanner.nextLine().trim();
             if (roomInput.equals("0")) return;
-            try {
-                room = Integer.parseInt(roomInput);
-                error = Validation.validateRoomNumber(room);
-                if (error != null) {
-                    System.out.println(error + "\n");
-                } else if (!doctorControl.checkRoomAvailability(room)) {
-                    error = "Room " + room + " is currently occupied. Please choose another.";
-                    System.out.println(error + "\n");
+            if (roomInput.isEmpty()) {
+                room = getNextAvailableRoom();
+                if (room == -1) {
+                    System.out.println("No available rooms. Cannot register doctor.");
+                    return;
                 }
-            } catch (NumberFormatException e) {
-                error = "Please enter a valid number";
-                System.out.println(error + "\n");
-                room = -1;
+                System.out.println("Assigned Room: " + room);
+                error = null;
+            } else {
+                try {
+                    room = Integer.parseInt(roomInput);
+                    error = Validation.validateRoomNumber(room);
+                    if (error != null) {
+                        System.out.println(error + "\n");
+                    } else if (!doctorControl.checkRoomAvailability(room)) {
+                        error = "Room " + room + " is currently occupied. Please choose another.";
+                        System.out.println(error + "\n");
+                    }
+                } catch (NumberFormatException e) {
+                    error = "Please enter a valid number";
+                    System.out.println(error + "\n");
+                    room = -1;
+                }
             }
         } while (error != null);
 
@@ -160,33 +131,14 @@ public class DoctorUI {
 
         // ===== Add Doctor =====
         doctorControl.addDoctor(name, room, gender, icNumber, phoneNum);
+        System.out.println("Doctor registered successfully!");
     }
 
-    private void viewDoctorSchedule() {
-        String doctorId;
-        String error;
-        Doctor doctor = null;
-
-        do {
-            System.out.print("Enter Doctor ID to view schedule table (or 0 to cancel): ");
-            doctorId = scanner.nextLine().trim().toUpperCase();
-            
-            if (doctorId.equals("0")) {
-                System.out.println("Operation cancelled.");
-                return;  // exit method if user cancels
-            }
-            error = Validation.validateDoctorId(doctorId);
-            if (error == null) {
-                doctor = doctorControl.getDoctorById(doctorId);
-                if (doctor == null) {
-                    error = "Doctor ID not found.\n";
-                }
-            }
-            if (error != null) System.out.println(error);
-        } while (error != null);
-
-        System.out.println();
-        doctor.getDutySchedule().printScheduleTable(doctor.getName());
+    private int getNextAvailableRoom() {
+        for (int i = 1; i <= 10; i++) {
+            if (doctorControl.checkRoomAvailability(i)) return i;
+        }
+        return -1; // no room available
     }
 
     private void displayAllDoctors() {
@@ -204,7 +156,9 @@ public class DoctorUI {
         System.out.printf(format, "DoctorID", "Name", "Gender", "IC Number", "Phone", "Room");
         System.out.println(line);
 
-        for (Doctor d : allDoctors) { // uses iterator()
+        ClinicADT.MyIterator<Doctor> it = allDoctors.iterator();
+        while (it.hasNext()) {
+            Doctor d = it.next();
             System.out.printf(format,
                     d.getId(),
                     d.getName(),
@@ -215,5 +169,81 @@ public class DoctorUI {
         }
 
         System.out.println(line);
+    }
+
+    private void viewDoctorSchedule() {
+        displayAllDoctors();
+
+        Doctor doctor = null;
+        String doctorId;
+        do {
+            System.out.print("Enter Doctor ID to view schedule table (or 0 to cancel): ");
+            doctorId = scanner.nextLine().trim().toUpperCase();
+            if (doctorId.equals("0")) {
+                System.out.println("Operation cancelled.");
+                return;
+            }
+
+            doctor = doctorControl.getDoctorById(doctorId);
+            if (doctor == null) System.out.println("Doctor ID not found. Try again.");
+        } while (doctor == null);
+
+        System.out.println();
+        doctor.getDutySchedule().printScheduleTable(doctor.getName());
+    }
+
+    private void updateDoctorSchedule() {
+        displayAllDoctors();
+        System.out.println();
+        System.out.print("Enter Doctor ID to update schedule (or 0 to cancel): ");
+        String doctorId = scanner.nextLine().trim();
+        if (doctorId.equals("0")) return;
+
+        Doctor doctor = doctorControl.getDoctorById(doctorId);
+        if (doctor == null) {
+            System.out.println("Doctor ID not found.");
+            return;
+        }
+
+        // Show current schedule
+        doctor.getDutySchedule().printScheduleTable(doctor.getName());
+
+        for (DayOfWeek day : DayOfWeek.values()) {
+            System.out.printf("Enter session for %s (REST/MORNING/AFTERNOON/NIGHT) or leave blank to skip: ", day);
+            String sessionInput = scanner.nextLine().trim().toUpperCase();
+            if (sessionInput.isEmpty()) continue;
+
+            try {
+                Session newSession = Session.valueOf(sessionInput);
+                doctor.getDutySchedule().setDaySession(day, newSession);
+            } catch (IllegalArgumentException e) {
+                System.out.println("Invalid session. Skipping " + day);
+            }
+        }
+
+        System.out.println("Schedule updated successfully!");
+        doctor.getDutySchedule().printScheduleTable(doctor.getName());
+    }
+
+    private void removeDoctor() {
+        boolean validDoctor;
+        do {
+            displayAllDoctors();
+            System.out.print("Enter Doctor ID to remove (or 0 to cancel): ");
+            String doctorID = scanner.nextLine().trim().toUpperCase();
+
+            if (doctorID.equals("0")) {
+                System.out.println("Removal cancelled.");
+                break;
+            }
+
+            validDoctor = doctorControl.getDoctorById(doctorID) != null;
+            if (!validDoctor) {
+                System.out.println("Doctor ID not found. Please try again.");
+            } else {
+                doctorControl.removeDoctorById(doctorID);
+                System.out.println("Doctor removed successfully.");
+            }
+        } while (!validDoctor);
     }
 }

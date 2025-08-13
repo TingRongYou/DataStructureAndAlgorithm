@@ -1,35 +1,41 @@
-/*
- * Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
- * Click nbfs://nbhost/SystemFileSystem/Templates/Classes/Interface.java to edit this template
- */
 package adt;
 
-/**
- *
- * @author Acer
- */
-public interface ClinicADT<T> extends Iterable <T> {
+public interface ClinicADT<T> {
+
+    // --- Custom Comparator ---
+    public static interface MyIterator<T> {
+       boolean hasNext();
+       T next();
+    }
+
+    public static interface MyComparator<T> {
+        int compare(T o1, T o2);
+    }
+
 
     // --- List-like operations ---
-    void add(T item);                  // Add to end
-    void add(int index, T item);       // Add at position
-    T get(int index);                  // Get item at position
-    T set(int index, T item);          // Replace item at position
-    T remove(int index);              // Remove item by index
-    boolean remove(T item);            // Remove item by value
-    int indexOf(T item);               // Find index of item
-    boolean contains(T item);          // Check if item exists
+    void add(T item);
+    void add(int index, T item);
+    T get(int index);
+    T set(int index, T item);
+    T remove(int index);
+    boolean remove(T item);
+    int indexOf(T item);
+    boolean contains(T item);
 
     // --- Queue-like operations ---
-    void enqueue(T item);              // Add to rear (alias of add())
-    T dequeue();                       // Remove and return front item (alias of remove(0))
-    T peek();                          // Return front item without removing (alias of get(0))
+    void enqueue(T item);
+    T dequeue();
+    T peek();
 
     // --- Utility operations ---
-    int size();                        // Number of elements
-    boolean isEmpty();                 // Is collection empty
-    void clear();                      // Clear all items
-    
-    // --- Sort items using comparator ---
-    void sort(java.util.Comparator<T> comparator);
+    int size();
+    boolean isEmpty();
+    void clear();
+
+    // --- Sorting ---
+    void sort(MyComparator<T> comparator);
+
+    // --- Iterator ---
+    MyIterator<T> iterator();
 }

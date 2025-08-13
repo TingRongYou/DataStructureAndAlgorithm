@@ -72,7 +72,7 @@ public class TreatmentUI {
         System.out.println("->Each treatment takes 2 hours");
         System.out.println("->Only available doctors during working hours will be shown\n");
 
-        // ✅ Pass `control` to BookingUI so treatment can be saved to file
+        // Pass control to BookingUI so treatment can be saved
         BookingUI bookingUI = new BookingUI(
             patientControl, doctorControl, consultations, treatments,
             consultationControl, control
@@ -83,7 +83,7 @@ public class TreatmentUI {
     private void viewPatientHistory() {
         System.out.println("\n=== Patient List ===");
         String patientFormat = "| %-10s | %-20s |\n";
-        String patientLine = "+------------+----------------------+";
+        String patientLine = "+------------+----------------------+"; 
 
         System.out.println(patientLine);
         System.out.printf(patientFormat, "Patient ID", "Patient Name");
@@ -93,9 +93,8 @@ public class TreatmentUI {
             Patient p = patientControl.getPatient(i);
             System.out.printf(patientFormat, p.getId(), p.getName());
         }
-
         System.out.println(patientLine);
-        
+
         String patientId;
         String error;
 
@@ -105,8 +104,7 @@ public class TreatmentUI {
 
             if (patientId.equals("0")) {
                 System.out.println("Operation cancelled.");
-                patientId = null;  // or return/throw depending on context
-                break;
+                return;
             }
 
             error = Validation.validatePatientId(patientId);
@@ -130,7 +128,9 @@ public class TreatmentUI {
 
             DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm");
 
-            for (MedicalTreatment t : result) {
+            ClinicADT.MyIterator<MedicalTreatment> iter = result.iterator();
+            while (iter.hasNext()) {
+                MedicalTreatment t = iter.next();
                 System.out.printf(format,
                     t.getTreatmentId(),
                     t.getPatientName(),
@@ -149,9 +149,11 @@ public class TreatmentUI {
             System.out.println("Processing follow-up treatment:");
             System.out.println("   ->ID       : " + next.getTreatmentId());
             System.out.println("   ->Patient  : " + next.getPatientName() + " (" + next.getPatientId() + ")");
-            System.out.println("   -> Doctor   : " + next.getDoctorId());
-            System.out.println("   -> Date     : " + next.getTreatmentDateTime().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm")));
-            System.out.println("   -> Completed: " + (next.isCompleted() ? "Yes" : "No"));
+            System.out.println("   ->Doctor   : " + next.getDoctorId());
+            System.out.println("   ->Date     : " + next.getTreatmentDateTime().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm")));
+            System.out.println("   ->Completed: " + (next.isCompleted() ? "Yes" : "No"));
+        } else {
+            System.out.println("No follow-up treatments in queue.");
         }
     }
 }
