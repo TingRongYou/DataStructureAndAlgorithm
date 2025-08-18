@@ -21,10 +21,10 @@ public class TreatmentControl {
     // --- Add Treatment ---
     public void addTreatment(MedicalTreatment treatment) {
         allTreatments.add(treatment);
-        if (treatment.isFollowUpNeeded()) {
+        if (treatment.isOverdue()) {
             followUpQueue.enqueue(treatment);
         }
-        saveTreatmentToFile(treatment);
+        saveTreatmentToFile(treatment, true);
         System.out.println("Treatment recorded.");
     }
 
@@ -32,22 +32,41 @@ public class TreatmentControl {
     public MedicalTreatment processNextFollowUp() {
         if (!followUpQueue.isEmpty()) {
             MedicalTreatment next = followUpQueue.dequeue();
+            
+            // Update the treatment in allTreatments to mark it as completed
+            ClinicADT.MyIterator<MedicalTreatment> it = allTreatments.iterator();
+            while (it.hasNext()) {
+                MedicalTreatment t = it.next();
+                if (t.getTreatmentId() == next.getTreatmentId()) {
+                    t.setCompleted(true);  // Mark as completed
+                    saveTreatmentToFile(null, false);  // Save the updated status to file
+                    break;
+                }
+            }
+            
             System.out.println("Follow-up for: " + next.getPatientName());
             return next;
         } else {
-            System.out.println("No follow-up treatments.");
             return null;
         }
     }
 
-    // --- Get Treatments by Patient ---
-    public ClinicADT<MedicalTreatment> getTreatmentsByPatient(String patientId) {
+    // --- Get Treatments by Patient --- 
+    public ClinicADT<MedicalTreatment> getTreatmentsByPatient(String patientId, boolean includeFuture) {
         ClinicADT<MedicalTreatment> result = new MyClinicADT<>();
+        LocalDateTime now = LocalDateTime.now();
+
         ClinicADT.MyIterator<MedicalTreatment> it = allTreatments.iterator();
         while (it.hasNext()) {
             MedicalTreatment t = it.next();
             if (t.getPatientId().equalsIgnoreCase(patientId)) {
-                result.add(t);
+                //if past
+                if (!includeFuture  && t.getTreatmentDateTime().isBefore(now)) {
+                    result.add(t);
+                }
+                else if (includeFuture  && t.getTreatmentDateTime().isAfter(now)) { // if future
+                    result.add(t);
+                }
             }
         }
         return result;
@@ -55,9 +74,9 @@ public class TreatmentControl {
 
     // --- Print Follow-Up Queue ---
     public void printFollowUpQueue() {
-        System.out.println("\n=== Follow-Up Queue ===");
+        System.out.println("\n=== Follow-Up Queue (Overdue Bookings) ===");
         if (followUpQueue.isEmpty()) {
-            System.out.println("No patients require follow-up.");
+            System.out.println("No patients require follow-up. (No Overdue Bookings)");
             return;
         }
 
@@ -116,7 +135,7 @@ public class TreatmentControl {
             }
         }
 
-        String format = "| %-12s | %-10s | %-15s | %-10s | %-17s | %-9s |%n";
+        String format = "| %-12s | %-10s | %-15s | %-10s | %-17s | %-9s |\n";
         String line = "+--------------+------------+-----------------+------------+-------------------+-----------+";
 
         System.out.println("\n=== All Treatments (Sorted by Date) ===");
@@ -141,20 +160,40 @@ public class TreatmentControl {
         System.out.println(line);
     }
 
-    // --- Save Treatment to File ---
-    private void saveTreatmentToFile(MedicalTreatment treatment) {
-        try (FileWriter fw = new FileWriter(treatmentFilePath, true)) {
+    // --- Save and Update Treatment to File ---
+    private void saveTreatmentToFile(MedicalTreatment treatment, boolean appendMode) {
+        try (FileWriter fw = new FileWriter(treatmentFilePath, appendMode)) {
             DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm");
-            String line = String.format("%d,%s,%s,%s,%s,%s,%s,%b%n",
-                    treatment.getTreatmentId(),
-                    treatment.getPatientId(),
-                    treatment.getPatientName(),
-                    treatment.getDoctorId(),
-                    treatment.getDiagnosis() != null ? treatment.getDiagnosis() : "N/A",
-                    treatment.getPrescription() != null ? treatment.getPrescription() : "N/A",
-                    treatment.getTreatmentDateTime().format(formatter),
-                    treatment.isCompleted());
-            fw.write(line);
+
+            if (!appendMode) {
+                // Save ALL treatments (overwrite mode)
+                ClinicADT.MyIterator<MedicalTreatment> it = allTreatments.iterator();
+                while (it.hasNext()) {
+                    MedicalTreatment t = it.next();
+                    String line = String.format("%d,%s,%s,%s,%s,%s,%s,%b%n",
+                            t.getTreatmentId(),
+                            t.getPatientId(),
+                            t.getPatientName(),
+                            t.getDoctorId(),
+                            t.getDiagnosis() != null ? t.getDiagnosis() : "N/A",
+                            t.getPrescription() != null ? t.getPrescription() : "N/A",
+                            t.getTreatmentDateTime().format(formatter),
+                            t.isCompleted());
+                    fw.write(line);
+                }
+            } else {
+                // Append single treatment
+                String line = String.format("%d,%s,%s,%s,%s,%s,%s,%b%n",
+                        treatment.getTreatmentId(),
+                        treatment.getPatientId(),
+                        treatment.getPatientName(),
+                        treatment.getDoctorId(),
+                        treatment.getDiagnosis() != null ? treatment.getDiagnosis() : "N/A",
+                        treatment.getPrescription() != null ? treatment.getPrescription() : "N/A",
+                        treatment.getTreatmentDateTime().format(formatter),
+                        treatment.isCompleted());
+                fw.write(line);
+            }
         } catch (IOException e) {
             System.err.println("Error saving treatment:");
             e.printStackTrace();
@@ -195,7 +234,7 @@ public class TreatmentControl {
                     );
                     allTreatments.add(treatment);
 
-                    if (treatment.isFollowUpNeeded()) {
+                    if (treatment.isOverdue()) {
                         followUpQueue.enqueue(treatment);
                     }
 

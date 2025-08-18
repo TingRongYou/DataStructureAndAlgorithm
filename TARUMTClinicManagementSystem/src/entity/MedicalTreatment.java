@@ -68,8 +68,8 @@ public class MedicalTreatment implements Comparable<MedicalTreatment> {
 
     // Determine if a follow-up is needed:
     // Follow-up required if treatment is not completed and the treatment date is more than 3 days ago
-    public boolean isFollowUpNeeded() {
-        return !completed && treatmentDateTime.plusDays(3).isBefore(LocalDateTime.now());
+    public boolean isOverdue() {
+        return !completed && treatmentDateTime.isBefore(LocalDateTime.now());
     }
 
     // Compare treatments by treatmentDateTime for sorting
