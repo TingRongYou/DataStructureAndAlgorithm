@@ -3,16 +3,23 @@ package control;
 import adt.ClinicADT;
 import adt.MyClinicADT;
 import entity.Patient;
+import entity.Consultation;
+import java.io.BufferedReader;
+import utility.Report;
 
 import java.io.File;
+import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.Scanner;
 
 public class PatientControl {
     private ClinicADT<Patient> patientQueue;
     private final String filePath = "src/textFile/patients.txt";
-
+    private String consultationFilePath = "src/textFile/consultations.txt";
+    
     public PatientControl() {
         patientQueue = new MyClinicADT<>();
         File directory = new File("src/textFile");
@@ -232,4 +239,87 @@ public class PatientControl {
         }
         return allPatients;
     }
+    
+    public int countPediatric() {
+        int count = 0;
+        ClinicADT<Patient> allPatients = getAllPatients();
+        ClinicADT.MyIterator<Patient> it = allPatients.iterator();
+        while (it.hasNext()) {
+            if (it.next().getAge() <= 12) count++;
+        }
+        return count;
+    }
+
+    public int countAdolescent() {
+        int count = 0;
+        ClinicADT<Patient> allPatients = getAllPatients();
+        ClinicADT.MyIterator<Patient> it = allPatients.iterator();
+        while (it.hasNext()) {
+            int age = it.next().getAge();
+            if (age >= 13 && age <= 17) count++;
+        }
+        return count;
+    }
+
+    public int countAdult() {
+        int count = 0;
+        ClinicADT<Patient> allPatients = getAllPatients();
+        ClinicADT.MyIterator<Patient> it = allPatients.iterator();
+        while (it.hasNext()) {
+            int age = it.next().getAge();
+            if (age >= 18 && age <= 64) count++;
+        }
+        return count;
+    }
+
+    public int countGeriatric() {
+        int count = 0;
+        ClinicADT<Patient> allPatients = getAllPatients();
+        ClinicADT.MyIterator<Patient> it = allPatients.iterator();
+        while (it.hasNext()) {
+            if (it.next().getAge() >= 65) count++;
+        }
+        return count;
+    }
+    public void medicalHistoryReport() {
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm");
+
+        String border = "+---------------+------------------+----------------------+-----------------+------------------------------+";
+        String headerFormat = "| %-13s | %-16s | %-20s | %-15s | %-28s |%n";
+        
+        try (BufferedReader br = new BufferedReader(new FileReader(consultationFilePath))) {
+            String line;
+
+            Report.printHeader("Medical History Report");
+            System.out.println(border);
+            System.out.printf(headerFormat, "Patient ID", "Date", "Patient Name", "Doctor ID", "Diagnosis");
+            System.out.println(border);
+
+            while ((line = br.readLine()) != null) {
+                String[] parts = line.split(",");
+
+                if (parts.length < 7) {
+                    continue; // skip invalid rows
+                }
+
+                String patientId = parts[1].trim();
+                String patientName = parts[2].trim();
+                String doctorId = parts[4].trim();
+                LocalDateTime consultationDate = LocalDateTime.parse(parts[5].trim(), formatter);
+                String diagnosis = parts[6].trim();
+
+                // Only print if diagnosis is NOT "To be diagnosed"
+                if (!diagnosis.equalsIgnoreCase("To be diagnosed during appointment")) {
+                    System.out.printf(headerFormat,
+                            patientId, consultationDate, patientName, doctorId, diagnosis);
+                }
+            }
+            System.out.println(border);
+        } catch (IOException e) {
+            System.out.println("Error reading consultations: " + e.getMessage());
+        }
+        
+        Report.printFooter();
+    }
+    
 }

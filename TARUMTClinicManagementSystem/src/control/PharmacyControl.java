@@ -4,7 +4,9 @@ import adt.ClinicADT;
 import adt.MyClinicADT;
 import entity.Medicine;
 import java.io.*;
+import java.time.LocalDate;
 import java.util.Scanner;
+import utility.Report;
 import utility.Validation;
 
 public class PharmacyControl {
@@ -22,13 +24,15 @@ public class PharmacyControl {
         String qtyError = Validation.validateMedicineQuantity(med.getQuantity());
         String unitError = Validation.validateMedicineUnit(med.getUnit());
         String usageError = Validation.validateMedicineUsage(med.getUsage());
+        String expirationError = Validation.validateMedicineExpiry(med.getExpiration());
 
-        if (nameError != null || qtyError != null || unitError != null || usageError != null) {
+        if (nameError != null || qtyError != null || unitError != null || usageError != null || expirationError != null) {
             System.out.println("Failed to add medicine due to validation errors:");
             if (nameError != null) System.out.println(" - " + nameError);
             if (qtyError != null) System.out.println(" - " + qtyError);
             if (unitError != null) System.out.println(" - " + unitError);
             if (usageError != null) System.out.println(" - " + usageError);
+            if (expirationError != null) System.out.println(" - " + expirationError);
             return;
         }
 
@@ -192,15 +196,15 @@ public class PharmacyControl {
 
     // --- Helper Methods ---
     private void printHeader() {
-        String format = "| %-5s | %-20s | %-8s | %-8s | %-30s |%n";
-        String line = "+-------+----------------------+----------+----------+--------------------------------+";
+        String format = "| %-5s | %-20s | %-8s | %-8s | %-8s | %-22s |%n";
+        String line = "+-------+----------------------+----------+----------+----------+------------------------+";
         System.out.println(line);
-        System.out.printf(format, "ID", "Name", "Quantity", "Unit", "Usage");
+        System.out.printf(format, "ID", "Name", "Quantity", "Unit", "Usage", "Expiration Date");
         System.out.println(line);
     }
 
     private void printLine() {
-        System.out.println("+-------+----------------------+----------+----------+--------------------------------+");
+        System.out.println("+-------+----------------------+----------+----------+----------+------------------------+");
     }
 
     private void printSingleMedicine(Medicine m) {
@@ -215,8 +219,8 @@ public class PharmacyControl {
             ClinicADT.MyIterator<Medicine> it = medicineList.iterator();
             while (it.hasNext()) {
                 Medicine m = it.next();
-                writer.printf("%s,%s,%d,%s,%s%n",
-                        m.getId(), m.getName(), m.getQuantity(), m.getUnit(), m.getUsage());
+                writer.printf("%s,%s,%d,%s,%s,%s%n",
+                        m.getId(), m.getName(), m.getQuantity(), m.getUnit(), m.getUsage(), m.getExpiration());
             }
         } catch (IOException e) {
             System.out.println("Error saving to file: " + e.getMessage());
@@ -231,13 +235,14 @@ public class PharmacyControl {
             String line;
             while ((line = reader.readLine()) != null) {
                 String[] parts = line.split(",", -1);
-                if (parts.length == 5) {
+                if (parts.length == 6) {
                     String id = parts[0].trim();
                     String name = parts[1].trim();
                     int qty = Integer.parseInt(parts[2].trim());
                     String unit = parts[3].trim();
                     String usage = parts[4].trim();
-                    medicineList.add(new Medicine(id, name, qty, unit, usage));
+                    String expiration = parts[5].trim();
+                    medicineList.add(new Medicine(id, name, qty, unit, usage, expiration));
                 }
             }
         } catch (IOException | NumberFormatException e) {
@@ -269,5 +274,70 @@ public class PharmacyControl {
 
     public boolean isEmpty() {
         return medicineList.isEmpty();
+    }
+    
+    public void expirationReport() {
+        Report.printHeader("=== Expiration Report ===");
+
+        int expiredCount = 0;
+        int within6Count = 0;
+        int after6Count = 0;
+
+        LocalDate today = LocalDate.now();
+        LocalDate sixMonthsLater = today.plusMonths(6);
+
+        try (BufferedReader reader = new BufferedReader(new FileReader(medicineFilePath))) {
+            String line;
+
+            // Table Header
+            String border = "+------------+----------------------+---------------+";
+            String header = String.format("| %-10s | %-20s | %-13s |", "ID", "Name", "Expiry");
+
+            // === Expired Medicines ===
+            System.out.println("\n[Expired Medicines]");
+            System.out.println(border);
+            System.out.println(header);
+            System.out.println(border);
+
+            while ((line = reader.readLine()) != null) {
+                String[] parts = line.split(",");
+                if (parts.length >= 6) {
+                    String id = parts[0].trim();
+                    String name = parts[1].trim();
+                    LocalDate expDate = LocalDate.parse(parts[5].trim());
+
+                    String category;
+                    if (expDate.isBefore(today)){
+                        category = "Expired";
+                        expiredCount++;
+                    } else if (!expDate.isAfter(sixMonthsLater)){
+                        category = "Within 6M";
+                        within6Count++;
+                    } else {
+                        category = "After 6M";
+                        after6Count++;
+                    }
+                    String shortId = id.length() > 3 ? id.substring(0, 3) : id;
+                    System.out.printf("| %-10s | %-20s | %-13s |%n", shortId, name, expDate, category);
+                }
+            }
+            System.out.println(border);
+        } catch (Exception e){
+            e.printStackTrace();
+        }
+        // print summary report
+        System.out.println("\nSummary Frequency Bar Chart");
+        printBar("Expired   ", expiredCount);
+        printBar("WIthin 6M   ", within6Count);
+        printBar("After 6M   ", after6Count);
+        Report.printFooter();
+    }
+
+    private void printBar(String label, int count){
+        StringBuilder bar = new StringBuilder();
+        for (int i = 0; i < count; i++){
+            bar.append(" * ");
+        }
+        System.out.printf("%-12s %s (%d)%n", label + ":", bar.toString(), count);
     }
 }

@@ -236,4 +236,17 @@ public class Validation {
         if (requested > currentStock) return "Cannot dispense more than current stock (" + currentStock + ")";
         return null;
     }
+    
+    public static String validateMedicineExpiry(String dateStr) {
+        try {
+            LocalDate date = LocalDate.parse(dateStr); // expects YYYY-MM-DD
+            if (date.isBefore(LocalDate.now())) {
+                return "Error: Expiration date cannot be in the past.";
+            }
+            return null; // ✅ valid, no error
+        } catch (Exception e) {
+            return "Error: Invalid date format. Use YYYY-MM-DD.";
+        }
+    }
+
 }

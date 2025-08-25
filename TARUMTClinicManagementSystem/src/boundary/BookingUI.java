@@ -56,9 +56,14 @@ public class BookingUI {
 
             System.out.println("Patient not found. Please try again."); 
         }
-
+        if (!hasValidDiagnosis(patientId)) {
+            System.out.println("Cannot add treatment. Patient has no valid consultation diagnosis.");
+            return;
+        }
+        
         int duration = isConsultation ? CONSULTATION_DURATION : TREATMENT_DURATION;
         String serviceType = isConsultation ? "Consultation" : "Medical Treatment";
+        
 
         LocalDate selectedDate = showCalendarAndSelectDate(duration);
         if (selectedDate == null) return;
@@ -79,6 +84,20 @@ public class BookingUI {
         System.out.printf(format, "Time", chosenSlot.toLocalTime().format(DateTimeFormatter.ofPattern("HH:mm")));
         System.out.printf(format, "Duration", duration + " hour(s)");
         System.out.println(line);
+    }
+    
+    public boolean hasValidDiagnosis(String patientId) {
+        ClinicADT.MyIterator<Consultation> iterator = consultations.iterator();
+        while (iterator.hasNext()) {
+            Consultation c = iterator.next();
+            if (c.getPatientId().equalsIgnoreCase(patientId)) {
+                // if diagnosis is set and not N/A
+                if (c.getDiagnosis() != null && !c.getDiagnosis().equalsIgnoreCase("To be diagnosed during appointment")) {
+                    return true;
+                }
+            }
+        }
+        return false;
     }
 
     private LocalDate showCalendarAndSelectDate(int duration) {
@@ -201,21 +220,21 @@ public class BookingUI {
                     System.out.println("Patient already has a consultation or treatment at this time.\n");
                     continue;
                 }
-
                 if (isConsultation) {
                     consultationControl.addConsultation(
                         patient.getId(),
                         patient.getName(),
                         selected.doctor.getName(),
                         selected.doctor.getId(),
-                        selected.time
+                        selected.time,
+                        "To be diagnosed during appointment"
                     );
                 } else {
                     treatmentControl.addTreatment(new MedicalTreatment(
                         patient.getId(),
                         patient.getName(),
                         selected.doctor.getId(),
-                        "To be diagnosed during appointment",
+                        getDiagnosisByPatientId(patient.getId()),   // have to link with and get from consultation's diagnosis
                         "To be prescribed during appointment",
                         selected.time,
                         false
@@ -230,6 +249,26 @@ public class BookingUI {
             }
         }
     }
+    public String getDiagnosisByPatientId(String patientId) {
+        String diagnosis = null;
+
+        ClinicADT.MyIterator<Consultation> iterator = consultations.iterator();
+        while (iterator.hasNext()) {
+            Consultation c = iterator.next();
+            if (c.getPatientId().equalsIgnoreCase(patientId)) {
+                diagnosis = c.getDiagnosis();
+                break; // stop after finding the first match
+            }
+        }
+
+        if (diagnosis != null) {
+            return diagnosis;
+        } else {
+            System.out.println("No diagnosis found for patient: " + patientId);
+        }
+        return diagnosis;
+    }
+
 
     private boolean hasAvailableSlots(LocalDate date, int duration) {
         LocalDateTime now = LocalDateTime.now();

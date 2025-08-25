@@ -3,3 +3,5 @@
 3,P1002,Osborn,D1001,To be diagnosed during appointment,To be prescribed during appointment,2025-08-16 08:00,false
 4,P1002,Osborn,D1002,To be diagnosed during appointment,To be prescribed during appointment,2025-08-21 18:00,false
 5,P1004,Sariel,D1000,To be diagnosed during appointment,To be prescribed during appointment,2025-08-24 08:00,false
+6,P1001,James,D1001,To be diagnosed during appointment,To be prescribed during appointment,2025-08-23 08:00,false
+7,P1004,Sariel,D1001,Food Poisoning,To be prescribed during appointment,2025-08-24 14:00,false

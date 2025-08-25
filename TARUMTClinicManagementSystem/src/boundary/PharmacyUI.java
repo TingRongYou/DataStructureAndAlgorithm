@@ -5,6 +5,7 @@
     import control.PharmacyControl;
     import utility.Validation;
     import adt.ClinicADT;
+import utility.Report;
 
     public class PharmacyUI {
         private final PharmacyControl control = new PharmacyControl();
@@ -19,8 +20,10 @@
                 System.out.println("3. View Stock");
                 System.out.println("4. Restock Medicine");
                 System.out.println("5. Remove Medicine");
-                System.out.println("6. Report: Low Stock Medicines");
-                System.out.println("7. Report: Medicines Sorted by Name");
+                System.out.println("6. Check Low Stock Medicines");
+                //System.out.println("7. Report: Medicines Sorted by Name");
+                System.out.println("7. Expiring Medicines Report");
+                System.out.println("8. Medicine Inventory Report");
                 System.out.println("0. Exit");
                 System.out.print("Choice: ");
 
@@ -33,7 +36,9 @@
                         case 4 -> restockMedicine();
                         case 5 -> removeMedicine();
                         case 6 -> generateLowStockReport();
-                        case 7 -> control.printAllMedicinesSortedByName();
+                        //case 7 -> control.printAllMedicinesSortedByName();
+                        case 7 -> control.expirationReport();
+                        case 8 -> inventoryReport();
                         case 0 -> System.out.println("Exiting Pharmacy Module...");
                         default -> System.out.println("Invalid choice. Please try again.");
                     }
@@ -45,7 +50,7 @@
         }
 
         private void addMedicine() {
-            String name, unit, usage, error;
+            String name, unit, usage, expiration, error;
             int qty;
 
             // Medicine Name
@@ -95,7 +100,19 @@
                 if (error != null) System.out.println(error + "\n");
             } while (error != null);
 
-            control.addMedicine(new Medicine(name, qty, unit, usage));
+            // Expiration Date
+            do {
+                System.out.print("Expiration Date (YYYY-MM-DD) (or 0 to cancel): ");
+                expiration = sc.nextLine().trim();
+                if (expiration.equals("0")) {
+                    System.out.println("Operation cancelled.");
+                    return;
+                }
+                error = Validation.validateMedicineExpiry(expiration);
+                if (error != null) System.out.println(error + "\n");
+            } while (error != null);
+
+            control.addMedicine(new Medicine(name, qty, unit, usage, expiration));
         }
 
         private void dispenseMedicine() {
@@ -264,5 +281,12 @@
         }
 
         System.out.println(line);
+    }
+    
+    
+    public void inventoryReport() {
+        Report.printHeader("Medcicine Inventory Report");
+        control.displayStock();
+        Report.printFooter();
     }
 }

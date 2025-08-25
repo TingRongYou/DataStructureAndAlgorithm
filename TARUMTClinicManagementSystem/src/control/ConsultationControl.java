@@ -102,7 +102,7 @@ public class ConsultationControl {
         }
 
         addConsultation(selectedPatient.getId(), selectedPatient.getName(), 
-                        selectedDoctor.getName(), selectedDoctor.getId(), dateTime);
+                        selectedDoctor.getName(), selectedDoctor.getId(), dateTime, "To be diagnosed during appointment");
     }
 
     private Patient selectPatient() {
@@ -302,10 +302,10 @@ public class ConsultationControl {
         return start1.isBefore(end2) && end1.isAfter(start2);
     }
 
-    public void addConsultation(String patientId, String patientName, String doctorName, String doctorId, LocalDateTime date) {
-        Consultation consultation = new Consultation(patientId, patientName, doctorName, doctorId, date);
+    public void addConsultation(String patientId, String patientName, String doctorName, String doctorId, LocalDateTime date , String diagnosis) {
+        Consultation consultation = new Consultation(patientId, patientName, doctorName, doctorId, date, diagnosis);
         consultations.add(consultation);
-        saveConsultationToFile(consultation);
+        saveConsultationToFile(consultation, false);
         displayConsultationConfirmation(consultation);
     }
 
@@ -316,23 +316,105 @@ public class ConsultationControl {
                            consultation.getConsultationDate().plusHours(CONSULTATION_DURATION)
                            .format(DateTimeFormatter.ofPattern("HH:mm")) + ")");
     }
+    
+    public void updateConsultation(String patientId) {
+        ClinicADT.MyIterator<Consultation> iterator = consultations.iterator();
+        boolean found = false;
+        Consultation consultationToProcess = null;
 
-    private void saveConsultationToFile(Consultation consultation) {
-        try (FileWriter fw = new FileWriter(consultationFilePath, true)) {
+        while (iterator.hasNext()) {
+            Consultation c = iterator.next();
+            if (c.getPatientId().equalsIgnoreCase(patientId)) {
+                found = true;
+                consultationToProcess = c;
+                System.out.println("+------------+----------------------+--------------+--------------+-----+--------+");
+                System.out.printf("| %-5d | %-8s | %-12s | %-12s | %-8s | %-16s | %-25s |\n",
+                        c.getId(),
+                        c.getPatientId(),
+                        c.getPatientName(),
+                        c.getDoctorName(),
+                        c.getDoctorId(),
+                        c.getConsultationDate(),
+                        c.getDiagnosis());
+                System.out.println("+------------+----------------------+--------------+--------------+-----+--------+");
+            }
+        }
+
+        if (!found) {
+            System.out.println("No consultations found for patient ID: " + patientId);
+            return;
+        }
+
+        System.out.println("\nTypes of Diagnosis");
+        System.out.println("1. Food Poisoning");
+        System.out.println("2. Common Cold");
+        System.out.println("3. COVID-19");
+        System.out.println("4. Dengue");
+        System.out.println("5. Allergies");
+        System.out.println("0. Cancel");
+        System.out.print("Enter Diagnosis: ");
+
+        int ch = sc.nextInt();
+        sc.nextLine(); // consume newline
+
+        switch (ch) {
+            case 1 -> consultationToProcess.setDiagnosis("Food Poisoning");
+            case 2 -> consultationToProcess.setDiagnosis("Common Cold");
+            case 3 -> consultationToProcess.setDiagnosis("COVID-19");
+            case 4 -> consultationToProcess.setDiagnosis("Dengue");
+            case 5 -> consultationToProcess.setDiagnosis("Allergies");
+            case 0 -> {
+                System.out.println("Operation cancelled");
+                return;
+            }
+            default -> {
+                System.out.println("Invalid choice. Please try again.");
+                return;
+            }
+        }
+
+        System.out.println("Diagnosis updated successfully!");
+        // overwrite existing record in file
+        saveConsultationToFile(consultationToProcess, false); 
+    }
+
+    private void saveConsultationToFile(Consultation consultation, boolean appendMode) {
+        try (FileWriter fw = new FileWriter(consultationFilePath, appendMode)) {
             DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm");
-            String line = String.format("%d,%s,%s,%s,%s,%s%n",
-                    consultation.getId(),
-                    consultation.getPatientId(),
-                    consultation.getPatientName(),
-                    consultation.getDoctorName(),
-                    consultation.getDoctorId(),
-                    consultation.getConsultationDate().format(formatter));
-            fw.write(line);
+
+            if (!appendMode) {
+                ClinicADT.MyIterator<Consultation> iterator = consultations.iterator();
+                while (iterator.hasNext()) {
+                    Consultation c = iterator.next();
+                    String line = String.format("%d,%s,%s,%s,%s,%s,%s%n",
+                            c.getId(),
+                            c.getPatientId(),
+                            c.getPatientName(),
+                            c.getDoctorName(),
+                            c.getDoctorId(),
+                            c.getConsultationDate().format(formatter),
+                            c.getDiagnosis() != null ? c.getDiagnosis() : "N/A");
+                    fw.write(line);
+                }
+
+            } else {
+                // Append single consultation
+                String line = String.format("%d,%s,%s,%s,%s,%s,%s%n",
+                        consultation.getId(),
+                        consultation.getPatientId(),
+                        consultation.getPatientName(),
+                        consultation.getDoctorName(),
+                        consultation.getDoctorId(),
+                        consultation.getConsultationDate().format(formatter),
+                        consultation.getDiagnosis() != null ? consultation.getDiagnosis() : "N/A");
+                fw.write(line);
+            }
         } catch (IOException e) {
             System.out.println("Error saving consultation: " + e.getMessage());
             e.printStackTrace();
         }
     }
+    
 
     public boolean removeConsultationById(int id) {
         for (int i = 0; i < consultations.size(); i++) {
@@ -378,6 +460,15 @@ public class ConsultationControl {
         }
 
         System.out.println(line);
+    }
+    
+    public void processPatient(){
+        ClinicADT.MyIterator<Consultation> process = consultations.iterator();
+        
+        while (process.hasNext()){
+            //find the record in consultation then modify it 
+            
+        }
     }
 
     public void searchByPatient(String patientName) {
@@ -490,55 +581,56 @@ public class ConsultationControl {
         System.out.println(line);
     }
 
-    public void printConsultationsSortedByDate() {
-        if (consultations.isEmpty()) {
-            System.out.println("No consultations to sort.");
-            return;
-        }
-
-        // Create a copy for sorting
-        ClinicADT<Consultation> sorted = new MyClinicADT<>();
-        // FIX: Replaced for-loop with iterator for copying
-        ClinicADT.MyIterator<Consultation> iterator = consultations.iterator();
-        while (iterator.hasNext()) {
-            sorted.add(iterator.next());
-        }
-        
-        // Sort using custom comparator
-        // FIX: Correctly reference the nested interface
-        sorted.sort(new ClinicADT.MyComparator<Consultation>() {
-            @Override
-            public int compare(Consultation c1, Consultation c2) {
-                return c1.getConsultationDate().compareTo(c2.getConsultationDate());
-            }
-        });
-
-        System.out.println("\n=== Consultations (Sorted by Date) ===");
-        displaySortedConsultations(sorted);
-    }
-
-    private void displaySortedConsultations(ClinicADT<Consultation> sorted) {
-        String format = "| %-4s | %-20s | %-20s | %-20s | %-9s |\n";
-        String line = "+------+----------------------+----------------------+----------------------+-----------+";
-
-        System.out.println(line);
-        System.out.printf(format, "ID", "Patient", "Doctor", "Date & Time", "Duration");
-        System.out.println(line);
-
-        // FIX: Replaced for-loop with iterator
-        ClinicADT.MyIterator<Consultation> iterator = sorted.iterator();
-        while (iterator.hasNext()) {
-            Consultation c = iterator.next();
-            System.out.printf(format,
-                    c.getId(),
-                    c.getPatientName(),
-                    c.getDoctorName(),
-                    c.getConsultationDate().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm")),
-                    CONSULTATION_DURATION + " hr");
-        }
-        System.out.println(line);
-    }
-
+//    public void consultationsSortedByDate() {
+//        
+//        if (consultations.isEmpty()) {
+//            System.out.println("No consultations to sort.");
+//            return;
+//        }
+//
+//        // Create a copy for sorting
+//        ClinicADT<Consultation> sorted = new MyClinicADT<>();
+//        // FIX: Replaced for-loop with iterator for copying
+//        ClinicADT.MyIterator<Consultation> iterator = consultations.iterator();
+//        while (iterator.hasNext()) {
+//            sorted.add(iterator.next());
+//        }
+//        
+//        // Sort using custom comparator
+//        // FIX: Correctly reference the nested interface
+//        sorted.sort(new ClinicADT.MyComparator<Consultation>() {
+//            @Override
+//            public int compare(Consultation c1, Consultation c2) {
+//                return c1.getConsultationDate().compareTo(c2.getConsultationDate());
+//            }
+//        });
+//
+//        System.out.println("\n=== Consultations (Sorted by Date) ===");
+//        displaySortedConsultations(sorted);
+//    }
+//
+//    private void displaySortedConsultations(ClinicADT<Consultation> sorted) {
+//        String format = "| %-4s | %-20s | %-20s | %-20s | %-9s |\n";
+//        String line = "+------+----------------------+----------------------+----------------------+-----------+";
+//
+//        System.out.println(line);
+//        System.out.printf(format, "ID", "Patient", "Doctor", "Date & Time", "Duration");
+//        System.out.println(line);
+//
+//        // FIX: Replaced for-loop with iterator
+//        ClinicADT.MyIterator<Consultation> iterator = sorted.iterator();
+//        while (iterator.hasNext()) {
+//            Consultation c = iterator.next();
+//            System.out.printf(format,
+//                    c.getId(),
+//                    c.getPatientName(),
+//                    c.getDoctorName(),
+//                    c.getConsultationDate().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm")),
+//                    CONSULTATION_DURATION + " hr");
+//        }
+//        System.out.println(line);
+//    }
+//
     public void showDoctorScheduleForDate(LocalDateTime date) {
         if (date.toLocalDate().isBefore(LocalDateTime.now().toLocalDate())) {
             System.out.println("Cannot check availability for past dates.");
@@ -714,9 +806,10 @@ public class ConsultationControl {
                     String doctorName = parts[3].trim();
                     String doctorId = parts[4].trim();
                     LocalDateTime consultationDate = LocalDateTime.parse(parts[5].trim(), formatter);
+                    String diagnosis = parts[6].trim();
 
                     Consultation consultation = new Consultation(
-                                consultationId, patientId, patientName, doctorName, doctorId, consultationDate);
+                                consultationId, patientId, patientName, doctorName, doctorId, consultationDate, diagnosis);
                     consultations.add(consultation);
                 } catch (Exception e) {
                     System.out.println("Error parsing consultation line: " + line);
@@ -787,4 +880,5 @@ public class ConsultationControl {
         }
         return true;
     }
+
 }

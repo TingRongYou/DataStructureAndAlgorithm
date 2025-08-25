@@ -8,23 +8,25 @@ public class Medicine {
     private int quantity;
     private final String unit;
     private final String usage;
-
+    private final String expiration;
     // Constructor for adding a new medicine (auto ID generation)
-    public Medicine(String name, int quantity, String unit, String usage) {
+    public Medicine(String name, int quantity, String unit, String usage, String expiration) {
         this.id = "M" + counter++;
         this.name = name;
         this.quantity = quantity;
         this.unit = unit;
         this.usage = usage;
+        this.expiration = expiration;
     }
 
     // Constructor for loading medicine from file (manual ID)
-    public Medicine(String id, String name, int quantity, String unit, String usage) {
+    public Medicine(String id, String name, int quantity, String unit, String usage, String expiration) {
         this.id = id;
         this.name = name;
         this.quantity = quantity;
         this.unit = unit;
         this.usage = usage;
+        this.expiration = expiration;
 
         // Ensure the counter is always ahead to prevent duplicate IDs
         try {
@@ -48,6 +50,7 @@ public class Medicine {
     public int getQuantity() { return quantity; }
     public String getUnit() { return unit; }
     public String getUsage() { return usage; }
+    public String getExpiration() { return expiration; }
 
     // === Setters ===
     public void setQuantity(int quantity) {
@@ -57,6 +60,6 @@ public class Medicine {
     // === Display Formatting ===
     @Override
     public String toString() {
-        return String.format("| %-5s | %-20s | %-8d | %-8s | %-30s |", id, name, quantity, unit, usage);
+        return String.format("| %-5s | %-20s | %-8d | %-8s | %-8s | %-22s |", id, name, quantity, unit, usage, expiration);
     }
 }

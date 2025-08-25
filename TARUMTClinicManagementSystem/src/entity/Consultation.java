@@ -12,25 +12,28 @@ public class Consultation implements Comparable<Consultation> {
     private String doctorName;
     private String doctorId;
     private LocalDateTime consultationDate;
+    private String diagnosis;
 
     // Constructor for new consultations (auto-ID)
-    public Consultation(String patientId, String patientName, String doctorName, String doctorId, LocalDateTime consultationDate) {
+    public Consultation(String patientId, String patientName, String doctorName, String doctorId, LocalDateTime consultationDate, String diagnosis) {
         this.consultationId = counter++;
         this.patientId = patientId;
         this.patientName = patientName;
         this.doctorName = doctorName;
         this.doctorId = doctorId;
         this.consultationDate = consultationDate;
+        this.diagnosis = diagnosis;
     }
 
     // Constructor for loading from file (manual ID)
-    public Consultation(int consultationId, String patientId, String patientName, String doctorName, String doctorId, LocalDateTime consultationDate) {
+    public Consultation(int consultationId, String patientId, String patientName, String doctorName, String doctorId, LocalDateTime consultationDate, String diagnosis) {
         this.consultationId = consultationId;
         this.patientId = patientId;
         this.patientName = patientName;
         this.doctorName = doctorName;
         this.doctorId = doctorId;
         this.consultationDate = consultationDate;
+        this.diagnosis = diagnosis;
 
         if (consultationId >= counter) {
             counter = consultationId + 1;
@@ -61,6 +64,9 @@ public class Consultation implements Comparable<Consultation> {
     public LocalDateTime getConsultationDate() {
         return consultationDate;
     }
+    public String getDiagnosis(){
+        return diagnosis;
+    }
 
     // Setters
     public void setPatientId(String patientId) {
@@ -81,6 +87,10 @@ public class Consultation implements Comparable<Consultation> {
 
     public void setConsultationDate(LocalDateTime date) {
         this.consultationDate = date;
+    }
+    
+    public void setDiagnosis(String diagnosis){
+        this.diagnosis = diagnosis;
     }
 
     // Comparison (for sorting by date)

@@ -12,6 +12,7 @@ import control.PatientControl;
 import control.TreatmentControl;
 import java.time.LocalDateTime;
 import utility.Validation;
+import utility.Report;
 
 public class TreatmentUI {
     private final TreatmentControl control;
@@ -45,6 +46,8 @@ public class TreatmentUI {
             System.out.println("4. Process Next Follow-Up");
             System.out.println("5. List All Treatments (Sorted)");
             System.out.println("6. View Overdue Bookings ");
+            System.out.println("7. Treatment Analysis Report");
+            System.out.println("8. Treatment Frequency Distribution Report");
             System.out.println("0. Exit");
             System.out.print("Enter choice: ");
 
@@ -58,6 +61,8 @@ public class TreatmentUI {
                     case 4 -> processFollowUp();
                     case 5 -> control.printAllTreatmentsSortedByDate();
                     case 6 -> control.printFollowUpQueue();
+                    case 7 -> analysisReport();
+                    case 8 -> frequencyDistributionReport();
                     case 0 -> System.out.println("Returning to main menu...");
                     default -> System.out.println("Invalid choice.");
                 }
@@ -72,9 +77,10 @@ public class TreatmentUI {
         System.out.println("\n=== Add New Treatment ===");
         System.out.println("Guided Medical Treatment Scheduling");
         System.out.println("->You will select patient, doctor, and treatment time.");
-        System.out.println("->Each treatment takes 2 hours");
-        System.out.println("->Only available doctors during working hours will be shown\n");
-
+        System.out.println("->Each treatment takes 2 hours.");
+        System.out.println("->Only available doctors during working hours will be shown.");
+        System.out.println("->Only diagnosed patients are selectable for treatment.\n");
+        
         // Pass control to BookingUI so treatment can be saved
         BookingUI bookingUI = new BookingUI(
             patientControl, doctorControl, consultations, treatments,
@@ -231,5 +237,175 @@ public class TreatmentUI {
         } else {
             System.out.println("No follow-up treatments in queue.");
         }
+    }
+    private void analysisReport() {
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm");
+        LocalDateTime now = LocalDateTime.now();
+        Report.printHeader("Treatment Analysis Report");
+
+        // Table formatting (shortened columns)
+        String line = "+---------------+--------------+-------------------+----------------+----------------+-------------------+--------------+";
+        String headerFormat = "| %-13s | %-12s | %-17s | %-14s | %-14s | %-17s | %-12s |%n";
+        String rowFormat    = "| %-13s | %-12s | %-17s | %-14s | %-14s | %-17s | %-12s |%n";
+
+        // Print header
+        System.out.println(line);
+        System.out.printf(headerFormat, 
+            "Treatment ID", "Patient ID", "Patient Name", "Diagnosis", "Prescription", "Date & Time", "Completed");
+        System.out.println(line);
+
+        ClinicADT.MyIterator<MedicalTreatment> iter = treatments.iterator();
+        while (iter.hasNext()) {
+            MedicalTreatment t = iter.next();
+
+            // Extract fields
+            String treatmentId   = String.valueOf(t.getTreatmentId());
+            String patientId     = t.getPatientId();
+            String patientName   = t.getPatientName();
+            String diagnosis     = t.getDiagnosis();
+            String prescription  = t.getPrescription();
+
+            // --- Shorten placeholder values ---
+            if ("to be diagnosed during appointment".equalsIgnoreCase(diagnosis)) {
+                diagnosis = "TBD";
+            }
+            if ("to be prescribed during appointment".equalsIgnoreCase(prescription)) {
+                prescription = "TBD";
+            }
+
+            String dateStr = t.getTreatmentDateTime().format(formatter);
+            String dateDisplay = t.getTreatmentDateTime().isAfter(now) 
+                    ? dateStr + " ▲"   // Mark upcoming treatments
+                    : dateStr;
+
+            // Completion handling
+            String completedDisplay = t.isCompleted()
+                    ? "Yes"
+                    : (t.getTreatmentDateTime().isBefore(now) ? "No (Overdue)" : "No");
+
+            // Print row
+            System.out.printf(rowFormat,
+                treatmentId,
+                patientId,
+                patientName,
+                diagnosis,
+                prescription,
+                dateDisplay,
+                completedDisplay);
+        }
+
+        System.out.println(line);
+        Report.printFooter();
+    }
+    private void frequencyDistributionReport() {
+        Report.printHeader("Treatment Frequency Distribution Report");
+
+        // --- Table formatting ---
+        String line = "+-------------------+------------+";
+        String headerFormat = "| %-17s | %-10s |%n";
+        String rowFormat    = "| %-17s | %-10d |%n";
+
+        // ================================
+        // Diagnosis Frequency Distribution
+        // ================================
+        System.out.println("\nDiagnosis Frequency Distribution:");
+        System.out.println(line);
+        System.out.printf(headerFormat, "Diagnosis", "Count");
+        System.out.println(line);
+
+        StringBuilder seenDiagnoses = new StringBuilder();
+        StringBuilder diagnosisBars = new StringBuilder(); // store chart
+
+        ClinicADT.MyIterator<MedicalTreatment> outer = treatments.iterator();
+        while (outer.hasNext()) {
+            MedicalTreatment t = outer.next();
+
+            String diagnosis = t.getDiagnosis();
+            if ("to be diagnosed during appointment".equalsIgnoreCase(diagnosis)) {
+                diagnosis = "TBD";
+            }
+
+            if (seenDiagnoses.toString().contains("|" + diagnosis + "|")) {
+                continue; // already counted
+            }
+
+            // Count occurrences
+            int count = 0;
+            ClinicADT.MyIterator<MedicalTreatment> inner = treatments.iterator();
+            while (inner.hasNext()) {
+                MedicalTreatment ti = inner.next();
+                String d = ti.getDiagnosis();
+                if ("to be diagnosed during appointment".equalsIgnoreCase(d)) {
+                    d = "TBD";
+                }
+                if (d.equalsIgnoreCase(diagnosis)) {
+                    count++;
+                }
+            }
+
+            seenDiagnoses.append("|").append(diagnosis).append("|");
+            System.out.printf(rowFormat, diagnosis, count);
+
+            // Add to bar chart
+            diagnosisBars.append(String.format("%-17s (%d) : %s%n", diagnosis, count, "*".repeat(count)));
+        }
+        System.out.println(line);
+
+        // ===================================
+        // Prescription Frequency Distribution
+        // ===================================
+        System.out.println("\nPrescription Frequency Distribution:");
+        System.out.println(line);
+        System.out.printf(headerFormat, "Prescription", "Count");
+        System.out.println(line);
+
+        StringBuilder seenPrescriptions = new StringBuilder();
+        StringBuilder prescriptionBars = new StringBuilder();
+
+        outer = treatments.iterator();
+        while (outer.hasNext()) {
+            MedicalTreatment t = outer.next();
+
+            String prescription = t.getPrescription();
+            if ("to be prescribed during appointment".equalsIgnoreCase(prescription)) {
+                prescription = "TBD";
+            }
+
+            if (seenPrescriptions.toString().contains("|" + prescription + "|")) {
+                continue; // already counted
+            }
+
+            // Count occurrences
+            int count = 0;
+            ClinicADT.MyIterator<MedicalTreatment> inner = treatments.iterator();
+            while (inner.hasNext()) {
+                MedicalTreatment ti = inner.next();
+                String p = ti.getPrescription();
+                if ("to be prescribed during appointment".equalsIgnoreCase(p)) {
+                    p = "TBD";
+                }
+                if (p.equalsIgnoreCase(prescription)) {
+                    count++;
+                }
+            }
+
+            seenPrescriptions.append("|").append(prescription).append("|");
+            System.out.printf(rowFormat, prescription, count);
+
+            // Add to bar chart
+            prescriptionBars.append(String.format("%-17s (%d) : %s%n", prescription, count, "*".repeat(count)));
+        }
+        System.out.println(line);
+
+        // =========================
+        // Bar Chart Displays
+        // =========================
+        System.out.println("\nDiagnosis Frequency Chart:");
+        System.out.println(diagnosisBars.toString());
+
+        System.out.println("Prescription Frequency Chart:");
+        System.out.println(prescriptionBars.toString());
+
+        Report.printFooter();
     }
 }

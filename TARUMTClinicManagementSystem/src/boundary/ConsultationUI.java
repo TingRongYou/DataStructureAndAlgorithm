@@ -9,10 +9,12 @@ import control.ConsultationControl;
 import control.DoctorControl;
 import control.PatientControl;
 import control.TreatmentControl;
+import utility.Report;
 
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.Scanner;
+
 
 public class ConsultationUI {
     private ConsultationControl consultationControl;
@@ -39,13 +41,14 @@ public class ConsultationUI {
             System.out.println("\n===== Consultation Management =====");
             System.out.println("1. Add Consultation");
             System.out.println("2. Remove Consultation");
-            System.out.println("3. List All Consultations");
-            System.out.println("4. Search by Patient");
-            System.out.println("5. Search by Doctor");
-            System.out.println("6. Display All (Sorted by Date)");
-            System.out.println("7. Show Total Consultation Count");
-            System.out.println("8. Check Doctor Availability for Date");
-            System.out.println("9. View Working Hours");
+            System.out.println("3. Process Consultation");
+            System.out.println("4. List All Consultations");
+            System.out.println("5. Search by Patient");
+            System.out.println("6. Search by Doctor");
+            System.out.println("7. Check Doctor Availability for Date");
+            System.out.println("8. View Working Hours");
+            System.out.println("9. Consultation Analysis Report(Sorted by Date)"); //replace for now, might switch to report
+            System.out.println("10. Consultation Frequency Distrbution Report");
             System.out.println("0. Exit");
             System.out.print("Choice: ");
 
@@ -55,13 +58,14 @@ public class ConsultationUI {
             switch (ch) {
                 case 1 -> addConsultation();
                 case 2 -> removeConsultation();
-                case 3 -> consultationControl.listConsultations();
-                case 4 -> searchByPatient();
-                case 5 -> searchByDoctor();
-                case 6 -> consultationControl.printConsultationsSortedByDate();
-                case 7 -> System.out.println("Total Consultations: " + consultationControl.getTotalConsultations());
-                case 8 -> checkDoctorAvailability();
-                case 9 -> showWorkingHours();
+                case 3 -> processConsultation();
+                case 4 -> consultationControl.listConsultations();
+                case 5 -> searchByPatient();
+                case 6 -> searchByDoctor();
+                case 7 -> checkDoctorAvailability();
+                case 8 -> showWorkingHours();
+                case 9 -> consultationsSortedByDate(); // switch to a report
+                case 10 -> frequencyDistributionReport();
                 case 0 -> {
                     System.out.println("Exiting Consultation Module...");
                     return;
@@ -110,6 +114,47 @@ public class ConsultationUI {
                 sc.nextLine(); // clear invalid input
             }
         }
+    }
+    
+    private void processConsultation(){
+        System.out.println("\n=== Process Consultation ===");
+
+        ClinicADT.MyIterator<Patient> patientIt = patientControl.getAllPatients().iterator();
+        if (!patientIt.hasNext()) {
+            System.out.println("No registered patients found.");
+            return;
+        }
+
+        // Display patients
+        System.out.println("+------------+----------------------+--------------+--------------+-----+--------+");
+        System.out.printf("| %-10s | %-20s | %-12s | %-12s | %-3s | %-6s |\n",
+                "Patient ID", "Name", "IC Number", "Phone", "Age", "Gender");
+        System.out.println("+------------+----------------------+--------------+--------------+-----+--------+");
+
+        while (patientIt.hasNext()) {
+            Patient p = patientIt.next();
+            System.out.printf("| %-10s | %-20s | %-12s | %-12s | %-3d | %-6s |\n",
+                    p.getId(), p.getName(), p.getIcNumber(), p.getContact(), p.getAge(), p.getGender());
+        }
+        System.out.println("+------------+----------------------+--------------+--------------+-----+--------+");
+
+        String patientId;
+        while (true) {
+            System.out.print("Enter Patient ID to process (or 0 to cancel): ");
+            patientId = sc.nextLine().trim();
+
+            if (patientId.equals("0")) {
+                System.out.println("Operation cancelled.");
+                return;
+            }
+
+            if (patientControl.getPatientById(patientId) == null) {
+                System.out.println("Patient ID not found. Please try again.");
+            } else {
+                break;
+            }
+        }
+        consultationControl.updateConsultation(patientId);
     }
 
     private void searchByPatient() {
@@ -289,5 +334,158 @@ public class ConsultationUI {
         System.out.println("    • Check doctor availability before scheduling.");
         System.out.println("    • Avoid time clashes with other bookings.");
         System.out.println("    • Doctor schedules vary by day.");
+    }
+    
+    public void consultationsSortedByDate(){
+            DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm");
+            LocalDateTime now = LocalDateTime.now();
+            Report.printHeader("Consultation Analysis Report");
+
+            // Table formatting
+            String line = "+-------------------+----------------------+-----------------+-----------------+---------------------------+---------------------+";
+            String headerFormat = "| %-17s | %-20s | %-15s | %-15s | %-25s | %-19s |%n";
+            String rowFormat    = "| %-17s | %-20s | %-15s | %-15s | %-25s | %-19s |%n";
+
+            // Print header
+            System.out.println(line);
+            System.out.printf(headerFormat, 
+                " Consultation ID", "Patient", "Doctor", "Doctor ID", "Diagnosis", "Date & Time");
+            System.out.println(line);
+
+            // Iterate through consultations
+            ClinicADT.MyIterator<Consultation> iterator = consultations.iterator();
+            while (iterator.hasNext()) {
+                Consultation c = iterator.next();
+
+                // Extract fields
+                String id          = String.valueOf(c.getId());
+                String patientName = c.getPatientName();
+                String doctorName  = c.getDoctorName();
+                String diagnosis   = c.getDiagnosis() != null ? c.getDiagnosis() : "N/A";
+                String doctorId    = c.getDoctorId();
+                String dateStr = c.getConsultationDate().format(formatter);
+
+                // Replace placeholder diagnosis
+                if ("To be diagnosed during appointment".equalsIgnoreCase(diagnosis)) {
+                    diagnosis = "TBD";
+                }
+
+                // Print row
+                System.out.printf(rowFormat,
+                    id,
+                    patientName,
+                    doctorName,
+                    doctorId,
+                    diagnosis,
+                    dateStr
+                );
+            }
+
+            System.out.println(line);
+            Report.printFooter();
+    }
+    
+    public void frequencyDistributionReport(){
+        Report.printHeader("Consultation Frequency Distribution Report");
+
+        // --- Table formatting ---
+        String line = "+-------------------+------------+";
+        String headerFormat = "| %-17s | %-10s |%n";
+        String rowFormat    = "| %-17s | %-10d |%n";
+
+        // ================================
+        // Diagnosis Frequency Distribution
+        // ================================
+        System.out.println("\nDiagnosis Frequency Distribution:");
+        System.out.println(line);
+        System.out.printf(headerFormat, "Diagnosis", "Count");
+        System.out.println(line);
+
+        StringBuilder seenDiagnoses = new StringBuilder();
+        StringBuilder diagnosisBars = new StringBuilder(); // store chart
+
+        ClinicADT.MyIterator<Consultation> outer = consultations.iterator();
+        while (outer.hasNext()) {
+            Consultation c = outer.next();
+
+            String diagnosis = c.getDiagnosis() != null ? c.getDiagnosis() : "N/A";
+            if ("to be diagnosed during appointment".equalsIgnoreCase(diagnosis)) {
+                diagnosis = "TBD";
+            }
+
+            // Skip if already counted
+            if (seenDiagnoses.toString().contains("|" + diagnosis + "|")) {
+                continue;
+            }
+
+            // Count occurrences
+            int count = 0;
+            ClinicADT.MyIterator<Consultation> inner = consultations.iterator();
+            while (inner.hasNext()) {
+                Consultation ci = inner.next();
+                String d = ci.getDiagnosis() != null ? ci.getDiagnosis() : "N/A";
+                if ("to be diagnosed during appointment".equalsIgnoreCase(d)) {
+                    d = "TBD";
+                }
+                if (d.equalsIgnoreCase(diagnosis)) {
+                    count++;
+                }
+            }
+
+            seenDiagnoses.append("|").append(diagnosis).append("|");
+            System.out.printf(rowFormat, diagnosis, count);
+
+            // Add to bar chart
+            diagnosisBars.append(String.format("%-17s (%d) : %s%n", diagnosis, count, "*".repeat(count)));
+        }
+        System.out.println(line);
+
+        // ================================
+        // Doctor Frequency Distribution
+        // ================================
+        System.out.println("\nDoctor Consultation Frequency:");
+        System.out.println(line);
+        System.out.printf(headerFormat, "Doctor", "Count");
+        System.out.println(line);
+
+        StringBuilder seenDoctors = new StringBuilder();
+        StringBuilder doctorBars = new StringBuilder();
+
+        outer = consultations.iterator();
+        while (outer.hasNext()) {
+            Consultation c = outer.next();
+
+            String doctor = c.getDoctorName();
+
+            if (seenDoctors.toString().contains("|" + doctor + "|")) {
+                continue; // already counted
+            }
+
+            int count = 0;
+            ClinicADT.MyIterator<Consultation> inner = consultations.iterator();
+            while (inner.hasNext()) {
+                Consultation ci = inner.next();
+                if (ci.getDoctorName().equalsIgnoreCase(doctor)) {
+                    count++;
+                }
+            }
+
+            seenDoctors.append("|").append(doctor).append("|");
+            System.out.printf(rowFormat, doctor, count);
+
+            doctorBars.append(String.format("%-17s (%d) : %s%n", doctor, count, "*".repeat(count)));
+        }
+        System.out.println(line);
+
+        // =========================
+        // Bar Chart Displays
+        // =========================
+        System.out.println("\nDiagnosis Frequency Chart:");
+        System.out.println(diagnosisBars.toString());
+
+        System.out.println("Doctor Consultation Frequency Chart:");
+        System.out.println(doctorBars.toString());
+
+        Report.printFooter();
     }
 }

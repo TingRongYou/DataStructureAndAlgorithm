@@ -256,7 +256,7 @@ public class DoctorControl {
                     writer.write("\n");
                 }
             }
-            System.out.println("Doctor data saved successfully");
+            System.out.println("Doctor data saved successfully to: " + filePath);
         } catch (IOException e) {
             System.out.println("Error writing to file: " + filePath + " - " + e.getMessage());
         }
@@ -383,5 +383,19 @@ public class DoctorControl {
 
     private void printDoctorTableFooter() {
         System.out.println("+------------+----------------+--------+------------+------------+------------------+--------------+");
+    }
+    
+    public int countDutySessions(Doctor doc) {
+        DutySchedule schedule = doc.getDutySchedule();
+        int dutyCount = 0;
+
+        for (DayOfWeek day : DayOfWeek.values()) {
+            Session session = schedule.getSessionForDay(day); // Use Session type
+            if (session != null && !session.toString().equalsIgnoreCase("OFF") && !session.toString().trim().isEmpty()) {
+                dutyCount++;
+            }
+        }
+
+        return dutyCount;
     }
 }

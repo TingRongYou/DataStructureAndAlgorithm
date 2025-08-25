@@ -7,6 +7,8 @@ import utility.Validation;
 import adt.ClinicADT;
 import java.time.DayOfWeek;
 import tarumtclinicmanagementsystem.Session;
+import tarumtclinicmanagementsystem.DutySchedule;
+import utility.Report;
 
 public class DoctorUI {
     private final DoctorControl doctorControl;
@@ -23,12 +25,14 @@ public class DoctorUI {
             System.out.println("\n=== Doctor Management Module ===");
             System.out.println("1. Add Doctor");
             System.out.println("2. Remove Doctor");
-            System.out.println("3. Display All Doctors");
-            System.out.println("4. View Doctor Schedule Table");
-            System.out.println("5. Update Doctor Schedule");
-            System.out.println("6. Show Doctor Count");
-            System.out.println("7. Display Doctors Sorted by Name");
-            System.out.println("8. Display Only Available Doctors");
+            //System.out.println("3. Display All Doctors");
+            System.out.println("3. View Doctor Schedule Table");
+            System.out.println("4. Update Doctor Schedule");
+            //System.out.println("6. Show Doctor Count");
+            System.out.println("5. Display Doctors Sorted by Name");
+            System.out.println("6. Display Only Available Doctors");
+            System.out.println("7. Doctors Workload Frequency Report");
+            System.out.println("8. Doctors Information Report");
             System.out.println("0. Exit");
             System.out.print("Choice: ");
 
@@ -42,12 +46,14 @@ public class DoctorUI {
             switch (choice) {
                 case 1 -> registerDoctor();
                 case 2 -> removeDoctor();
-                case 3 -> displayAllDoctors();
-                case 4 -> viewDoctorSchedule();
-                case 5 -> updateDoctorSchedule();
-                case 6 -> System.out.println("Total doctors: " + doctorControl.getDoctorCount());
-                case 7 -> doctorControl.printDoctorsSortedByName();
-                case 8 -> doctorControl.printAvailableDoctors();
+                //case 3 -> displayAllDoctors();
+                case 3 -> viewDoctorSchedule();
+                case 4 -> updateDoctorSchedule();
+                //case 6 -> System.out.println("Total doctors: " + doctorControl.getDoctorCount());
+                case 5 -> doctorControl.printDoctorsSortedByName();
+                case 6 -> doctorControl.printAvailableDoctors();
+                case 7 -> doctorWorkloadReport();
+                case 8 -> doctorInformationReport();
                 case 0 -> System.out.println("Exiting Doctor Management.");
                 default -> System.out.println("Invalid choice.");
             }
@@ -245,5 +251,190 @@ public class DoctorUI {
                 System.out.println("Doctor removed successfully.");
             }
         } while (!validDoctor);
+    }
+    
+    private void doctorWorkloadReport() {
+        Report.printHeader("Doctor Duty Frequency Report");
+
+        String line = "+------------------+--------------------+";
+        String headerFormat = "| %-16s | %-18s |%n";
+        String rowFormat    = "| %-16s | %-18d |%n";
+
+        System.out.println(line);
+        System.out.printf(headerFormat, "Doctor", "Duty Sessions/Week");
+        System.out.println(line);
+
+        int totalDuties = 0;
+        ClinicADT<Doctor> allDoctors = doctorControl.getAllDoctors();
+        ClinicADT.MyIterator<Doctor> it = allDoctors.iterator();
+
+        // First pass: print table and count total duties
+        while (it.hasNext()) {
+            Doctor doc = it.next();
+            DutySchedule schedule = doc.getDutySchedule();
+
+            int dutyCount = 0;
+
+            // Count duty sessions manually
+            Session s;
+
+            s = schedule.getSessionForDay(DayOfWeek.MONDAY);
+            if (s != null && !s.toString().equalsIgnoreCase("OFF") && !s.toString().equalsIgnoreCase("REST") && !s.toString().trim().isEmpty()) dutyCount++;
+
+            s = schedule.getSessionForDay(DayOfWeek.TUESDAY);
+            if (s != null && !s.toString().equalsIgnoreCase("OFF") && !s.toString().equalsIgnoreCase("REST") && !s.toString().trim().isEmpty()) dutyCount++;
+
+            s = schedule.getSessionForDay(DayOfWeek.WEDNESDAY);
+            if (s != null && !s.toString().equalsIgnoreCase("OFF") && !s.toString().equalsIgnoreCase("REST") && !s.toString().trim().isEmpty()) dutyCount++;
+
+            s = schedule.getSessionForDay(DayOfWeek.THURSDAY);
+            if (s != null && !s.toString().equalsIgnoreCase("OFF") && !s.toString().equalsIgnoreCase("REST") && !s.toString().trim().isEmpty()) dutyCount++;
+
+            s = schedule.getSessionForDay(DayOfWeek.FRIDAY);
+            if (s != null && !s.toString().equalsIgnoreCase("OFF") && !s.toString().equalsIgnoreCase("REST") && !s.toString().trim().isEmpty()) dutyCount++;
+
+            s = schedule.getSessionForDay(DayOfWeek.SATURDAY);
+            if (s != null && !s.toString().equalsIgnoreCase("OFF") && !s.toString().equalsIgnoreCase("REST") && !s.toString().trim().isEmpty()) dutyCount++;
+
+            s = schedule.getSessionForDay(DayOfWeek.SUNDAY);
+            if (s != null && !s.toString().equalsIgnoreCase("OFF") && !s.toString().equalsIgnoreCase("REST") && !s.toString().trim().isEmpty()) dutyCount++;
+
+            System.out.printf(rowFormat, doc.getName(), dutyCount);
+            totalDuties += dutyCount;
+        }
+
+        System.out.println(line);
+        System.out.printf("| %-16s | %-18d |%n", "TOTAL", totalDuties);
+        System.out.println(line);
+
+        // --- Print bar chart block ---
+        System.out.println("\nDuty Frequency by Day:");
+        System.out.println("+------------------+-----------------------------+");
+        System.out.println("| Doctor             Mon Tue Wed Thu Fri Sat Sun |");
+        System.out.println("+------------------+-----------------------------+");
+
+        // Reset iterator to print bars
+        it = allDoctors.iterator();
+        int monCount = 0, tueCount = 0, wedCount = 0, thuCount = 0, friCount = 0, satCount = 0, sunCount = 0;
+        while (it.hasNext()) {
+            Doctor doc = it.next();
+            DutySchedule schedule = doc.getDutySchedule();
+
+            System.out.printf("| %-18s", doc.getName());
+
+            // Monday
+            Session s = schedule.getSessionForDay(DayOfWeek.MONDAY);
+            if (s != null && !s.toString().equalsIgnoreCase("OFF") && !s.toString().equalsIgnoreCase("REST") && !s.toString().trim().isEmpty()) {
+                System.out.print("  * ");
+                monCount++;
+            } else {
+                System.out.print("    ");
+            }
+
+            // Tuesday
+            s = schedule.getSessionForDay(DayOfWeek.TUESDAY);
+            if (s != null && !s.toString().equalsIgnoreCase("OFF") && !s.toString().equalsIgnoreCase("REST") && !s.toString().trim().isEmpty()) {
+                System.out.print("  * ");
+                tueCount++;
+            } else {
+                System.out.print("    ");
+            }
+
+            // Wednesday
+            s = schedule.getSessionForDay(DayOfWeek.WEDNESDAY);
+            if (s != null && !s.toString().equalsIgnoreCase("OFF") && !s.toString().equalsIgnoreCase("REST") && !s.toString().trim().isEmpty()) {
+                System.out.print("  * ");
+                wedCount++;
+            } else {
+                System.out.print("    ");
+            }
+
+            // Thursday
+            s = schedule.getSessionForDay(DayOfWeek.THURSDAY);
+            if (s != null && !s.toString().equalsIgnoreCase("OFF") && !s.toString().equalsIgnoreCase("REST") && !s.toString().trim().isEmpty()) {
+                System.out.print("  * ");
+                thuCount++;
+            } else {
+                System.out.print("    ");
+            }
+
+            // Friday
+            s = schedule.getSessionForDay(DayOfWeek.FRIDAY);
+            if (s != null && !s.toString().equalsIgnoreCase("OFF") && !s.toString().equalsIgnoreCase("REST") && !s.toString().trim().isEmpty()) {
+                System.out.print("  * ");
+                friCount++;
+            } else {
+                System.out.print("    ");
+            }
+
+            // Saturday
+            s = schedule.getSessionForDay(DayOfWeek.SATURDAY);
+            if (s != null && !s.toString().equalsIgnoreCase("OFF") && !s.toString().equalsIgnoreCase("REST") && !s.toString().trim().isEmpty()) {
+                System.out.print("  * ");
+                satCount++;
+            } else {
+                System.out.print("    ");
+            }
+
+            // Sunday
+            s = schedule.getSessionForDay(DayOfWeek.SUNDAY);
+            if (s != null && !s.toString().equalsIgnoreCase("OFF") && !s.toString().equalsIgnoreCase("REST") && !s.toString().trim().isEmpty()) {
+                System.out.print("  * ");
+                sunCount++;
+            } else {
+                System.out.print("    ");
+            }
+
+            System.out.println(" |");
+        }
+
+        System.out.println("+------------------+-----------------------------+");
+        // Find max and min
+        int maxCount = monCount;
+        int minCount = monCount;
+
+        if (tueCount > maxCount) maxCount = tueCount;
+        if (wedCount > maxCount) maxCount = wedCount;
+        if (thuCount > maxCount) maxCount = thuCount;
+        if (friCount > maxCount) maxCount = friCount;
+        if (satCount > maxCount) maxCount = satCount;
+        if (sunCount > maxCount) maxCount = sunCount;
+
+        // Determine min
+        if (tueCount < minCount) minCount = tueCount;
+        if (wedCount < minCount) minCount = wedCount;
+        if (thuCount < minCount) minCount = thuCount;
+        if (friCount < minCount) minCount = friCount;
+        if (satCount < minCount) minCount = satCount;
+        if (sunCount < minCount) minCount = sunCount;
+
+        // Build day labels for max
+        String maxDays = "";
+        if (monCount == maxCount) maxDays += "Mon ";
+        if (tueCount == maxCount) maxDays += "Tue ";
+        if (wedCount == maxCount) maxDays += "Wed ";
+        if (thuCount == maxCount) maxDays += "Thu ";
+        if (friCount == maxCount) maxDays += "Fri ";
+        if (satCount == maxCount) maxDays += "Sat ";
+        if (sunCount == maxCount) maxDays += "Sun ";
+        
+        String minDays = "";
+        if (monCount == minCount) minDays += "Mon ";
+        if (tueCount == minCount) minDays += "Tue ";
+        if (wedCount == minCount) minDays += "Wed ";
+        if (thuCount == minCount) minDays += "Thu ";
+        if (friCount == minCount) minDays += "Fri ";
+        if (satCount == minCount) minDays += "Sat ";
+        if (sunCount == minCount) minDays += "Sun ";
+        System.out.println("\nDay(s) with Most Doctors: " + maxDays + " (" + maxCount + ")");
+        System.out.println("Day(s) with Least Doctors: " + minDays + " (" + minCount + ")");
+        
+        Report.printFooter();
+    }
+    
+    public void doctorInformationReport() {
+        Report.printHeader("Doctors Information Report");
+        displayAllDoctors();
+        Report.printFooter();
     }
 }
