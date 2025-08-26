@@ -44,6 +44,7 @@ public class BookingUI {
         patientControl.displayAllPatients();
         String patientId;
         Patient patient;
+        
         while(true){
             System.out.print("\nEnter Patient ID from the list (or 0 to cancel): ");
             patientId = scanner.nextLine().trim();
@@ -56,7 +57,9 @@ public class BookingUI {
 
             System.out.println("Patient not found. Please try again."); 
         }
-        if (!hasValidDiagnosis(patientId)) {
+        
+        // Only check for valid diagnosis when booking treatments, not consultations
+        if (!isConsultation && !hasValidDiagnosis(patientId)) {
             System.out.println("Cannot add treatment. Patient has no valid consultation diagnosis.");
             return;
         }
@@ -64,7 +67,6 @@ public class BookingUI {
         int duration = isConsultation ? CONSULTATION_DURATION : TREATMENT_DURATION;
         String serviceType = isConsultation ? "Consultation" : "Medical Treatment";
         
-
         LocalDate selectedDate = showCalendarAndSelectDate(duration);
         if (selectedDate == null) return;
 
@@ -91,8 +93,10 @@ public class BookingUI {
         while (iterator.hasNext()) {
             Consultation c = iterator.next();
             if (c.getPatientId().equalsIgnoreCase(patientId)) {
-                // if diagnosis is set and not N/A
-                if (c.getDiagnosis() != null && !c.getDiagnosis().equalsIgnoreCase("To be diagnosed during appointment")) {
+                // Check if diagnosis is set and not the default placeholder
+                if (c.getDiagnosis() != null && 
+                    !c.getDiagnosis().equalsIgnoreCase("To be diagnosed during appointment") &&
+                    !c.getDiagnosis().trim().isEmpty()) {
                     return true;
                 }
             }
@@ -177,9 +181,9 @@ public class BookingUI {
         ClinicADT.MyIterator<Doctor> doctorIter;
 
         for (int hour = 8; hour <= 22 - duration; hour++) {
-            if (hour == 12) continue;
+            if (hour == 12) continue; // Skip lunch hour
             LocalDateTime slotStart = LocalDateTime.of(date, LocalTime.of(hour, 0));
-            if (slotStart.isBefore(now)) continue;
+            if (slotStart.isBefore(now)) continue; // Skip past time slots
 
             doctorIter = doctorControl.getAllDoctors().iterator();
             while (doctorIter.hasNext()) {
@@ -215,11 +219,13 @@ public class BookingUI {
 
                 Slot selected = slotList.get(choice - 1);
 
-                // Check patient clashes
+                // Check patient time conflicts
                 if (isPatientTimeClash(patient.getId(), selected.time, duration)) {
                     System.out.println("Patient already has a consultation or treatment at this time.\n");
                     continue;
                 }
+                
+                // Create the appropriate appointment
                 if (isConsultation) {
                     consultationControl.addConsultation(
                         patient.getId(),
@@ -230,11 +236,12 @@ public class BookingUI {
                         "To be diagnosed during appointment"
                     );
                 } else {
+                    String diagnosis = getMostRecentDiagnosisByPatientId(patient.getId());
                     treatmentControl.addTreatment(new MedicalTreatment(
                         patient.getId(),
                         patient.getName(),
                         selected.doctor.getId(),
-                        getDiagnosisByPatientId(patient.getId()),   // have to link with and get from consultation's diagnosis
+                        diagnosis,
                         "To be prescribed during appointment",
                         selected.time,
                         false
@@ -249,35 +256,58 @@ public class BookingUI {
             }
         }
     }
-    public String getDiagnosisByPatientId(String patientId) {
+    
+    /**
+     * Gets the most recent valid diagnosis for a patient
+     * @param patientId The patient ID to search for
+     * @return The most recent diagnosis, or null if none found
+     */
+    public String getMostRecentDiagnosisByPatientId(String patientId) {
         String diagnosis = null;
+        LocalDateTime mostRecentDate = null;
 
         ClinicADT.MyIterator<Consultation> iterator = consultations.iterator();
         while (iterator.hasNext()) {
             Consultation c = iterator.next();
             if (c.getPatientId().equalsIgnoreCase(patientId)) {
-                diagnosis = c.getDiagnosis();
-                break; // stop after finding the first match
+                // Check if this consultation has a valid diagnosis
+                if (c.getDiagnosis() != null && 
+                    !c.getDiagnosis().equalsIgnoreCase("To be diagnosed during appointment") &&
+                    !c.getDiagnosis().trim().isEmpty()) {
+                    
+                    // Check if this is the most recent consultation
+                    if (mostRecentDate == null || c.getConsultationDate().isAfter(mostRecentDate)) {
+                        mostRecentDate = c.getConsultationDate();
+                        diagnosis = c.getDiagnosis();
+                    }
+                }
             }
         }
 
-        if (diagnosis != null) {
-            return diagnosis;
-        } else {
-            System.out.println("No diagnosis found for patient: " + patientId);
+        if (diagnosis == null) {
+            System.out.println("No valid diagnosis found for patient: " + patientId);
         }
+        
         return diagnosis;
     }
 
+    /**
+     * Legacy method for backward compatibility
+     * @deprecated Use getMostRecentDiagnosisByPatientId instead
+     */
+    @Deprecated
+    public String getDiagnosisByPatientId(String patientId) {
+        return getMostRecentDiagnosisByPatientId(patientId);
+    }
 
     private boolean hasAvailableSlots(LocalDate date, int duration) {
         LocalDateTime now = LocalDateTime.now();
         ClinicADT.MyIterator<Doctor> doctorIter;
 
         for (int hour = 8; hour <= 22 - duration; hour++) {
-            if (hour == 12) continue;
+            if (hour == 12) continue; // Skip lunch hour
             LocalDateTime slotStart = LocalDateTime.of(date, LocalTime.of(hour, 0));
-            if (slotStart.isBefore(now)) continue;
+            if (slotStart.isBefore(now)) continue; // Skip past time slots
 
             doctorIter = doctorControl.getAllDoctors().iterator();
             while (doctorIter.hasNext()) {
@@ -296,9 +326,9 @@ public class BookingUI {
         ClinicADT.MyIterator<Doctor> doctorIter;
 
         for (int hour = 8; hour <= 22 - duration; hour++) {
-            if (hour == 12) continue;
+            if (hour == 12) continue; // Skip lunch hour
             LocalDateTime slotStart = LocalDateTime.of(date, LocalTime.of(hour, 0));
-            if (slotStart.isBefore(now)) continue;
+            if (slotStart.isBefore(now)) continue; // Skip past time slots
 
             doctorIter = doctorControl.getAllDoctors().iterator();
             while (doctorIter.hasNext()) {
@@ -314,24 +344,30 @@ public class BookingUI {
     private boolean isPatientTimeClash(String patientId, LocalDateTime newStart, int duration) {
         LocalDateTime newEnd = newStart.plusHours(duration);
 
+        // Check for consultation conflicts
         ClinicADT.MyIterator<Consultation> itC = consultations.iterator();
         while (itC.hasNext()) {
             Consultation c = itC.next();
             if (c.getPatientId().equalsIgnoreCase(patientId)) {
                 LocalDateTime existingStart = c.getConsultationDate();
                 LocalDateTime existingEnd = existingStart.plusHours(CONSULTATION_DURATION);
+                
+                // Check for time overlap
                 if (newStart.isBefore(existingEnd) && newEnd.isAfter(existingStart)) {
                     return true;
                 }
             }
         }
 
+        // Check for treatment conflicts
         ClinicADT.MyIterator<MedicalTreatment> itT = treatments.iterator();
         while (itT.hasNext()) {
             MedicalTreatment t = itT.next();
             if (t.getPatientId().equalsIgnoreCase(patientId)) {
                 LocalDateTime existingStart = t.getTreatmentDateTime();
                 LocalDateTime existingEnd = existingStart.plusHours(TREATMENT_DURATION);
+                
+                // Check for time overlap
                 if (newStart.isBefore(existingEnd) && newEnd.isAfter(existingStart)) {
                     return true;
                 }

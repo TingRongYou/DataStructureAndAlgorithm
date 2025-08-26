@@ -318,64 +318,154 @@ public class ConsultationControl {
     }
     
     public void updateConsultation(String patientId) {
-        ClinicADT.MyIterator<Consultation> iterator = consultations.iterator();
-        boolean found = false;
-        Consultation consultationToProcess = null;
-
-        while (iterator.hasNext()) {
-            Consultation c = iterator.next();
-            if (c.getPatientId().equalsIgnoreCase(patientId)) {
-                found = true;
-                consultationToProcess = c;
-                System.out.println("+------------+----------------------+--------------+--------------+-----+--------+");
-                System.out.printf("| %-5d | %-8s | %-12s | %-12s | %-8s | %-16s | %-25s |\n",
-                        c.getId(),
-                        c.getPatientId(),
-                        c.getPatientName(),
-                        c.getDoctorName(),
-                        c.getDoctorId(),
-                        c.getConsultationDate(),
-                        c.getDiagnosis());
-                System.out.println("+------------+----------------------+--------------+--------------+-----+--------+");
+        // 1) Collect pending consultations for this patient
+        java.util.List<Consultation> pending = new java.util.ArrayList<>();
+        ClinicADT.MyIterator<Consultation> it = consultations.iterator();
+        while (it.hasNext()) {
+            Consultation c = it.next();
+            if (c.getPatientId() != null
+                    && c.getPatientId().trim().equalsIgnoreCase(patientId.trim())
+                    && isPending(c)) {
+                pending.add(c);
             }
         }
 
-        if (!found) {
-            System.out.println("No consultations found for patient ID: " + patientId);
+        // 2) Guard: none found
+        if (pending.isEmpty()) {
+            System.out.println("No unprocessed consultations found for this patient.");
+            System.out.println("Please book a consultation first.");
             return;
         }
 
-        System.out.println("\nTypes of Diagnosis");
-        System.out.println("1. Food Poisoning");
-        System.out.println("2. Common Cold");
-        System.out.println("3. COVID-19");
-        System.out.println("4. Dengue");
-        System.out.println("5. Allergies");
-        System.out.println("0. Cancel");
-        System.out.print("Enter Diagnosis: ");
+        // 3) Show a table for just these pending consultations
+        final String line =
+            "+------------+----------------------+--------------+--------------+---------------------+-------------------------------+";
+        final String headerFmt =
+            "| %-10s | %-20s | %-12s | %-12s | %-19s | %-29s |%n";
+        final String rowFmt =
+            "| %10d | %-20s | %-12s | %-12s | %-19s | %-29s |%n";
 
-        int ch = sc.nextInt();
-        sc.nextLine(); // consume newline
+        System.out.println("\nPending consultations for " + patientId + ":");
+        System.out.println(line);
+        System.out.printf(headerFmt, "Consult ID", "Patient", "Doctor", "Doctor ID", "Date & Time", "Diagnosis");
+        System.out.println(line);
 
-        switch (ch) {
-            case 1 -> consultationToProcess.setDiagnosis("Food Poisoning");
-            case 2 -> consultationToProcess.setDiagnosis("Common Cold");
-            case 3 -> consultationToProcess.setDiagnosis("COVID-19");
-            case 4 -> consultationToProcess.setDiagnosis("Dengue");
-            case 5 -> consultationToProcess.setDiagnosis("Allergies");
-            case 0 -> {
-                System.out.println("Operation cancelled");
+        DateTimeFormatter fmt = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm");
+        for (Consultation c : pending) {
+            String dateStr = (c.getConsultationDate() != null) ? c.getConsultationDate().format(fmt) : "N/A";
+            String diag    = (c.getDiagnosis() == null) ? "Pending" : c.getDiagnosis();
+            System.out.printf(rowFmt, c.getId(), c.getPatientName(), c.getDoctorName(),
+                              c.getDoctorId(), dateStr, diag);
+        }
+        System.out.println(line);
+
+        // 4) Let user choose which consultation to process
+        Integer chosenId = null;
+        while (true) {
+            System.out.print("Enter Consultation ID to process (or 0 to cancel): ");
+            String input = sc.nextLine().trim();
+            if (input.equals("0")) {
+                System.out.println("Operation cancelled.");
                 return;
             }
-            default -> {
-                System.out.println("Invalid choice. Please try again.");
-                return;
+            try {
+                int id = Integer.parseInt(input);
+                Consultation target = findPendingForPatientById(patientId, id);
+                if (target != null) {
+                    chosenId = id;
+                    break;
+                }
+                System.out.println("Consultation ID not found for this patient or already processed. Try again.");
+            } catch (NumberFormatException e) {
+                System.out.println("Please enter a valid numeric Consultation ID.");
             }
         }
 
+        // 5) Choose diagnosis (includes "Other (enter manually)" and free typing)
+        String diagnosis = chooseDiagnosisInteractive();
+        if (diagnosis == null) {
+            System.out.println("Operation cancelled.");
+            return;
+        }
+
+        // 6) Update the chosen consultation and persist
+        Consultation consultationToProcess = findPendingForPatientById(patientId, chosenId);
+        if (consultationToProcess == null) {
+            System.out.println("Consultation not found or already processed.");
+            return;
+        }
+
+        consultationToProcess.setDiagnosis(diagnosis);
         System.out.println("Diagnosis updated successfully!");
-        // overwrite existing record in file
-        saveConsultationToFile(consultationToProcess, false); 
+
+        // overwrite whole file with current in-memory list
+        saveConsultationToFile(consultationToProcess, false);
+    }
+
+    /** A consultation is pending if diagnosis is null/blank or equals the placeholder text. */
+    private boolean isPending(Consultation c) {
+        String d = (c.getDiagnosis() == null) ? "" : c.getDiagnosis().trim();
+        return d.isEmpty() || d.equalsIgnoreCase("Pending")
+               || d.equalsIgnoreCase("To be diagnosed during appointment");
+    }
+
+    /** Look up a pending consultation by id for the given patient. */
+    private Consultation findPendingForPatientById(String patientId, int consultationId) {
+        ClinicADT.MyIterator<Consultation> it = consultations.iterator();
+        while (it.hasNext()) {
+            Consultation c = it.next();
+            if (c.getId() == consultationId
+                    && c.getPatientId() != null
+                    && c.getPatientId().trim().equalsIgnoreCase(patientId.trim())
+                    && isPending(c)) {
+                return c;
+            }
+        }
+        return null;
+    }
+
+    /** Menu + manual entry; also accepts direct typed diagnosis text. Returns null if user cancels. */
+    private String chooseDiagnosisInteractive() {
+        final String[] commonDiagnoses = {
+            "Food Poisoning", "Common Cold", "COVID-19", "Dengue", "Allergies",
+            "Hypertension", "Diabetes", "Migraine", "Gastritis", "Bronchitis"
+        };
+
+        while (true) {
+            System.out.println("\nTypes of Diagnosis");
+            System.out.println("=========================");
+            for (int i = 0; i < commonDiagnoses.length; i++) {
+                System.out.printf("%2d. %s%n", i + 1, commonDiagnoses[i]);
+            }
+            System.out.printf("%2d. Other (enter manually)%n", commonDiagnoses.length + 1);
+            System.out.println(" 0. Cancel");
+
+            System.out.print("Enter Diagnosis: ");
+            String input = sc.nextLine().trim();
+
+            if (input.equals("0")) return null;
+
+            try {
+                int opt = Integer.parseInt(input);
+                if (opt >= 1 && opt <= commonDiagnoses.length) {
+                    return commonDiagnoses[opt - 1];
+                } else if (opt == commonDiagnoses.length + 1) {
+                    // Manual
+                    while (true) {
+                        System.out.print("Enter custom diagnosis: ");
+                        String custom = sc.nextLine().trim();
+                        if (!custom.isEmpty()) return custom;
+                        System.out.println("Diagnosis cannot be empty. Try again.");
+                    }
+                } else {
+                    System.out.println("Invalid option. Please choose 0–" + (commonDiagnoses.length + 1) + ".");
+                }
+            } catch (NumberFormatException e) {
+                // Treat as free-typed diagnosis
+                if (!input.isEmpty()) return input;
+                System.out.println("Please enter a valid option or diagnosis text.");
+            }
+        }
     }
 
     private void saveConsultationToFile(Consultation consultation, boolean appendMode) {
