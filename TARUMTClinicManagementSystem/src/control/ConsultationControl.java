@@ -26,8 +26,8 @@ public class ConsultationControl {
     private ClinicADT<MedicalTreatment> treatments;
     private String consultationFilePath = "src/textFile/consultations.txt";
 
-    // === Waiting queue of pending consultation IDs (FIFO) ===
-    private final java.util.Deque<Integer> waitingQueue = new java.util.ArrayDeque<>();
+    // === Waiting queue of pending consultation IDs (ordered by nearest to now) ===
+    private final MyClinicADT<Integer> waitingQueue = new MyClinicADT<>();
 
     // === The only consultation currently allowed to be processed ===
     private Integer currentCalledConsultationId = null;
@@ -47,8 +47,8 @@ public class ConsultationControl {
 
     // Consultation duration in hours
     private static final int CONSULTATION_DURATION = 1;
-    
-     // Holds processed consultation IDs like "|1|7|23|"
+
+    // Holds processed consultation IDs like "|1|7|23|"
     private String processedIdx = "|";
 
     public ConsultationControl(PatientControl patientControl, DoctorControl doctorControl,
@@ -89,14 +89,17 @@ public class ConsultationControl {
         return null;
     }
 
-    /** Call the next consultation in FIFO queue (does NOT delete patient). */
+    /** Call the next consultation based on the ordered queue (does NOT delete patient). */
     public boolean callNextFromQueue() {
         if (currentCalledConsultationId != null) {
             System.out.println("A patient is already called (Consultation ID: "
                     + currentCalledConsultationId + "). Finish processing first.");
             return false;
         }
-        Integer next = waitingQueue.pollFirst(); // pop head (FIFO)
+        // Ensure order is up-to-date before pulling next
+        rebuildWaitingQueueFromPending();
+
+        Integer next = waitingQueue.dequeue(); // closest to now
         if (next == null) {
             System.out.println("No pending consultations in the queue.");
             return false;
@@ -357,9 +360,9 @@ public class ConsultationControl {
         consultations.add(consultation);
         saveConsultationToFile(consultation, false);
         displayConsultationConfirmation(consultation);
-        if (isPending(consultation)) {
-            waitingQueue.addLast(consultation.getId());
-        }
+
+        // Rebuild the queue in "nearest to now" order
+        rebuildWaitingQueueFromPending();
     }
 
     private void displayConsultationConfirmation(Consultation consultation) {
@@ -388,21 +391,18 @@ public class ConsultationControl {
             return;
         }
 
-        // Find the *called* consultation
         Consultation consultationToProcess = findById(currentCalledConsultationId);
         if (consultationToProcess == null) {
             System.out.println("Internal error: called consultation not found.");
             currentCalledConsultationId = null; // clear bad state
             return;
         }
-        // Extra safety: ensure it's still pending
         if (!isPending(consultationToProcess)) {
             System.out.println("Called consultation is already processed.");
             currentCalledConsultationId = null;
             return;
         }
 
-        // Show the single called consultation (include Status)
         final String line =
                 "+------------+----------------------+--------------+--------------+---------------------+---------------------+";
         final String headerFmt =
@@ -426,21 +426,20 @@ public class ConsultationControl {
                 statusOf(consultationToProcess));
         System.out.println(line);
 
-        // Choose diagnosis (menu + manual, or free-typed)
         String diagnosis = chooseDiagnosisInteractive();
         if (diagnosis == null) {
             System.out.println("Operation cancelled.");
             return;
         }
 
-        // Update diagnosis
         consultationToProcess.setDiagnosis(diagnosis);
         System.out.println("Diagnosis updated successfully!");
 
-        // Persist entire list (overwrite)
         saveConsultationToFile(consultationToProcess, false);
 
-        // Clear the lock so next patient can be called
+        // Once diagnosis is set, it's no longer pending; rebuild queue order
+        rebuildWaitingQueueFromPending();
+
         currentCalledConsultationId = null;
     }
 
@@ -482,7 +481,6 @@ public class ConsultationControl {
                 if (opt >= 1 && opt <= commonDiagnoses.length) {
                     return commonDiagnoses[opt - 1];
                 } else if (opt == commonDiagnoses.length + 1) {
-                    // Manual
                     while (true) {
                         System.out.print("Enter custom diagnosis: ");
                         String custom = sc.nextLine().trim();
@@ -493,7 +491,6 @@ public class ConsultationControl {
                     System.out.println("Invalid option. Please choose 0–" + (commonDiagnoses.length + 1) + ".");
                 }
             } catch (NumberFormatException e) {
-                // Treat as free-typed diagnosis
                 if (!input.isEmpty()) return input;
                 System.out.println("Please enter a valid option or diagnosis text.");
             }
@@ -520,7 +517,6 @@ public class ConsultationControl {
                 }
 
             } else {
-                // Append single consultation
                 String line = String.format("%d,%s,%s,%s,%s,%s,%s%n",
                         consultation.getId(),
                         consultation.getPatientId(),
@@ -543,13 +539,13 @@ public class ConsultationControl {
                 Consultation removed = consultations.get(i);
                 consultations.remove(i);
                 System.out.println("Consultation removed: " + removed);
-                // also ensure it's not in queue or the current called
                 waitingQueue.remove(id);
                 if (currentCalledConsultationId != null && currentCalledConsultationId == id) {
                     currentCalledConsultationId = null;
                 }
-                // persist file after removal
                 saveConsultationToFile(null, false);
+                // Keep queue order consistent
+                rebuildWaitingQueueFromPending();
                 return true;
             }
         }
@@ -597,7 +593,6 @@ public class ConsultationControl {
     public void processPatient() {
         ClinicADT.MyIterator<Consultation> process = consultations.iterator();
         while (process.hasNext()) {
-            // placeholder
             process.next();
         }
     }
@@ -628,7 +623,6 @@ public class ConsultationControl {
             return;
         }
 
-        // Step 1: Display all doctors
         System.out.println("\n=== All Registered Doctors ===");
         System.out.println("+------------+----------------+--------+------------+------------+------------------+--------------+");
         System.out.printf("| %-10s | %-14s | %-6s | %-10s | %-10s | %-16s | %-12s |\n",
@@ -645,7 +639,6 @@ public class ConsultationControl {
         }
         System.out.println("+------------+----------------+--------+------------+------------+------------------+--------------+");
 
-        // Step 2: Prompt for Doctor ID
         Doctor doctor = null;
         String doctorId;
         while (true) {
@@ -665,7 +658,6 @@ public class ConsultationControl {
             }
         }
 
-        // Step 3: Search consultations
         ClinicADT<Consultation> found = new MyClinicADT<>();
         ClinicADT.MyIterator<Consultation> consultationIterator = consultations.iterator();
         while (consultationIterator.hasNext()) {
@@ -675,7 +667,6 @@ public class ConsultationControl {
             }
         }
 
-        // Step 4: Display results
         if (found.isEmpty()) {
             System.out.println("No consultations found for Dr. " + doctor.getName() + " (" + doctor.getId() + ").");
         } else {
@@ -722,7 +713,7 @@ public class ConsultationControl {
             System.out.println("Cannot check availability for past dates.");
             return;
         }
-        System.out.println("\n=== Doctor Availability for " + 
+        System.out.println("\n=== Doctor Availability for " +
             date.format(DateTimeFormatter.ofPattern("yyyy-MM-dd (EEEE)")) + " ===");
 
         displaySessionAvailability(date, Session.MORNING, "Morning Shift (08:00-12:00)");
@@ -776,7 +767,6 @@ public class ConsultationControl {
         return consultations;
     }
 
-    // Utility method to get consultation statistics
     public void displayConsultationStatistics() {
         System.out.println("\n=== Consultation Statistics ===");
         System.out.println("Total Consultations: " + consultations.size());
@@ -785,7 +775,7 @@ public class ConsultationControl {
             System.out.println("No consultation data available.");
             return;
         }
-        
+
         int morningCount = 0, afternoonCount = 0, nightCount = 0;
         ClinicADT.MyIterator<Consultation> iterator = consultations.iterator();
         while (iterator.hasNext()) {
@@ -856,10 +846,10 @@ public class ConsultationControl {
                 }
             }
         }
-        
+
         return (consultationCount > 0 || treatmentCount > 0);
     }
-    
+
     public void loadConsultationsFromFile() {
         consultations.clear();
         try (BufferedReader br = new BufferedReader(new FileReader(consultationFilePath))) {
@@ -896,25 +886,70 @@ public class ConsultationControl {
             System.out.println("Error loading consultations: " + e.getMessage());
         }
     }
-    
+
+    /**
+     * Rebuild the waiting queue so that pending consultations are ordered by
+     * the absolute time distance from NOW (nearest first).
+     * Ties -> earlier date-time first; final tie -> smaller ID first.
+     */
     private void rebuildWaitingQueueFromPending() {
         waitingQueue.clear();
-        ClinicADT.MyIterator<Consultation> it = consultations.iterator();
-        while (it.hasNext()) {
-            Consultation c = it.next();
+
+        // Count pending
+        int count = 0;
+        for (int i = 0; i < consultations.size(); i++) {
+            Consultation c = consultations.get(i);
+            if (isPending(c)) count++;
+        }
+        if (count == 0) return;
+
+        // Collect into arrays
+        int[] ids = new int[count];
+        LocalDateTime[] times = new LocalDateTime[count];
+        int idx = 0;
+        for (int i = 0; i < consultations.size(); i++) {
+            Consultation c = consultations.get(i);
             if (isPending(c)) {
-                waitingQueue.addLast(c.getId());
+                ids[idx] = c.getId();
+                times[idx] = c.getConsultationDate();
+                idx++;
             }
         }
+
+        // Selection-order by distance from now
+        boolean[] used = new boolean[count];
+        for (int k = 0; k < count; k++) {
+            int best = -1;
+            long bestDist = Long.MAX_VALUE;
+            LocalDateTime bestTime = null;
+            int bestId = Integer.MAX_VALUE;
+
+            for (int i = 0; i < count; i++) {
+                if (used[i]) continue;
+                long dist = Math.abs(java.time.Duration.between(LocalDateTime.now(), times[i]).toMinutes());
+                if (best == -1
+                        || dist < bestDist
+                        || (dist == bestDist && times[i].isBefore(bestTime))
+                        || (dist == bestDist && times[i].equals(bestTime) && ids[i] < bestId)) {
+                    best = i;
+                    bestDist = dist;
+                    bestTime = times[i];
+                    bestId = ids[i];
+                }
+            }
+
+            waitingQueue.enqueue(ids[best]);
+            used[best] = true;
+        }
     }
-    
+
     // Validation methods
     private boolean hasDoctorReachedDailyLimit(String doctorId, LocalDate date) {
         int count = 0;
         ClinicADT.MyIterator<Consultation> iterator = consultations.iterator();
         while (iterator.hasNext()) {
             Consultation c = iterator.next();
-            if (c.getDoctorId().equalsIgnoreCase(doctorId) && 
+            if (c.getDoctorId().equalsIgnoreCase(doctorId) &&
                 c.getConsultationDate().toLocalDate().equals(date)) {
                 count++;
                 if (count >= MAX_DAILY_CONSULTATIONS_PER_DOCTOR) {
@@ -924,15 +959,15 @@ public class ConsultationControl {
         }
         return false;
     }
-    
+
     private boolean hasPatientExceededFrequency(String patientId) {
         LocalDate oneWeekAgo = LocalDate.now().minusDays(7);
         int count = 0;
-        
+
         ClinicADT.MyIterator<Consultation> iterator = consultations.iterator();
         while (iterator.hasNext()) {
             Consultation c = iterator.next();
-            if (c.getPatientId().equalsIgnoreCase(patientId) && 
+            if (c.getPatientId().equalsIgnoreCase(patientId) &&
                 !c.getConsultationDate().toLocalDate().isBefore(oneWeekAgo)) {
                 count++;
                 if (count >= MAX_WEEKLY_CONSULTATIONS_PER_PATIENT) {
@@ -967,7 +1002,10 @@ public class ConsultationControl {
 
     /** Show the next patient in the FIFO queue without removing them. (Now shows Status) */
     public void viewNextPatientInQueue() {
-        Integer next = waitingQueue.peekFirst(); // just peek
+        // Keep it fresh
+        rebuildWaitingQueueFromPending();
+
+        Integer next = waitingQueue.peek();
         if (next == null) {
             System.out.println("No pending consultations in the queue.");
             return;
@@ -993,9 +1031,11 @@ public class ConsultationControl {
                           truncate(c.getDoctorName(),20), dt, statusOf(c));
         System.out.println(line);
     }
-    
-    /** Display all queued pending consultations in FIFO order (head first). (Now shows Status) */
+
+    /** Display all queued pending consultations in order of nearest-to-now. */
     public void displayQueuedPatients() {
+        rebuildWaitingQueueFromPending();
+
         if (waitingQueue.isEmpty()) {
             System.out.println("No pending consultations in the queue.");
             return;
@@ -1006,26 +1046,33 @@ public class ConsultationControl {
         final String rowFmt    = "| %3d | %12d | %-10s | %-20s | %-20s | %-19s | %-10s |%n";
         DateTimeFormatter fmt  = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm");
 
-        System.out.println("\nQueued patients (FIFO):");
+        System.out.println("\nQueued patients (nearest time first):");
         System.out.println(line);
         System.out.printf(headerFmt, "Consult ID", "PatientID", "Patient Name", "Doctor", "Date & Time", "Status");
         System.out.println(line);
 
         int pos = 1;
-        for (Integer id : waitingQueue) {
+        // ✅ use fully qualified nested interface
+        MyClinicADT.MyIterator<Integer> it = waitingQueue.iterator();
+
+        while (it.hasNext()) {
+            Integer id = it.next();
             Consultation c = findById(id);
+
             if (c == null) {
                 System.out.printf("| %3d | %12s | %-10s | %-20s | %-20s | %-19s | %-10s |%n",
                         pos++, "N/A", "N/A", "Unknown", "Unknown", "N/A", "PENDING");
                 continue;
             }
+
             String dt = (c.getConsultationDate() != null) ? c.getConsultationDate().format(fmt) : "N/A";
             System.out.printf(rowFmt, pos++, c.getId(), c.getPatientId(),
-                              truncate(c.getPatientName(),20), truncate(c.getDoctorName(),20), dt, statusOf(c));
+                              truncate(c.getPatientName(), 20), truncate(c.getDoctorName(), 20), dt, statusOf(c));
         }
+
         System.out.println(line);
     }
-    
+
     private boolean isMarkedProcessed(int id) {
         String key = "|" + id + "|";
         return processedIdx.indexOf(key) >= 0;
@@ -1036,42 +1083,29 @@ public class ConsultationControl {
             processedIdx += id + "|";
         }
     }
-    
-    // Add this method to ConsultationControl.java
 
-    /**
-     * Marks a consultation as processed (used for treatment creation)
-     * This prevents it from showing up in treatment booking lists
-     */
+    /** Marks a consultation as processed (used for treatment creation) */
     public void markConsultationAsProcessed(int consultationId) {
         markProcessed(consultationId);
-        // Save the updated state to file
         saveConsultationToFile(null, false);
+        rebuildWaitingQueueFromPending();
     }
 
-    /**
-     * Remove a consultation by ID (used when treatment is created from it)
-     */
+    /** Remove a consultation by ID (used when treatment is created from it) */
     public boolean removeProcessedConsultation(String patientId, String doctorId, LocalDateTime consultationDate) {
         for (int i = 0; i < consultations.size(); i++) {
             Consultation c = consultations.get(i);
-            if (c.getPatientId().equalsIgnoreCase(patientId) && 
+            if (c.getPatientId().equalsIgnoreCase(patientId) &&
                 c.getDoctorId().equalsIgnoreCase(doctorId) &&
                 c.getConsultationDate().equals(consultationDate)) {
 
-                // Remove from main list
                 consultations.remove(i);
-
-                // Remove from queue if present
                 waitingQueue.remove(c.getId());
-
-                // Clear current called if it's this consultation
                 if (currentCalledConsultationId != null && currentCalledConsultationId == c.getId()) {
                     currentCalledConsultationId = null;
                 }
-
-                // Save changes to file
                 saveConsultationToFile(null, false);
+                rebuildWaitingQueueFromPending();
 
                 System.out.println("Processed consultation removed: Patient " + c.getPatientName());
                 return true;
@@ -1080,9 +1114,7 @@ public class ConsultationControl {
         return false;
     }
 
-    /**
-     * Get only unprocessed consultations for a patient (for treatment booking)
-     */
+    /** Get only unprocessed consultations for a patient (for treatment booking) */
     public ClinicADT<Consultation> getUnprocessedConsultationsForPatient(String patientId) {
         ClinicADT<Consultation> result = new MyClinicADT<>();
 
@@ -1090,7 +1122,6 @@ public class ConsultationControl {
         while (iterator.hasNext()) {
             Consultation c = iterator.next();
             if (c.getPatientId().equalsIgnoreCase(patientId)) {
-                // Only include if it has a valid diagnosis but hasn't been used for treatment yet
                 if (hasValidDiagnosis(c) && !isMarkedProcessed(c.getId())) {
                     result.add(c);
                 }
@@ -1099,18 +1130,15 @@ public class ConsultationControl {
         return result;
     }
 
-    /**
-     * Check if a consultation has a valid diagnosis
-     */
     private boolean hasValidDiagnosis(Consultation c) {
         String diagnosis = c.getDiagnosis();
-        return diagnosis != null && 
+        return diagnosis != null &&
                !diagnosis.trim().isEmpty() &&
                !diagnosis.equalsIgnoreCase("To be diagnosed during appointment") &&
                !diagnosis.equalsIgnoreCase("Pending");
     }
-    
-    //List the patients who had finished the consultatio diagnosis
+
+    //List the patients who had finished the consultation diagnosis
     public void listConsultations(boolean onlyProcessed) {
         if (consultations.isEmpty()) {
             System.out.println("No consultations scheduled.");
@@ -1134,9 +1162,6 @@ public class ConsultationControl {
         while (it.hasNext()) {
             Consultation c = it.next();
 
-            // A consultation is processed if either:
-            //  - your existing status logic says so (!isPending(c)), OR
-            //  - we've marked it processed after creating a treatment.
             boolean processed = (!isPending(c)) || isMarkedProcessed(c.getId());
 
             if (onlyProcessed && !processed) continue;     // show only processed when requested

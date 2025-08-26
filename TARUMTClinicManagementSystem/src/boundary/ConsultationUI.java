@@ -469,15 +469,15 @@ public class ConsultationUI {
         System.out.println("+---------------------------------------------+");
         System.out.println();
         System.out.println("Important Information:");
-        System.out.println("• Each consultation is exactly 1 hour long");
-        System.out.println("• Consultations can only be scheduled during working hours");
-        System.out.println("• Only doctors on duty during that shift are available");
-        System.out.println("• 12:00 - 13:00 is lunch break (no appointments)");
+        System.out.println("-> Each consultation is exactly 1 hour long");
+        System.out.println("-> Consultations can only be scheduled during working hours");
+        System.out.println("-> Only doctors on duty during that shift are available");
+        System.out.println("-> 12:00 - 13:00 is lunch break (no appointments)");
         System.out.println();
         System.out.println("Tips for Booking:");
-        System.out.println("• Check doctor availability before scheduling");
-        System.out.println("• Avoid time conflicts with existing bookings");
-        System.out.println("• Doctor schedules may vary by day");
+        System.out.println("-> Check doctor availability before scheduling");
+        System.out.println("-> Avoid time conflicts with existing bookings");
+        System.out.println("-> Doctor schedules may vary by day");
     }
 
     public void consultationsSortedByDate() {

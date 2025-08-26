@@ -43,12 +43,18 @@ public class BookingUI {
         System.out.println("\nRegistered Patients:");
         String patientId;
         Patient patient;
-
-        if (isConsultation) {
+        
+        if (patientControl.getPatientCount() == 0) {   // ✅ check if empty
+                System.out.println("No patients available.");
+                return;
+        }
+        else {
+            if (isConsultation) {
             patientControl.printAllPatientsSortedByName();
-        } else {
-            // For treatments, show only patients with unprocessed diagnosed consultations
-            showPatientsWithUnprocessedConsultations();
+            } else {
+                // For treatments, show only patients with unprocessed diagnosed consultations
+                showPatientsWithUnprocessedConsultations();
+            }
         }
 
         while (true) {

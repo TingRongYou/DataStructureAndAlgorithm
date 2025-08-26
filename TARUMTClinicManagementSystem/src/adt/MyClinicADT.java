@@ -112,22 +112,63 @@ public class MyClinicADT<T> implements ClinicADT<T> {
         size = 0;
     }
 
-    // ---------------- Sorting ----------------
+    // ---------------- Merge Sort ----------------
     @Override
     public void sort(MyComparator<T> comparator) {
         if (comparator == null) throw new IllegalArgumentException("Comparator cannot be null");
-        for (int i = 0; i < size - 1; i++) {
-            boolean swapped = false;
-            for (int j = 0; j < size - i - 1; j++) {
-                T a = (T) data[j];
-                T b = (T) data[j + 1];
-                if (comparator.compare(a, b) > 0) {
-                    data[j] = b;
-                    data[j + 1] = a;
-                    swapped = true;
-                }
+        if (size > 1) {
+            mergeSort(0, size - 1, comparator);
+        }
+    }
+
+    @SuppressWarnings("unchecked")
+    private void mergeSort(int left, int right, MyComparator<T> comparator) {
+        if (left < right) {
+            int mid = (left + right) / 2;
+
+            // Recursively divide
+            mergeSort(left, mid, comparator);
+            mergeSort(mid + 1, right, comparator);
+
+            // Merge the sorted halves
+            merge(left, mid, right, comparator);
+        }
+    }
+
+    @SuppressWarnings("unchecked")
+    private void merge(int left, int mid, int right, MyComparator<T> comparator) {
+        // Sizes of the two subarrays
+        int n1 = mid - left + 1;
+        int n2 = right - mid;
+
+        // Temporary arrays
+        Object[] L = new Object[n1];
+        Object[] R = new Object[n2];
+
+        // Copy data into temp arrays
+        for (int i = 0; i < n1; i++)
+            L[i] = data[left + i];
+        for (int j = 0; j < n2; j++)
+            R[j] = data[mid + 1 + j];
+
+        // Merge the temp arrays back into data[]
+        int i = 0, j = 0, k = left;
+        while (i < n1 && j < n2) {
+            if (comparator.compare((T) L[i], (T) R[j]) <= 0) {
+                data[k++] = L[i++];
+            } else {
+                data[k++] = R[j++];
             }
-            if (!swapped) break;
+        }
+
+        // Copy remaining elements of L[]
+        while (i < n1) {
+            data[k++] = L[i++];
+        }
+
+        // Copy remaining elements of R[]
+        while (j < n2) {
+            data[k++] = R[j++];
         }
     }
 

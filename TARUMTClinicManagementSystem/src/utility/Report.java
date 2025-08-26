@@ -20,6 +20,7 @@ public class Report {
         String timestamp = LocalDateTime.now().format(formatter);
 
         // Print header with extra padding
+        System.out.println();
         System.out.println("=".repeat(WIDTH));
         System.out.println(centerText("", WIDTH)); // extra top padding
         System.out.println(centerText(university, WIDTH));
@@ -28,6 +29,7 @@ public class Report {
         System.out.println(centerText(title, WIDTH));
         System.out.println(centerText("", WIDTH)); // extra space after title
         System.out.println(centerText("Generated at: " + timestamp, WIDTH));
+        System.out.println();
         System.out.println("*".repeat(WIDTH));
         System.out.println();
     }
@@ -39,7 +41,6 @@ public class Report {
         System.out.println(centerText("END OF THE REPORT", WIDTH));
         System.out.println(centerText("", WIDTH)); // extra padding after footer text
         System.out.println("=".repeat(WIDTH));
-        System.out.println();
     }
 
     // Helper method to center text
