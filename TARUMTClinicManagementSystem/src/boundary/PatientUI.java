@@ -2,15 +2,12 @@ package boundary;
 
 import java.util.Scanner;
 import control.PatientControl;
-import entity.Patient;
 import utility.Validation;
 import utility.Report;
-import control.ConsultationControl;
 
 public class PatientUI {
     private final PatientControl control;
     private final Scanner scanner;
-    private ConsultationControl c;
 
     public PatientUI(PatientControl control) {
         this.control = control;
@@ -22,36 +19,30 @@ public class PatientUI {
         do {
             System.out.println("\n====== Patient Management ======");
             System.out.println("1. Register New Patient");
-            System.out.println("2. Call Next Patient");
-            System.out.println("3. View Next Patient in Queue");
-            System.out.println("4. Display All Patients (Queue Order)");
-            System.out.println("5. Show Patient Count");
-            System.out.println("6. View All Patients (Sorted by Name)");
-            System.out.println("7. Patient Age Frequency Distribution Report");
-            System.out.println("8. Patient Medical History Report");
+            System.out.println("2. Show Patient Count");
+            System.out.println("3. View All Patients (Sorted by Name)");
+            System.out.println("4. Patient Age Frequency Distribution Report");
+            System.out.println("5. Patient Medical History Report");
             System.out.println("0. Exit");
             System.out.print("Enter your choice: ");
 
             if (!scanner.hasNextInt()) {
-                System.out.println("Invalid input. Please enter a number.");
-                scanner.nextLine();
+                System.out.println("Invalid input. Please enter a number 0–6.");
+                scanner.nextLine(); // clear bad token
                 continue;
             }
-            
+
             choice = scanner.nextInt();
-            scanner.nextLine(); // Consume newline
+            scanner.nextLine(); // consume newline
 
             switch (choice) {
                 case 1 -> registerPatient();
-                case 2 -> control.callNextPatient();
-                case 3 -> control.viewNextPatient();
-                case 4 -> control.displayAllPatients();
-                case 5 -> System.out.println("Total patients in queue: " + control.getPatientCount());
-                case 6 -> control.printAllPatientsSortedByName();
-                case 7 -> ageDistributionReport();
-                case 8 -> control.medicalHistoryReport();
+                case 2 -> System.out.println("Total registered patients: " + control.getPatientCount());
+                case 3 -> control.printAllPatientsSortedByName();    // alphabetical
+                case 4 -> ageDistributionReport();
+                case 5 -> control.medicalHistoryReport();
                 case 0 -> System.out.println("Exiting Patient Management Module.");
-                default -> System.out.println("Invalid choice. Please try again.");
+                default -> System.out.println("Invalid choice. Please enter 0–6.");
             }
         } while (choice != 0);
     }
@@ -99,7 +90,7 @@ public class PatientUI {
         // ===== IC Number =====
         String icNumber;
         do {
-            System.out.print("Enter Malaysian IC Number (e.g., YYMMDD-XX-XXXX) (or 0 to cancel): ");
+            System.out.print("Enter Malaysian IC Number (YYMMDD-XX-XXXX) (or 0 to cancel): ");
             icNumber = scanner.nextLine().trim();
             if (icNumber.equals("0")) return;
 
@@ -128,7 +119,7 @@ public class PatientUI {
         // ===== Register =====
         control.registerPatient(name, age, gender, icNumber, contact);
     }
-    
+
     public void ageDistributionReport() {
         // --- Get counts from patientControl ---
         int pediatric  = control.countPediatric();    // 0–12
@@ -159,35 +150,26 @@ public class PatientUI {
         System.out.println(line);
 
         // --- Determine max and min ---
-        int maxCount = pediatric;
-        int minCount = pediatric;
+        int maxCount = Math.max(Math.max(pediatric, adolescent), Math.max(adult, geriatric));
+        int minCount = Math.min(Math.min(pediatric, adolescent), Math.min(adult, geriatric));
 
-        if (adolescent > maxCount) maxCount = adolescent;
-        if (adult > maxCount) maxCount = adult;
-        if (geriatric > maxCount) maxCount = geriatric;
+        StringBuilder maxGroups = new StringBuilder();
+        if (pediatric == maxCount)  maxGroups.append("Pediatric ");
+        if (adolescent == maxCount) maxGroups.append("Adolescent ");
+        if (adult == maxCount)      maxGroups.append("Adult ");
+        if (geriatric == maxCount)  maxGroups.append("Geriatric ");
 
-        if (adolescent < minCount) minCount = adolescent;
-        if (adult < minCount) minCount = adult;
-        if (geriatric < minCount) minCount = geriatric;
-
-        // --- Build group labels ---
-        String maxGroups = "";
-        if (pediatric == maxCount) maxGroups += "Pediatric ";
-        if (adolescent == maxCount) maxGroups += "Adolescent ";
-        if (adult == maxCount) maxGroups += "Adult ";
-        if (geriatric == maxCount) maxGroups += "Geriatric ";
-
-        String minGroups = "";
-        if (pediatric == minCount) minGroups += "Pediatric ";
-        if (adolescent == minCount) minGroups += "Adolescent ";
-        if (adult == minCount) minGroups += "Adult ";
-        if (geriatric == minCount) minGroups += "Geriatric ";
+        StringBuilder minGroups = new StringBuilder();
+        if (pediatric == minCount)  minGroups.append("Pediatric ");
+        if (adolescent == minCount) minGroups.append("Adolescent ");
+        if (adult == minCount)      minGroups.append("Adult ");
+        if (geriatric == minCount)  minGroups.append("Geriatric ");
 
         // --- Print summary ---
         System.out.println("\nGroup(s) with Most Patients: " + maxGroups + "(" + maxCount + ")");
         System.out.println("Group(s) with Least Patients: " + minGroups + "(" + minCount + ")");
-        
-        // --- Print bar chart with numeric count ---
+
+        // --- Bar chart (each * = 1 patient) ---
         System.out.println("\nPatient Distribution Chart (Each * = 1 patient):\n");
         System.out.printf("%-16s | %-3d | ", "Pediatric", pediatric);
         for (int i = 0; i < pediatric; i++) System.out.print("* ");
@@ -207,5 +189,4 @@ public class PatientUI {
         System.out.println("+----------------+-----+-----------------------------+");
         Report.printFooter();
     }
-
 }
