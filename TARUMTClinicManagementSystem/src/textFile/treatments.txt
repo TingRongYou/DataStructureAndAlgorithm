@@ -3,7 +3,7 @@
 3,P1005,John,D1001,no status,To be prescribed during appointment,2025-09-01 13:00,true
 4,P1005,John,D1001,no status,To be prescribed during appointment,2025-08-31 15:00,true
 5,P1005,John,D1000,no status,To be prescribed during appointment,2025-09-03 18:00,false
-6,P1005,John,D1001,no status,To be prescribed during appointment,2025-09-01 15:00,false
+6,P1005,John,D1001,no status,To be prescribed during appointment,2025-09-01 16:00,true
 7,P1005,John,D1000,no status,To be prescribed during appointment,2025-09-02 16:00,true
 8,P1005,John,D1001,no status,To be prescribed during appointment,2025-08-27 09:00,true
 9,P1004,Sariel,D1002,Common Cold,To be prescribed during appointment,2025-09-01 18:00,true
