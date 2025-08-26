@@ -256,7 +256,6 @@ public class DoctorControl {
                     writer.write("\n");
                 }
             }
-            System.out.println("Doctor data saved successfully to: " + filePath);
         } catch (IOException e) {
             System.out.println("Error writing to file: " + filePath + " - " + e.getMessage());
         }

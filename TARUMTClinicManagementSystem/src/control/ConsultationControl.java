@@ -440,19 +440,20 @@ public class ConsultationControl {
     }
 
     private void displayConsultationTable() {
-        String format = "| %-4s | %-20s | %-20s | %-20s | %-9s |\n";
-        String line = "+------+----------------------+----------------------+----------------------+-----------+";
+        String format = "| %-4s | %-12s | %-20s | %-20s | %-20s | %-9s |\n";
+        String line   = "+------+--------------+----------------------+----------------------+----------------------+-----------+";
 
         System.out.println(line);
-        System.out.printf(format, "ID", "Patient", "Doctor", "Date & Time", "Duration");
+        System.out.printf(format, "ID", "Patient ID", "Patient Name", "Doctor", "Date & Time", "Duration");
         System.out.println(line);
 
-        // FIX: Replaced for-loop with iterator
+        // Iterate through consultations
         ClinicADT.MyIterator<Consultation> iterator = consultations.iterator();
         while (iterator.hasNext()) {
             Consultation c = iterator.next();
             System.out.printf(format,
                     c.getId(),
+                    c.getPatientId(),
                     c.getPatientName(),
                     c.getDoctorName(),
                     c.getConsultationDate().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm")),
@@ -461,7 +462,7 @@ public class ConsultationControl {
 
         System.out.println(line);
     }
-    
+
     public void processPatient(){
         ClinicADT.MyIterator<Consultation> process = consultations.iterator();
         

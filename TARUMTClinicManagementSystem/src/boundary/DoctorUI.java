@@ -76,7 +76,7 @@ public class DoctorUI {
         // ===== Room Number (auto-assign if blank) =====
         int room = -1;
         do {
-            System.out.print("Enter Room Number (1–10) (press Enter to auto-assign, 0 to cancel): ");
+            System.out.print("Enter Room Number (1-10) (press Enter to auto-assign, 0 to cancel): ");
             String roomInput = scanner.nextLine().trim();
             if (roomInput.equals("0")) return;
             if (roomInput.isEmpty()) {

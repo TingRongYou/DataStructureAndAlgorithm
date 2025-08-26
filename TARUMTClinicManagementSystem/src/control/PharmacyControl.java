@@ -276,7 +276,7 @@ public class PharmacyControl {
         return medicineList.isEmpty();
     }
     
-    public void expirationReport() {
+   public void expirationReport() {
         Report.printHeader("=== Expiration Report ===");
 
         int expiredCount = 0;
@@ -306,38 +306,40 @@ public class PharmacyControl {
                     String name = parts[1].trim();
                     LocalDate expDate = LocalDate.parse(parts[5].trim());
 
-                    String category;
-                    if (expDate.isBefore(today)){
-                        category = "Expired";
+                    if (expDate.isBefore(today)) {
                         expiredCount++;
-                    } else if (!expDate.isAfter(sixMonthsLater)){
-                        category = "Within 6M";
+                    } else if (!expDate.isAfter(sixMonthsLater)) {
                         within6Count++;
                     } else {
-                        category = "After 6M";
                         after6Count++;
                     }
+
                     String shortId = id.length() > 3 ? id.substring(0, 3) : id;
-                    System.out.printf("| %-10s | %-20s | %-13s |%n", shortId, name, expDate, category);
+                    System.out.printf("| %-10s | %-20s | %-13s |%n", shortId, name, expDate);
                 }
             }
             System.out.println(border);
-        } catch (Exception e){
+
+        } catch (Exception e) {
             e.printStackTrace();
         }
-        // print summary report
+
+        // Print summary report
         System.out.println("\nSummary Frequency Bar Chart");
+        System.out.println("=============================");
         printBar("Expired   ", expiredCount);
-        printBar("WIthin 6M   ", within6Count);
-        printBar("After 6M   ", after6Count);
+        printBar("Within 6M ", within6Count);
+        printBar("After 6M  ", after6Count);
+
         Report.printFooter();
     }
 
-    private void printBar(String label, int count){
-        StringBuilder bar = new StringBuilder();
-        for (int i = 0; i < count; i++){
-            bar.append(" * ");
+    // Helper method: print stars only, no count
+    private void printBar(String label, int count) {
+        System.out.print(label + " : ");
+        for (int i = 0; i < count; i++) {
+            System.out.print("* ");
         }
-        System.out.printf("%-12s %s (%d)%n", label + ":", bar.toString(), count);
+        System.out.println();
     }
 }

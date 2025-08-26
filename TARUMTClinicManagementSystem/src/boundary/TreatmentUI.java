@@ -401,9 +401,11 @@ public class TreatmentUI {
         // Bar Chart Displays
         // =========================
         System.out.println("\nDiagnosis Frequency Chart:");
+        System.out.println("============================");
         System.out.println(diagnosisBars.toString());
 
         System.out.println("Prescription Frequency Chart:");
+        System.out.println("=============================");
         System.out.println(prescriptionBars.toString());
 
         Report.printFooter();

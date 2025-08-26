@@ -39,15 +39,15 @@ public class ConsultationUI {
     public void run() {
         while (true) {
             System.out.println("\n===== Consultation Management =====");
-            System.out.println("1. Add Consultation");
-            System.out.println("2. Remove Consultation");
-            System.out.println("3. Process Consultation");
-            System.out.println("4. List All Consultations");
-            System.out.println("5. Search by Patient");
-            System.out.println("6. Search by Doctor");
-            System.out.println("7. Check Doctor Availability for Date");
-            System.out.println("8. View Working Hours");
-            System.out.println("9. Consultation Analysis Report(Sorted by Date)"); //replace for now, might switch to report
+            System.out.println(" 1. Add Consultation");
+            System.out.println(" 2. Remove Consultation");
+            System.out.println(" 3. Process Consultation");
+            System.out.println(" 4. List All Consultations");
+            System.out.println(" 5. Search by Patient");
+            System.out.println(" 6. Search by Doctor");
+            System.out.println(" 7. Check Doctor Availability for Date");
+            System.out.println(" 8. View Working Hours");
+            System.out.println(" 9. Consultation Analysis Report(Sorted by Date)"); //replace for now, might switch to report
             System.out.println("10. Consultation Frequency Distrbution Report");
             System.out.println("0. Exit");
             System.out.print("Choice: ");
@@ -330,10 +330,10 @@ public class ConsultationUI {
         System.out.println("-> Each consultation is exactly 1 hour long.");
         System.out.println("-> Consultations can only be scheduled during working hours.");
         System.out.println("-> Only doctors on duty during that shift are available.\n");
-        System.out.println(" 💡 Tips:");
-        System.out.println("    • Check doctor availability before scheduling.");
-        System.out.println("    • Avoid time clashes with other bookings.");
-        System.out.println("    • Doctor schedules vary by day.");
+        System.out.println(" Tips:");
+        System.out.println("    -> Check doctor availability before scheduling.");
+        System.out.println("    -> Avoid time clashes with other bookings.");
+        System.out.println("    -> Doctor schedules vary by day.");
     }
     
     public void consultationsSortedByDate(){
@@ -481,9 +481,11 @@ public class ConsultationUI {
         // Bar Chart Displays
         // =========================
         System.out.println("\nDiagnosis Frequency Chart:");
+        System.out.println("============================");
         System.out.println(diagnosisBars.toString());
 
         System.out.println("Doctor Consultation Frequency Chart:");
+        System.out.println("====================================");
         System.out.println(doctorBars.toString());
 
         Report.printFooter();
