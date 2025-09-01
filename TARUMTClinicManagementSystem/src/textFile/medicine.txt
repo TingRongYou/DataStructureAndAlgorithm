@@ -1,5 +1,20 @@
-M1000,dwa,12,mg,2,2025-10-01
-M1000,dd,0,g,ff,2025-12-12
-M1001,ff,7,g,ff,2025-01-01
-M1002,optive fusion,5,g,5,2025-10-10
-M1003,dwad,12,g,12,2025-12-12
+M1,Optive Fusion,545,ml,sterilization,2027-10-10,50.50,OPHTHALMIC_EYE_DROP,5 drops/day
+M2,Insulin Injection,90,mg,injection,2026-10-10,50.00,INJECTION,1 unit/day
+M3,Panadol 500mg,100,tablet,fever,2026-10-10,50.00,ORAL_WITH_WATER,2 unit/day
+M4,Amoxicillin,200,capsule,antibiotic,2026-05-15,1.20,ORAL_AFTER_MEAL,1 capsule/8h
+M5,Loratadine,10,tablet,allergy relief,2027-03-20,0.80,ORAL_BEFORE_MEAL,1 tablet/day
+M6,Salbutamol Inhaler,10,inhaler,asthma,2026-08-12,25.00,INHALATION,2 puffs PRN
+M7,ORS Solution,240,sachet,dehydration,2027-01-01,2.50,ORAL_DISSOLVE_WATER,1 sachet/episode
+M8,Ibuprofen 200mg,120,tablet,pain relief,2026-07-07,0.60,ORAL_AFTER_MEAL,1 tablet/6h
+M9,Metformin,160,tablet,diabetes,2026-12-12,0.40,ORAL_AFTER_MEAL,1 tablet/12h
+M10,Amlodipine 5mg,35,tablet,hypertension,2026-09-30,0.55,ORAL_BEFORE_MEAL,1 tablet/day
+M11,Vitamin C 500mg,400,tablet,supplement,2028-01-15,0.20,ORAL_AFTER_MEAL,1 tablet/day
+M12,Zinc Sulfate,250,tablet,immune support,2027-06-25,0.35,ORAL_AFTER_MEAL,1 tablet/day
+M13,Hydrocortisone Cream,60,tube,skin infection,2026-04-18,12.00,TOPICAL_APPLY,2x/day thin layer
+M14,Paracetamol Syrup,75,bottle,fever (children),2026-11-05,8.50,ORAL_SYRUP,5ml/6h
+M15,Azithromycin,70,tablet,antibiotic,2026-08-15,2.10,ORAL_BEFORE_MEAL,1 tablet/day (3 days)
+M16,Naproxen 250mg,90,tablet,anti-inflammatory,2026-05-21,0.70,ORAL_AFTER_MEAL,1 tablet/12h
+M17,Montelukast,60,tablet,asthma/allergy,2027-01-10,1.50,ORAL_BEFORE_MEAL,1 tablet/night
+M18,Omeprazole,140,capsule,gastric acid,2026-12-31,0.45,ORAL_BEFORE_MEAL,1 capsule/day
+M19,Clarithromycin,100,tablet,respiratory infection,2026-06-11,1.80,ORAL_AFTER_MEAL,1 tablet/12h
+M20,Multivitamin Syrup,80,bottle,general supplement,2027-09-19,10.00,ORAL_SYRUP,10ml/day

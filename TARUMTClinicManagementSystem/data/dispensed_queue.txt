@@ -1,0 +1,3 @@
+P1001,Sunny,1005,M5,Loratadine,10,1 tablet/day,May cause drowsiness in some,0.80
+P1001,Sunny,1005,M5,Loratadine,5,1 tablet/day,May cause drowsiness in some,0.80
+P1000,John,1006,M5,Loratadine,5,1 tablet/day,May cause drowsiness in some,0.80

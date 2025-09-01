@@ -3,42 +3,114 @@ package control;
 import adt.ClinicADT;
 import adt.MyClinicADT;
 import entity.Medicine;
-import java.io.*;
-import java.time.LocalDate;
-import java.util.Scanner;
 import utility.Report;
 import utility.Validation;
 
+import java.io.*;
+import java.nio.charset.StandardCharsets;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
+import java.util.Scanner;
+
 public class PharmacyControl {
     private final ClinicADT<Medicine> medicineList = new MyClinicADT<>();
-    private final String medicineFilePath = "src/textFile/medicine.txt";
 
-    public PharmacyControl() {
-        loadFromFile();
+    // === DATA FILES ===
+    private final String medicineFilePath = "src/textFile/medicine.txt";
+    private final String dispenseLogPath = "src/textFile/dispense_log.txt";
+    private final String restockLogPath  = "src/textFile/restock_log.txt";
+
+    public PharmacyControl() { loadFromFile(); }
+
+    // === Fixed table format with consistent column widths ===
+    private static final String LINE =
+            "+-------+----------------------+----------+----------+------------+--------------------+---------------------------+----------------+";
+    private static final String ROWFMT =
+            "| %-5s | %-20s | %8s | %-8s | %10s | %-22s | %-25s | %-10s |";
+
+    // ---------- Centering wrappers ----------
+    private static void cLine(String s) { Report.cprintln(s); }
+    private static void cPrintf(String fmt, Object... args) { Report.cprintf(fmt, args); }
+
+    private void printHeader() {
+        cLine(LINE);
+        cPrintf(ROWFMT, "ID", "Name", "Quantity", "Unit", "Price(MYR)", "Usage", "Intake/Day", "Expiry");
+        cLine(LINE);
+    }
+
+    private void printLine() { cLine(LINE); }
+
+    private void printSingleMedicine(Medicine m) {
+        printHeader();
+        cLine(formatMedicineRow(m));
+        printLine();
+    }
+
+    // Helper method to format a single medicine row consistently
+    private String formatMedicineRow(Medicine m) {
+        return String.format(ROWFMT,
+                m.getId(),
+                fit(m.getName(), 20),
+                m.getQuantity(),
+                fit(m.getUnit(), 8),
+                String.format("%.2f", m.getPricePerUnit()),
+                fit(m.getUsage(), 22),
+                fit(m.getIntakeMeasurePerDay(), 25),
+                fit(m.getExpiration(), 10)
+        );
+    }
+
+    // ===== Billing/Payment table (reuse the same widths for alignment) =====
+    private static final String LINE_BILLING = LINE;
+    private static final String ROWFMT_BILLING = ROWFMT;
+
+    public void printBillingHeader() {
+        cLine(LINE_BILLING);
+        cPrintf(ROWFMT_BILLING, "ID", "Name", "Quantity", "Unit", "Price(MYR)", "Usage", "Intake/Day", "Expiry");
+        cLine(LINE_BILLING);
+    }
+
+    public void printBillingRow(Medicine m) {
+        cLine(formatMedicineRow(m));
+    }
+
+    public void printBillingTable() {
+        printBillingHeader();
+        ClinicADT.MyIterator<Medicine> it = medicineList.iterator();
+        while (it.hasNext()) printBillingRow(it.next());
+        cLine(LINE_BILLING);
     }
 
     // --- Add Medicine ---
     public void addMedicine(Medicine med) {
-        // Validation
         String nameError = Validation.validateMedicineName(med.getName());
-        String qtyError = Validation.validateMedicineQuantity(med.getQuantity());
+        String qtyError  = Validation.validateMedicineQuantity(med.getQuantity());
         String unitError = Validation.validateMedicineUnit(med.getUnit());
         String usageError = Validation.validateMedicineUsage(med.getUsage());
         String expirationError = Validation.validateMedicineExpiry(med.getExpiration());
+        String priceError = (med.getPricePerUnit() < 0) ? "Price per unit must be >= 0." : null;
+        String intakeMeasureError = (med.getIntakeMeasurePerDay() == null || med.getIntakeMeasurePerDay().isBlank())
+                ? "Intake measure per day is required." : null;
 
-        if (nameError != null || qtyError != null || unitError != null || usageError != null || expirationError != null) {
-            System.out.println("Failed to add medicine due to validation errors:");
-            if (nameError != null) System.out.println(" - " + nameError);
-            if (qtyError != null) System.out.println(" - " + qtyError);
-            if (unitError != null) System.out.println(" - " + unitError);
-            if (usageError != null) System.out.println(" - " + usageError);
-            if (expirationError != null) System.out.println(" - " + expirationError);
+        if (nameError != null || qtyError != null || unitError != null || usageError != null
+                || expirationError != null || priceError != null || intakeMeasureError != null) {
+            Report.cprintln("Failed to add medicine due to validation errors:");
+            if (nameError != null) Report.cprintln(" - " + nameError);
+            if (qtyError != null) Report.cprintln(" - " + qtyError);
+            if (unitError != null) Report.cprintln(" - " + unitError);
+            if (usageError != null) Report.cprintln(" - " + usageError);
+            if (expirationError != null) Report.cprintln(" - " + expirationError);
+            if (priceError != null) Report.cprintln(" - " + priceError);
+            if (intakeMeasureError != null) Report.cprintln(" - " + intakeMeasureError);
             return;
         }
 
         medicineList.add(med);
         saveToFile();
-        System.out.println("\nMedicine added successfully!\n");
+        Report.cprintln("");
+        Report.cprintln("Medicine added successfully!");
+        Report.cprintln("");
         printSingleMedicine(med);
     }
 
@@ -48,15 +120,19 @@ public class PharmacyControl {
         if (m != null) {
             String error = Validation.validateDispenseQuantity(m.getQuantity(), amount);
             if (error != null) {
-                System.out.println(error);
+                Report.cprintln(error);
                 return false;
             }
             m.setQuantity(m.getQuantity() - amount);
-            System.out.println(amount + " units of " + m.getName() + " dispensed.");
+            Report.cprintln(amount + " units of " + m.getName() + " dispensed.");
             saveToFile();
+            double unit = m.getPricePerUnit();
+            double total = unit * amount;
+            appendLog(dispenseLogPath, String.format("%s,%s,%s,%d,%.2f,%.2f",
+                    nowIso(), m.getId(), m.getName(), amount, unit, total));
             return true;
         } else {
-            System.out.println("Medicine not found.");
+            Report.cprintln("Medicine not found.");
         }
         return false;
     }
@@ -67,15 +143,18 @@ public class PharmacyControl {
         if (m != null) {
             String qtyError = Validation.validateMedicineQuantity(amount);
             if (qtyError != null) {
-                System.out.println(qtyError);
+                Report.cprintln(qtyError);
                 return false;
             }
-            m.setQuantity(m.getQuantity() + amount);
+            int before = m.getQuantity();
+            m.setQuantity(before + amount);
             System.out.println("Medicine restocked: " + amount + " added to " + m.getName());
             saveToFile();
+            appendLog(restockLogPath, String.format("%s,%s,%s,%d,%d",
+                    nowIso(), m.getId(), m.getName(), amount, m.getQuantity()));
             return true;
         }
-        System.out.println("Medicine not found.");
+        Report.cprintln("Medicine not found.");
         return false;
     }
 
@@ -86,33 +165,35 @@ public class PharmacyControl {
         while (it.hasNext()) {
             if (it.next().getId().equalsIgnoreCase(id)) {
                 medicineList.remove(index);
-                System.out.println("Medicine removed: " + id);
+                Report.cprintln("Medicine removed: " + id);
                 saveToFile();
                 return true;
             }
             index++;
         }
-        System.out.println("Medicine not found.");
+        Report.cprintln("Medicine not found.");
         return false;
     }
 
-    // --- Display All Stock ---
+    // --- Display All Stock (centered, no pagination) ---
     public void displayStock() {
         if (medicineList.isEmpty()) {
-            System.out.println("No medicines in stock.");
+            Report.cprintln("No medicines in stock.");
             return;
         }
+
         printHeader();
         ClinicADT.MyIterator<Medicine> it = medicineList.iterator();
         while (it.hasNext()) {
-            System.out.println(it.next());
+            Medicine m = it.next();
+            cLine(formatMedicineRow(m));
         }
         printLine();
     }
 
-    // --- Print Low Stock and Restock Prompt ---
+    // --- Print Low Stock and Restock Prompt (centered) ---
     public void printLowStockMedicines(int threshold, Scanner sc) {
-        System.out.println("\n=== Medicines Low In Stock (≤ " + threshold + ") ===");
+        Report.printHeader("Low Stock Report (≤ " + threshold + ")");
         boolean found = false;
         printHeader();
 
@@ -120,110 +201,290 @@ public class PharmacyControl {
         while (it.hasNext()) {
             Medicine m = it.next();
             if (m.getQuantity() <= threshold) {
-                System.out.println(m);
+                cLine(formatMedicineRow(m));
                 found = true;
             }
         }
 
         if (!found) {
-            System.out.println("|       All medicines are sufficiently stocked.       |");
+            cLine(String.format("| %-" + (LINE.length() - 4) + "s |",
+                    "All medicines are sufficiently stocked."));
             printLine();
+            Report.printFooter();
             return;
         }
 
         printLine();
-        System.out.print("\nDo you want to restock any medicine? (y/n): ");
+        Report.printFooter();
+
+        System.out.print(("Do you want to restock any medicine? (y/n): "));
         String ans = sc.nextLine().trim().toLowerCase();
         if (!ans.equals("y")) return;
 
-        System.out.print("Enter Medicine ID to restock: ");
+        System.out.print(Report.center("Enter Medicine ID to restock: "));
         String id = sc.nextLine().trim().toUpperCase();
         Medicine m = getMedicineById(id);
         if (m == null) {
-            System.out.println("Invalid Medicine ID.");
+            Report.cprintln("Invalid Medicine ID.");
             return;
         }
 
-        System.out.print("Enter quantity to add: ");
+        System.out.print(Report.center("Enter quantity to add: "));
         try {
             int qty = Integer.parseInt(sc.nextLine());
             String qtyError = Validation.validateMedicineQuantity(qty);
             if (qtyError == null) {
-                m.setQuantity(m.getQuantity() + qty);
-                saveToFile();
-                System.out.println(qty + " units added to " + m.getName() + ".");
+                restockMedicineById(id, qty);
             } else {
-                System.out.println(qtyError);
+                Report.cprintln(qtyError);
             }
         } catch (NumberFormatException e) {
-            System.out.println("Invalid quantity input.");
+            Report.cprintln("Invalid quantity input.");
         }
     }
 
-    // --- Print All Medicines Sorted by Name ---
-    public void printAllMedicinesSortedByName() {
+    // --- All Medicines Sorted by Name (centered) ---
+    public void printAllMedicinesSortedByNameReport() {
+        Report.printHeader("All Medicines (Sorted by Name)");
         if (medicineList.isEmpty()) {
-            System.out.println("No medicines available.");
+            Report.cprintln("No medicines available.");
+            Report.printFooter();
             return;
         }
 
+        // Copy into a working list
         ClinicADT<Medicine> sorted = new MyClinicADT<>();
         ClinicADT.MyIterator<Medicine> it = medicineList.iterator();
-        while (it.hasNext()) {
-            sorted.add(it.next());
-        }
+        while (it.hasNext()) sorted.add(it.next());
+        sorted.sort(new ClinicADT.MyComparator<Medicine>() {
+            @Override
+            public int compare(Medicine a, Medicine b) {
+                String x = (a == null || a.getName() == null) ? "" : a.getName().trim();
+                String y = (b == null || b.getName() == null) ? "" : b.getName().trim();
+                return x.compareToIgnoreCase(y);
+            }
+        });
 
-        // Bubble sort by name
-        for (int i = 0; i < sorted.size() - 1; i++) {
-            for (int j = 0; j < sorted.size() - 1 - i; j++) {
-                Medicine m1 = sorted.get(j);
-                Medicine m2 = sorted.get(j + 1);
-                if (m1.getName().compareToIgnoreCase(m2.getName()) > 0) {
-                    sorted.set(j, m2);
-                    sorted.set(j + 1, m1);
+        cLine(LINE);
+        cPrintf(ROWFMT, "ID", "Name", "Quantity", "Unit",
+                "Price(MYR)", "Usage", "Intake/Day", "Expiry");
+        cLine(LINE);
+
+        ClinicADT.MyIterator<Medicine> sortedIt = sorted.iterator();
+        while (sortedIt.hasNext()) {
+            cLine(formatMedicineRow(sortedIt.next()));
+        }
+        cLine(LINE);
+
+        Report.printFooter();
+    }
+
+    // --- Expiration Report ---
+    public void expirationReport() {
+        Report.printHeader("Expiration Report");
+
+        int expiredCount = 0;
+        int within6Count = 0;
+        int after6Count = 0;
+
+        LocalDate today = LocalDate.now();
+        LocalDate sixMonthsLater = today.plusMonths(6);
+
+        // Partition medicines into 3 groups
+        ClinicADT<Medicine> expiredMeds = new MyClinicADT<>();
+        ClinicADT<Medicine> within6Meds = new MyClinicADT<>();
+        ClinicADT<Medicine> after6Meds = new MyClinicADT<>();
+
+        ClinicADT.MyIterator<Medicine> it = medicineList.iterator();
+        while (it.hasNext()) {
+            Medicine m = it.next();
+            try {
+                LocalDate expDate = LocalDate.parse(m.getExpiration());
+
+                if (expDate.isBefore(today)) {
+                    expiredMeds.add(m); expiredCount++;
+                } else if (!expDate.isAfter(sixMonthsLater)) {
+                    within6Meds.add(m); within6Count++;
+                } else {
+                    after6Meds.add(m);  after6Count++;
                 }
+            } 
+            catch (Exception ignored) {
             }
         }
 
-        System.out.println("\n=== All Medicines (Sorted by Name) ===");
-        printHeader();
-        ClinicADT.MyIterator<Medicine> sortedIt = sorted.iterator();
-        while (sortedIt.hasNext()) {
-            System.out.println(sortedIt.next());
+        String border    = "+-------+----------------------+------------+";
+        String headerFmt = "| %-5s | %-20s | %-10s |";
+        String rowFmt    = "| %-5s | %-20s | %-10s |";
+
+        // Expired
+        Report.cprintln("");
+        Report.cprintln("[Expired Medicines]");
+        if (expiredCount > 0) {
+            cLine(border);
+            cPrintf(headerFmt, "ID", "Name", "Expiry");
+            cLine(border);
+            ClinicADT.MyIterator<Medicine> eit = expiredMeds.iterator();
+            while (eit.hasNext()) {
+                Medicine m = eit.next();
+                cLine(String.format(rowFmt, m.getId(), fit(m.getName(), 20), m.getExpiration()));
+            }
+            cLine(border);
+        } else {
+            Report.cprintln("No expired medicines found.");
         }
-        printLine();
+
+        // Within 6 months
+        Report.cprintln("");
+        Report.cprintln("[Medicines Expiring Within 6 Months]");
+        if (within6Count > 0) {
+            cLine(border);
+            cPrintf(headerFmt, "ID", "Name", "Expiry");
+            cLine(border);
+            ClinicADT.MyIterator<Medicine> wit = within6Meds.iterator();
+            while (wit.hasNext()) {
+                Medicine m = wit.next();
+                cLine(String.format(rowFmt, m.getId(), fit(m.getName(), 20), m.getExpiration()));
+            }
+            cLine(border);
+        } else {
+            Report.cprintln("No medicines expiring within 6 months.");
+        }
+
+        // After 6 months
+        Report.cprintln("");
+        Report.cprintln("[Medicines Expiring After 6 Months]");
+        if (after6Count > 0) {
+            cLine(border);
+            cPrintf(headerFmt, "ID", "Name", "Expiry");
+            cLine(border);
+            ClinicADT.MyIterator<Medicine> ait = after6Meds.iterator();
+            while (ait.hasNext()) {
+                Medicine m = ait.next();
+                cLine(String.format(rowFmt, m.getId(), fit(m.getName(), 20), m.getExpiration()));
+            }
+            cLine(border);
+        } else {
+            Report.cprintln("No medicines expiring after 6 months.");
+        }
+
+        // Summary chart
+        printSummaryChart(expiredCount, within6Count, after6Count);
+        Report.printFooter();
     }
 
-    // --- Helper Methods ---
-    private void printHeader() {
-        String format = "| %-5s | %-20s | %-8s | %-8s | %-8s | %-22s |%n";
-        String line = "+-------+----------------------+----------+----------+----------+------------------------+";
-        System.out.println(line);
-        System.out.printf(format, "ID", "Name", "Quantity", "Unit", "Usage", "Expiration Date");
-        System.out.println(line);
+    // --- Daily Dispense Report (for given date) ---
+    public void dailyDispenseReport(LocalDate date) {
+        Report.printHeader("Daily Dispense Report (" + date + ")");
+
+        double grandTotal = 0.0;
+
+        String border = "+--------------+----------+----------------------+--------+------------+------------+";
+        String rowFmt  = "| %-12s | %-8s | %-20s | %6s | %10s | %10s |";
+
+        cLine(border);
+        cPrintf(rowFmt, "Time", "ID", "Name", "Qty", "Unit(MYR)", "Total");
+        cLine(border);
+
+        try (BufferedReader br = new BufferedReader(new FileReader(dispenseLogPath))) {
+            String line;
+            while ((line = br.readLine()) != null) {
+                String[] p = line.split(",", -1);
+                if (p.length < 6) continue;
+
+                try {
+                    LocalDateTime ts = LocalDateTime.parse(p[0]);
+                    if (!ts.toLocalDate().equals(date)) continue;
+
+                    String timeStr = ts.toLocalTime().format(DateTimeFormatter.ofPattern("HH:mm:ss"));
+                    String id = p[1];
+                    String name = p[2];
+                    int qty = Integer.parseInt(p[3]);
+                    double unit = Double.parseDouble(p[4]);
+                    double total = Double.parseDouble(p[5]);
+
+                    grandTotal += total;
+
+                    cLine(String.format(rowFmt,
+                            timeStr, id, fit(name, 20), qty,
+                            String.format("%.2f", unit), String.format("%.2f", total)));
+                } 
+                catch (Exception ignored) {
+                }
+            }
+        } catch (IOException ignored) {}
+
+        cLine(border);
+        cLine(String.format(rowFmt, "Grand Total", "", "", "", "", String.format("%.2f", grandTotal)));
+        cLine(border);
+
+        Report.printFooter();
     }
 
-    private void printLine() {
-        System.out.println("+-------+----------------------+----------+----------+----------+------------------------+");
-    }
+    // --- Restock Report (last 14 days from today) ---
+    public void restockReportLast14Days() {
+        LocalDate end = LocalDate.now();
+        LocalDate start = end.minusDays(13);
 
-    private void printSingleMedicine(Medicine m) {
-        printHeader();
-        System.out.println(m);
-        printLine();
+        Report.printHeader("Restock Report (" + start + " to " + end + ")");
+
+        final String border = "+---------------------+----------+----------------------+--------+----------+";
+        final String rowFmt = "| %-19s | %-8s | %-20s | %6s | %8s |";
+        final DateTimeFormatter outTs = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
+
+        cLine(border);
+        cPrintf(rowFmt, "DateTime", "ID", "Name", "Added", "Balance");
+        cLine(border);
+
+        int totalAdded = 0;
+
+        try (BufferedReader br = new BufferedReader(new FileReader(restockLogPath))) {
+            String line;
+            while ((line = br.readLine()) != null) {
+                String[] p = line.split(",", -1);
+                if (p.length < 5) continue;
+
+                try {
+                    LocalDateTime ts = LocalDateTime.parse(p[0]);
+                    LocalDate d = ts.toLocalDate();
+                    if (d.isBefore(start) || d.isAfter(end)) continue;
+
+                    String id = p[1].trim();
+                    String name = p[2].trim();
+                    int added = safeInt(p[3]);
+                    int after = safeInt(p[4]);
+
+                    totalAdded += added;
+
+                    cLine(String.format(rowFmt,
+                            ts.format(outTs), id, fit(name, 20),
+                            String.valueOf(added), String.valueOf(after)));
+                } catch (Exception ignored) {
+                    // skip malformed row
+                }
+            }
+        } catch (IOException ignored) {}
+
+        cLine(border);
+        cLine(String.format(rowFmt, "", "", "Total Added", String.valueOf(totalAdded), ""));
+        cLine(border);
+
+        Report.printFooter();
     }
 
     // --- File Operations ---
     private void saveToFile() {
-        try (PrintWriter writer = new PrintWriter(new FileWriter(medicineFilePath))) {
+        ensureParentDir(medicineFilePath);
+        try (PrintWriter writer = new PrintWriter(new OutputStreamWriter(new FileOutputStream(medicineFilePath), StandardCharsets.UTF_8))) {
             ClinicADT.MyIterator<Medicine> it = medicineList.iterator();
             while (it.hasNext()) {
                 Medicine m = it.next();
-                writer.printf("%s,%s,%d,%s,%s,%s%n",
-                        m.getId(), m.getName(), m.getQuantity(), m.getUnit(), m.getUsage(), m.getExpiration());
+                writer.printf("%s,%s,%d,%s,%s,%s,%.2f,%s,%s%n",
+                        m.getId(), m.getName(), m.getQuantity(), m.getUnit(), m.getUsage(), m.getExpiration(),
+                        m.getPricePerUnit(), m.getIntakeMethod(), m.getIntakeMeasurePerDay());
             }
         } catch (IOException e) {
-            System.out.println("Error saving to file: " + e.getMessage());
+            Report.cprintln("Error saving to file: " + e.getMessage());
         }
     }
 
@@ -231,22 +492,41 @@ public class PharmacyControl {
         File file = new File(medicineFilePath);
         if (!file.exists()) return;
 
-        try (BufferedReader reader = new BufferedReader(new FileReader(file))) {
+        try (BufferedReader reader = new BufferedReader(new InputStreamReader(new FileInputStream(file), StandardCharsets.UTF_8))) {
             String line;
             while ((line = reader.readLine()) != null) {
                 String[] parts = line.split(",", -1);
-                if (parts.length == 6) {
+                if (parts.length >= 9) {
                     String id = parts[0].trim();
                     String name = parts[1].trim();
                     int qty = Integer.parseInt(parts[2].trim());
                     String unit = parts[3].trim();
                     String usage = parts[4].trim();
                     String expiration = parts[5].trim();
-                    medicineList.add(new Medicine(id, name, qty, unit, usage, expiration));
+                    double price = Double.parseDouble(parts[6].trim());
+                    String intakeMethod = parts[7].trim();
+                    String intakeMeasurePerDay = parts[8].trim();
+
+                    medicineList.add(new Medicine(id, name, qty, unit, usage, expiration,
+                            price, intakeMethod, intakeMeasurePerDay));
+                } else if (parts.length == 6) {
+                    String id = parts[0].trim();
+                    String name = parts[1].trim();
+                    int qty = Integer.parseInt(parts[2].trim());
+                    String unit = parts[3].trim();
+                    String usage = parts[4].trim();
+                    String expiration = parts[5].trim();
+
+                    double price = 0.0;
+                    String intakeMethod = "ORAL_AFTER_MEAL";
+                    String intakeMeasurePerDay = "1 unit/day";
+
+                    medicineList.add(new Medicine(id, name, qty, unit, usage, expiration,
+                            price, intakeMethod, intakeMeasurePerDay));
                 }
             }
         } catch (IOException | NumberFormatException e) {
-            System.out.println("Error loading from file: " + e.getMessage());
+            Report.cprintln("Error loading from file: " + e.getMessage());
         }
     }
 
@@ -260,86 +540,70 @@ public class PharmacyControl {
         return null;
     }
 
-    public ClinicADT<Medicine> getAllMedicines() {
-        return medicineList;
+    public ClinicADT<Medicine> getAllMedicines() { return medicineList; }
+    public Medicine getMedicineAt(int index) { return medicineList.get(index); }
+    public int getSize() { return medicineList.size(); }
+    public boolean isEmpty() { return medicineList.isEmpty(); }
+
+    // --- Summary chart (centered with aligned colons) ---
+    private void printSummaryChart(int expired, int within6, int after6) {
+        final String title = "Summary Frequency Bar Chart";
+        final String underline = "=".repeat(title.length());
+
+        Report.cprintln("");
+        Report.cprintln(title);
+        Report.cprintln(underline);
+
+        final int labelWidth = 10;   // width before colon
+        final int barMaxChars = 40;
+        final int rowTargetWidth = labelWidth + 2 + barMaxChars;
+
+        printSummaryRow("Expired",   expired,  labelWidth, barMaxChars, rowTargetWidth);
+        printSummaryRow("Within 6M", within6,  labelWidth, barMaxChars, rowTargetWidth);
+        printSummaryRow("After 6M",  after6,   labelWidth, barMaxChars, rowTargetWidth);
     }
 
-    public Medicine getMedicineAt(int index) {
-        return medicineList.get(index);
-    }
-
-    public int getSize() {
-        return medicineList.size();
-    }
-
-    public boolean isEmpty() {
-        return medicineList.isEmpty();
-    }
-    
-   public void expirationReport() {
-        Report.printHeader("=== Expiration Report ===");
-
-        int expiredCount = 0;
-        int within6Count = 0;
-        int after6Count = 0;
-
-        LocalDate today = LocalDate.now();
-        LocalDate sixMonthsLater = today.plusMonths(6);
-
-        try (BufferedReader reader = new BufferedReader(new FileReader(medicineFilePath))) {
-            String line;
-
-            // Table Header
-            String border = "+------------+----------------------+---------------+";
-            String header = String.format("| %-10s | %-20s | %-13s |", "ID", "Name", "Expiry");
-
-            // === Expired Medicines ===
-            System.out.println("\n[Expired Medicines]");
-            System.out.println(border);
-            System.out.println(header);
-            System.out.println(border);
-
-            while ((line = reader.readLine()) != null) {
-                String[] parts = line.split(",");
-                if (parts.length >= 6) {
-                    String id = parts[0].trim();
-                    String name = parts[1].trim();
-                    LocalDate expDate = LocalDate.parse(parts[5].trim());
-
-                    if (expDate.isBefore(today)) {
-                        expiredCount++;
-                    } else if (!expDate.isAfter(sixMonthsLater)) {
-                        within6Count++;
-                    } else {
-                        after6Count++;
-                    }
-
-                    String shortId = id.length() > 3 ? id.substring(0, 3) : id;
-                    System.out.printf("| %-10s | %-20s | %-13s |%n", shortId, name, expDate);
-                }
-            }
-            System.out.println(border);
-
-        } catch (Exception e) {
-            e.printStackTrace();
+    private void printSummaryRow(String label, int count, int labelWidth, int barMaxChars, int rowTargetWidth) {
+        String bars = "| ".repeat(Math.max(0, count));
+        if (bars.length() > barMaxChars) {
+            bars = bars.substring(0, Math.max(0, barMaxChars - 3)) + "...";
         }
-
-        // Print summary report
-        System.out.println("\nSummary Frequency Bar Chart");
-        System.out.println("=============================");
-        printBar("Expired   ", expiredCount);
-        printBar("Within 6M ", within6Count);
-        printBar("After 6M  ", after6Count);
-
-        Report.printFooter();
+        String left = String.format("%-" + labelWidth + "s : ", label);
+        String row  = left + bars;
+        if (row.length() < rowTargetWidth) {
+            row = row + " ".repeat(rowTargetWidth - row.length());
+        }
+        Report.cprintln(row);
     }
 
-    // Helper method: print stars only, no count
-    private void printBar(String label, int count) {
-        System.out.print(label + " : ");
-        for (int i = 0; i < count; i++) {
-            System.out.print("* ");
-        }
-        System.out.println();
+    // --- Misc helpers ---
+    private static void appendLog(String path, String line) {
+        ensureParentDir(path);
+        try (PrintWriter pw = new PrintWriter(new OutputStreamWriter(new FileOutputStream(path, true), StandardCharsets.UTF_8))) {
+            pw.println(line);
+        } catch (IOException ignored) {}
+    }
+
+    private static String nowIso() {
+        return LocalDateTime.now().format(DateTimeFormatter.ISO_LOCAL_DATE_TIME);
+    }
+
+    // Use ASCII "..." to keep consoles consistent across platforms
+    private static String fit(String s, int w) {
+        if (s == null) s = "";
+        if (s.length() <= w) return s;
+        return s.substring(0, Math.max(0, w - 3)) + "...";
+    }
+
+    private static int safeInt(String s) {
+        try { return Integer.parseInt(s.trim()); } catch (Exception e) { return 0; }
+    }
+
+    private static void ensureParentDir(String path) {
+        try {
+            File f = new File(path);
+            File dir = f.getParentFile();
+            if (dir != null && !dir.exists()) dir.mkdirs();
+        } catch (Exception ignored) {}
     }
 }

@@ -13,6 +13,7 @@ public class MedicalTreatment implements Comparable<MedicalTreatment> {
     private String prescription;
     private LocalDateTime treatmentDateTime;
     private boolean completed;
+    private int consultationId; 
 
     // Constructor for creating new treatments (auto ID)
     public MedicalTreatment(String patientId, String patientName, String doctorId,
@@ -26,6 +27,20 @@ public class MedicalTreatment implements Comparable<MedicalTreatment> {
         this.prescription = prescription;
         this.treatmentDateTime = treatmentDateTime;
         this.completed = completed;
+    }
+
+    public MedicalTreatment(int consultationId, String patientId, String patientName,
+                            String doctorId, String diagnosis, String prescription,
+                            LocalDateTime treatmentDateTime) {
+        this.treatmentId = counter++;
+        this.consultationId = consultationId;
+        this.patientId = patientId;
+        this.patientName = patientName;
+        this.doctorId = doctorId;
+        this.diagnosis = diagnosis;
+        this.prescription = prescription;
+        this.treatmentDateTime = treatmentDateTime;
+        this.completed = false;
     }
 
     // Constructor for loading from file (fixed ID)
@@ -55,6 +70,7 @@ public class MedicalTreatment implements Comparable<MedicalTreatment> {
     public String getDiagnosis() { return diagnosis; }
     public String getPrescription() { return prescription; }
     public LocalDateTime getTreatmentDateTime() { return treatmentDateTime; }
+    public int getConsultationId() { return consultationId; }
     public boolean isCompleted() { return completed; }
 
     // Setters
@@ -65,20 +81,19 @@ public class MedicalTreatment implements Comparable<MedicalTreatment> {
     public void setPrescription(String prescription) { this.prescription = prescription; }
     public void setTreatmentDateTime(LocalDateTime treatmentDateTime) { this.treatmentDateTime = treatmentDateTime; }
     public void setCompleted(boolean completed) { this.completed = completed; }
+    public void setConsultationId(int consultationId) { this.consultationId = consultationId; }
 
-    // Determine if a follow-up is needed:
-    // Follow-up required if treatment is not completed and the treatment date is more than 3 days ago
+    // Overdue = scheduled in the past and not completed
     public boolean isOverdue() {
         return !completed && treatmentDateTime.isBefore(LocalDateTime.now());
     }
 
-    // Compare treatments by treatmentDateTime for sorting
+    // Compare treatments by date/time for sorting
     @Override
     public int compareTo(MedicalTreatment other) {
         return this.treatmentDateTime.compareTo(other.getTreatmentDateTime());
     }
 
-    // String representation for display
     @Override
     public String toString() {
         DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm");

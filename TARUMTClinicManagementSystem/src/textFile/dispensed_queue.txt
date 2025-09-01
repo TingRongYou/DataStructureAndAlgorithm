@@ -1,0 +1,12 @@
+1,P1001,Sunny,1001,M5,Loratadine,5,1 tablet/day,May cause drowsiness in some,0.80,DISPENSED
+2,P1001,Sunny,1000,M9,Metformin,10,1 tablet  2x/day,After meal; monitor glucose,0.40,DISPENSED
+3,P1000,John,1000,M5,Loratadine,2,1 tablet/day,May cause drowsiness in some,0.80,DISPENSED
+4,P1001,Sunny,1001,M3,Panadol 500mg,10,1 tablet  3x/day,Symptomatic relief; isolate & test,50.00,DISPENSED
+5,P1000,John,1002,M3,Panadol 500mg,10,1 tablet  3x/day,After meal  3-5 days; rest & fluids,50.00,DISPENSED
+31,P1001,Sunny,1004,M3,Panadol 500mg,4,1 tablet  3x/day,Symptomatic relief; isolate & test,50.00,DISPENSED
+44,P1001,Sunny,1005,M3,Panadol 500mg,2,1 tablet  3x/day,Symptomatic relief; isolate & test,50.00,DISPENSED
+8,P1002,john papa,1007,M3,Panadol 500mg,2,1 tablet  3x/day,After meal  3-5 days; rest & fluids,50.00,DISPENSED
+9,P1002,john papa,1008,M5,Loratadine,2,1 tablet/day,May cause drowsiness in some,0.80,DISPENSED
+10,P1002,john papa,1009,M20,Multivitamin Syrup,20,dd,dd,10.00,DISPENSED
+11,P1001,Sunny,1010,M1,Optive Fusion,5,skssks,ssssss,50.50,DISPENSED
+12,P1001,Sunny,1012,M15,Azithromycin,10,ffccc,feef,2.10,DISPENSED

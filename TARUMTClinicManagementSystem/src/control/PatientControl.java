@@ -105,7 +105,7 @@ public class PatientControl {
                 + "-".repeat(COL_IC + 2) + "+"
                 + "-".repeat(COL_CONTACT + 2) + "+";
 
-        System.out.println("\nPatients Sorted by Name:");
+        Report.cprintln("====== Patients Sorted by Name ======");
         System.out.println(separator);
         System.out.printf("| %-" + COL_NO + "s | %-" + COL_ID + "s | %-" + COL_NAME + "s | %-" + COL_AGE + "s | %-" + COL_GENDER + "s | %-" + COL_IC + "s | %-" + COL_CONTACT + "s |%n",
                 "No.", "ID", "Name", "Age", "Gender", "IC Number", "Contact");

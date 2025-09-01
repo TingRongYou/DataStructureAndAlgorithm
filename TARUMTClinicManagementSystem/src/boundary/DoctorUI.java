@@ -1,16 +1,24 @@
 package boundary;
 
 import java.util.Scanner;
-import entity.Doctor;
-import control.DoctorControl;
-import utility.Validation;
+
 import adt.ClinicADT;
-import java.time.DayOfWeek;
-import tarumtclinicmanagementsystem.Session;
+import control.DoctorControl;
+import entity.Doctor;
 import tarumtclinicmanagementsystem.DutySchedule;
+import tarumtclinicmanagementsystem.Session;
 import utility.Report;
+import utility.Validation;
 
 public class DoctorUI {
+    // =========================
+    // ======= CONSTANTS =======
+    // =========================
+    private static final int MAX_ROOMS = 10;
+
+    // =========================
+    // ====== DEPENDENCIES =====
+    // =========================
     private final DoctorControl doctorControl;
     private final Scanner scanner;
 
@@ -19,134 +27,274 @@ public class DoctorUI {
         this.scanner = new Scanner(System.in);
     }
 
+    // =========================
+    // ========= MENU ==========
+    // =========================
     public void run() {
-        int choice;
-        do {
-            System.out.println("\n=== Doctor Management Module ===");
+        while (true) {
+            System.out.println("\n" + "=".repeat(60));
+            System.out.println("             TARUMT CLINIC DOCTOR MANAGEMENT");
+            System.out.println("=".repeat(60));
             System.out.println("1. Add Doctor");
             System.out.println("2. Remove Doctor");
-            //System.out.println("3. Display All Doctors");
-            System.out.println("3. View Doctor Schedule Table");
+            System.out.println("3. View Doctor Schedule Table"); // Include this
             System.out.println("4. Update Doctor Schedule");
-            //System.out.println("6. Show Doctor Count");
             System.out.println("5. Display Doctors Sorted by Name");
             System.out.println("6. Display Only Available Doctors");
-            System.out.println("7. Doctors Workload Frequency Report");
-            System.out.println("8. Doctors Information Report");
+            System.out.println("7. Generate Report");
             System.out.println("0. Exit");
-            System.out.print("Choice: ");
 
-            while (!scanner.hasNextInt()) {
-                System.out.print("Invalid input. Please enter a number: ");
-                scanner.next();
-            }
-            choice = scanner.nextInt();
-            scanner.nextLine();
-
+            int choice = readInt("Choice: ");
             switch (choice) {
                 case 1 -> registerDoctor();
                 case 2 -> removeDoctor();
-                //case 3 -> displayAllDoctors();
                 case 3 -> viewDoctorSchedule();
                 case 4 -> updateDoctorSchedule();
-                //case 6 -> System.out.println("Total doctors: " + doctorControl.getDoctorCount());
-                case 5 -> doctorControl.printDoctorsSortedByName();
-                case 6 -> doctorControl.printAvailableDoctors();
-                case 7 -> doctorWorkloadReport();
-                case 8 -> doctorInformationReport();
-                case 0 -> System.out.println("Exiting Doctor Management.");
+                case 5 -> doctorControl.printDoctorsSortedByName();  // ADT sort inside control
+                case 6 -> doctorControl.printAvailableDoctors();     // ADT filter inside control
+                case 7 -> generateReport();
+                case 0 -> { System.out.println("Exiting Doctor Management."); return; }
                 default -> System.out.println("Invalid choice.");
             }
-        } while (choice != 0);
+        }
+    }
+    
+   public void doctorDoctorMenu() {
+        while (true) {
+            System.out.println("\n" + "=".repeat(60));
+            System.out.println("              DOCTOR - DOCTORS");
+            System.out.println("=".repeat(60));
+            System.out.println(" 1) View Doctor Schedule Table");
+            System.out.println(" 2) Update My Schedule");
+            System.out.println(" 3) Display Doctors Sorted by Name");
+            System.out.println(" 4) Display Only Available Doctors");
+            System.out.println(" 0) Back");
+            int choice = readInt("Choice: ");
+            switch (choice) {
+                case 1 -> viewDoctorSchedule();
+                case 2 -> updateDoctorSchedule();
+                case 3 -> doctorControl.printDoctorsSortedByName();
+                case 4 -> doctorControl.printAvailableDoctors();
+                case 0 -> { System.out.println("Returning..."); return; }
+                default -> System.out.println("Invalid choice.");
+            }
+        }
     }
 
+    public void adminDoctorMenu() {
+    while (true) {
+        System.out.println("\n" + "=".repeat(60));
+        System.out.println("               ADMIN - DOCTORS");
+        System.out.println("=".repeat(60));
+        System.out.println(" 1) Add Doctor");
+        System.out.println(" 2) Remove Doctor");
+        System.out.println(" 3) View Doctor Schedule Table");
+        System.out.println(" 4) Update Doctor Schedule");
+        System.out.println(" 5) Display Doctors Sorted by Name");
+        System.out.println(" 6) Display Only Available Doctors");
+        System.out.println(" 7) Generate Report");
+        System.out.println(" 0) Back");
+        int choice = readInt("Choice: ");
+        switch (choice) {
+            case 1 -> registerDoctor();
+            case 2 -> removeDoctor();
+            case 3 -> viewDoctorSchedule();
+            case 4 -> updateDoctorSchedule();
+            case 5 -> doctorControl.printDoctorsSortedByName();
+            case 6 -> doctorControl.printAvailableDoctors();
+            case 7 -> generateReport();
+            case 0 -> { System.out.println("Returning..."); return; }
+            default -> System.out.println("Invalid choice.");
+        }
+    }
+}
+    
+    
+
+    // =========================
+    // ======= REPORT HUB ======
+    // =========================
+    private void generateReport() {
+        while (true) {
+            System.out.println("\n=== Generate Report ===");
+            System.out.println("1. Doctors Workload Frequency Report");
+            System.out.println("2. Doctors Information Report");
+            System.out.println("3. Doctors Room Allocation Report");
+            System.out.println("4. Doctors On-Duty Today Report");
+            System.out.println("5. Doctors Contact List Report");
+            System.out.println("0. Back");
+
+            int choice = readInt("Choice: ");
+            switch (choice) {
+                case 1 -> doctorWorkloadReport();
+                case 2 -> doctorInformationReport();
+                case 3 -> doctorRoomAllocationReport();
+                case 4 -> doctorOnDutyTodayReport();
+                case 5 -> doctorContactListReport();
+                case 0 -> { System.out.println("Returning to Doctor Management menu..."); return; }
+                default -> System.out.println("Invalid choice.");
+            }
+        }
+    }
+
+    // =========================
+    // ==== CORE OPERATIONS ====
+    // =========================
     private void registerDoctor() {
-        String error;
+        // ----- Name -----
         String name;
+        while (true) {
+            name = readLine("Enter Doctor Name (or 0 to cancel): ");
+            if ("0".equals(name)) return;
+            String err = Validation.validateName(name);
+            if (err == null) break;
+            Report.cprintln(err + "\n");
+        }
 
-        // ===== Doctor Name =====
-        do {
-            System.out.print("Enter Doctor Name (or 0 to cancel): ");
-            name = scanner.nextLine();
-            if (name.equals("0")) return;
-            error = Validation.validateName(name);
-            if (error != null) System.out.println(error + "\n");
-        } while (error != null);
+        // ----- Room (auto-assign if blank) -----
+        int room;
+        while (true) {
+            String roomInput = readLine("Enter Room Number (1-" + MAX_ROOMS + ") [Enter=auto, 0=cancel]: ");
+            if ("0".equals(roomInput)) return;
 
-        // ===== Room Number (auto-assign if blank) =====
-        int room = -1;
-        do {
-            System.out.print("Enter Room Number (1-10) (press Enter to auto-assign, 0 to cancel): ");
-            String roomInput = scanner.nextLine().trim();
-            if (roomInput.equals("0")) return;
-            if (roomInput.isEmpty()) {
+            if (roomInput.isBlank()) {
                 room = getNextAvailableRoom();
                 if (room == -1) {
-                    System.out.println("No available rooms. Cannot register doctor.");
+                    Report.cprintln("No available rooms. Cannot register doctor.");
                     return;
                 }
-                System.out.println("Assigned Room: " + room);
-                error = null;
-            } else {
-                try {
-                    room = Integer.parseInt(roomInput);
-                    error = Validation.validateRoomNumber(room);
-                    if (error != null) {
-                        System.out.println(error + "\n");
-                    } else if (!doctorControl.checkRoomAvailability(room)) {
-                        error = "Room " + room + " is currently occupied. Please choose another.";
-                        System.out.println(error + "\n");
-                    }
-                } catch (NumberFormatException e) {
-                    error = "Please enter a valid number";
-                    System.out.println(error + "\n");
-                    room = -1;
-                }
+                Report.cprintln("Assigned Room: " + room);
+                break;
             }
-        } while (error != null);
 
-        // ===== Gender =====
-        String gender;
-        do {
-            System.out.print("Enter Gender (M/F) (or 0 to cancel): ");
-            gender = scanner.nextLine().trim().toUpperCase();
-            if (gender.equals("0")) return;
-            error = Validation.validateGender(gender);
-            if (error != null) System.out.println(error + "\n");
-        } while (error != null);
+            try {
+                room = Integer.parseInt(roomInput.trim());
+            } catch (NumberFormatException e) {
+                Report.cprintln("Please enter a valid number\n");
+                continue;
+            }
 
-        // ===== IC Number =====
-        String icNumber;
-        do {
-            System.out.print("Enter IC Number (format: XXXXXX-XX-XXXX) (or 0 to cancel): ");
-            icNumber = scanner.nextLine().trim();
-            if (icNumber.equals("0")) return;
-            error = Validation.validateMalaysianIC(icNumber);
-            if (error != null) System.out.println(error + "\n");
-        } while (error != null);
-
-        // ===== Phone Number =====
-        String phoneNum;
-        do {
-            System.out.print("Enter Phone Number (e.g., 0123456789) (or 0 to cancel): ");
-            phoneNum = scanner.nextLine().trim();
-            if (phoneNum.equals("0")) return;
-            error = Validation.validatePhone(phoneNum);
-            if (error != null) System.out.println(error + "\n");
-        } while (error != null);
-
-        // ===== Add Doctor =====
-        doctorControl.addDoctor(name, room, gender, icNumber, phoneNum);
-        System.out.println("Doctor registered successfully!");
-    }
-
-    private int getNextAvailableRoom() {
-        for (int i = 1; i <= 10; i++) {
-            if (doctorControl.checkRoomAvailability(i)) return i;
+            String roomErr = Validation.validateRoomNumber(room);
+            if (roomErr != null) {
+                Report.cprintln(roomErr + "\n");
+                continue;
+            }
+            if (!doctorControl.checkRoomAvailability(room)) {
+                Report.cprintln("Room " + room + " is currently occupied. Please choose another.\n");
+                continue;
+            }
+            break;
         }
-        return -1; // no room available
+
+        // ----- Gender -----
+        String gender;
+        while (true) {
+            gender = readLine("Enter Gender (M/F) (or 0 to cancel): ").toUpperCase();
+            if ("0".equals(gender)) return;
+            String err = Validation.validateGender(gender);
+            if (err == null) break;
+            Report.cprintln(err + "\n");
+        }
+
+        // ----- IC Number -----
+        String icNumber;
+        while (true) {
+            icNumber = readLine("Enter IC Number (format: XXXXXX-XX-XXXX) (or 0 to cancel): ");
+            if ("0".equals(icNumber)) return;
+            String err = Validation.validateMalaysianIC(icNumber);
+            if (err == null) break;
+            Report.cprintln(err + "\n");
+        }
+
+        // ----- Phone -----
+        String phoneNum;
+        while (true) {
+            phoneNum = readLine("Enter Phone Number (e.g., 0123456789) (or 0 to cancel): ");
+            if ("0".equals(phoneNum)) return;
+            String err = Validation.validatePhone(phoneNum);
+            if (err == null) break;
+            Report.cprintln(err + "\n");
+        }
+
+        // ----- Create -----
+        doctorControl.addDoctor(name, room, gender, icNumber, phoneNum);
+        Report.cprintln("Doctor registered successfully!");
     }
 
+    private void removeDoctor() {
+        boolean loop = true;
+        while (loop) {
+            displayAllDoctors();
+            String doctorID = readLine("Enter Doctor ID to remove (or 0 to cancel): ").toUpperCase();
+
+            if ("0".equals(doctorID)) {
+                Report.cprintln("Removal cancelled.");
+                break;
+            }
+
+            Doctor d = doctorControl.getDoctorById(doctorID);
+            if (d == null) {
+                Report.cprintln("Doctor ID not found. Please try again.");
+            } else {
+                doctorControl.removeDoctorById(doctorID);
+                Report.cprintln("Doctor removed successfully.");
+                loop = false;
+            }
+        }
+    }
+
+    private void viewDoctorSchedule() {
+        displayAllDoctors();
+
+        Doctor doctor;
+        while (true) {
+            String doctorId = readLine("Enter Doctor ID to view schedule table (or 0 to cancel): ").toUpperCase();
+            if ("0".equals(doctorId)) {
+                Report.cprintln("Operation cancelled.");
+                return;
+            }
+            doctor = doctorControl.getDoctorById(doctorId);
+            if (doctor != null) break;
+            Report.cprintln("Doctor ID not found. Try again.");
+        }
+
+        Report.cprintln("");
+        doctor.getDutySchedule().printScheduleTable(doctor.getName());
+    }
+
+    private void updateDoctorSchedule() {
+        displayAllDoctors();
+        String doctorId = readLine("Enter Doctor ID to update schedule (or 0 to cancel): ").toUpperCase();
+        if ("0".equals(doctorId)) return;
+
+        Doctor doctor = doctorControl.getDoctorById(doctorId);
+        if (doctor == null) {
+            Report.cprintln("Doctor ID not found.");
+            return;
+        }
+
+        // Show current schedule
+        doctor.getDutySchedule().printScheduleTable(doctor.getName());
+
+        // For each day, prompt a new session or skip
+        for (java.time.DayOfWeek day : java.time.DayOfWeek.values()) {
+            String in = readLine("Enter session for " + day + " (REST/MORNING/AFTERNOON/NIGHT) or leave blank to skip: ").toUpperCase();
+            if (in.isBlank()) continue;
+            try {
+                Session newSession = Session.valueOf(in);
+                doctor.getDutySchedule().setDaySession(day, newSession);
+            } catch (IllegalArgumentException e) {
+                Report.cprintln("Invalid session. Skipping " + day);
+            }
+        }
+
+        Report.cprintln("Schedule updated successfully!");
+        doctor.getDutySchedule().printScheduleTable(doctor.getName());
+    }
+
+    // =========================
+    // ======= LIST VIEWS ======
+    // =========================
     private void displayAllDoctors() {
         ClinicADT<Doctor> allDoctors = doctorControl.getAllDoctors();
         if (allDoctors.isEmpty()) {
@@ -154,18 +302,21 @@ public class DoctorUI {
             return;
         }
 
-        String format = "| %-8s | %-20s | %-6s | %-15s | %-12s | %-4s |\n";
-        String line = "+----------+----------------------+--------+-----------------+--------------+------+";;
+        // Define table separator and format for each row
+        String line = "+------------+------------------------+--------+---------------------+-------------------+------+"; // Adjusted width for better spacing
+        String fmt  = "| %-10s | %-22s | %-6s | %-19s | %-17s | %-4s |"; // Adjusted column widths for consistency
 
-        System.out.println("\nRegistered Doctors:");
-        System.out.println(line);
-        System.out.printf(format, "DoctorID", "Name", "Gender", "IC Number", "Phone", "Room");
-        System.out.println(line);
+        // Print table header
+        System.out.println("Registered Doctors:");
+        Report.cprintln(line);
+        Report.cprintf(fmt, "DoctorID", "Name", "Gender", "IC Number", "Phone", "Room");
+        Report.cprintln(line);
 
+        // Iterate through each doctor and display their details
         ClinicADT.MyIterator<Doctor> it = allDoctors.iterator();
         while (it.hasNext()) {
             Doctor d = it.next();
-            System.out.printf(format,
+            Report.cprintf(fmt,
                     d.getId(),
                     d.getName(),
                     d.getGender(),
@@ -174,267 +325,256 @@ public class DoctorUI {
                     d.getRoomNumber());
         }
 
-        System.out.println(line);
+        System.out.println(line); // End of table
     }
 
-    private void viewDoctorSchedule() {
-        displayAllDoctors();
-
-        Doctor doctor = null;
-        String doctorId;
-        do {
-            System.out.print("Enter Doctor ID to view schedule table (or 0 to cancel): ");
-            doctorId = scanner.nextLine().trim().toUpperCase();
-            if (doctorId.equals("0")) {
-                System.out.println("Operation cancelled.");
-                return;
-            }
-
-            doctor = doctorControl.getDoctorById(doctorId);
-            if (doctor == null) System.out.println("Doctor ID not found. Try again.");
-        } while (doctor == null);
-
-        System.out.println();
-        doctor.getDutySchedule().printScheduleTable(doctor.getName());
-    }
-
-    private void updateDoctorSchedule() {
-        displayAllDoctors();
-        System.out.println();
-        System.out.print("Enter Doctor ID to update schedule (or 0 to cancel): ");
-        String doctorId = scanner.nextLine().trim();
-        if (doctorId.equals("0")) return;
-
-        Doctor doctor = doctorControl.getDoctorById(doctorId);
-        if (doctor == null) {
-            System.out.println("Doctor ID not found.");
-            return;
-        }
-
-        // Show current schedule
-        doctor.getDutySchedule().printScheduleTable(doctor.getName());
-
-        for (DayOfWeek day : DayOfWeek.values()) {
-            System.out.printf("Enter session for %s (REST/MORNING/AFTERNOON/NIGHT) or leave blank to skip: ", day);
-            String sessionInput = scanner.nextLine().trim().toUpperCase();
-            if (sessionInput.isEmpty()) continue;
-
-            try {
-                Session newSession = Session.valueOf(sessionInput);
-                doctor.getDutySchedule().setDaySession(day, newSession);
-            } catch (IllegalArgumentException e) {
-                System.out.println("Invalid session. Skipping " + day);
-            }
-        }
-
-        System.out.println("Schedule updated successfully!");
-        doctor.getDutySchedule().printScheduleTable(doctor.getName());
-    }
-
-    private void removeDoctor() {
-        boolean validDoctor;
-        do {
-            displayAllDoctors();
-            System.out.print("Enter Doctor ID to remove (or 0 to cancel): ");
-            String doctorID = scanner.nextLine().trim().toUpperCase();
-
-            if (doctorID.equals("0")) {
-                System.out.println("Removal cancelled.");
-                break;
-            }
-
-            validDoctor = doctorControl.getDoctorById(doctorID) != null;
-            if (!validDoctor) {
-                System.out.println("Doctor ID not found. Please try again.");
-            } else {
-                doctorControl.removeDoctorById(doctorID);
-                System.out.println("Doctor removed successfully.");
-            }
-        } while (!validDoctor);
-    }
-    
+    // =========================
+    // ======== REPORTS ========
+    // =========================
     private void doctorWorkloadReport() {
         Report.printHeader("Doctor Duty Frequency Report");
 
+        // Summary table
         String line = "+------------------+--------------------+";
-        String headerFormat = "| %-16s | %-18s |%n";
-        String rowFormat    = "| %-16s | %-18d |%n";
+        String headerFormat = "| %-16s | %-18s |";
+        String rowFormat    = "| %-16s | %-18d |";
 
-        System.out.println(line);
-        System.out.printf(headerFormat, "Doctor", "Duty Sessions/Week");
-        System.out.println(line);
+        Report.cprintln(line);
+        Report.cprintf(headerFormat, "Doctor", "Duty Sessions/Week");
+        Report.cprintln(line);
 
         int totalDuties = 0;
         ClinicADT<Doctor> allDoctors = doctorControl.getAllDoctors();
         ClinicADT.MyIterator<Doctor> it = allDoctors.iterator();
 
-        // First pass: print table and count total duties
         while (it.hasNext()) {
             Doctor doc = it.next();
-            DutySchedule schedule = doc.getDutySchedule();
-
             int dutyCount = 0;
 
-            // Count duty sessions manually
-            Session s;
+            DutySchedule sch = doc.getDutySchedule();
+            dutyCount += isOnDuty(sch.getSessionForDay(java.time.DayOfWeek.MONDAY))     ? 1 : 0;
+            dutyCount += isOnDuty(sch.getSessionForDay(java.time.DayOfWeek.TUESDAY))    ? 1 : 0;
+            dutyCount += isOnDuty(sch.getSessionForDay(java.time.DayOfWeek.WEDNESDAY))  ? 1 : 0;
+            dutyCount += isOnDuty(sch.getSessionForDay(java.time.DayOfWeek.THURSDAY))   ? 1 : 0;
+            dutyCount += isOnDuty(sch.getSessionForDay(java.time.DayOfWeek.FRIDAY))     ? 1 : 0;
+            dutyCount += isOnDuty(sch.getSessionForDay(java.time.DayOfWeek.SATURDAY))   ? 1 : 0;
+            dutyCount += isOnDuty(sch.getSessionForDay(java.time.DayOfWeek.SUNDAY))     ? 1 : 0;
 
-            s = schedule.getSessionForDay(DayOfWeek.MONDAY);
-            if (s != null && !s.toString().equalsIgnoreCase("OFF") && !s.toString().equalsIgnoreCase("REST") && !s.toString().trim().isEmpty()) dutyCount++;
-
-            s = schedule.getSessionForDay(DayOfWeek.TUESDAY);
-            if (s != null && !s.toString().equalsIgnoreCase("OFF") && !s.toString().equalsIgnoreCase("REST") && !s.toString().trim().isEmpty()) dutyCount++;
-
-            s = schedule.getSessionForDay(DayOfWeek.WEDNESDAY);
-            if (s != null && !s.toString().equalsIgnoreCase("OFF") && !s.toString().equalsIgnoreCase("REST") && !s.toString().trim().isEmpty()) dutyCount++;
-
-            s = schedule.getSessionForDay(DayOfWeek.THURSDAY);
-            if (s != null && !s.toString().equalsIgnoreCase("OFF") && !s.toString().equalsIgnoreCase("REST") && !s.toString().trim().isEmpty()) dutyCount++;
-
-            s = schedule.getSessionForDay(DayOfWeek.FRIDAY);
-            if (s != null && !s.toString().equalsIgnoreCase("OFF") && !s.toString().equalsIgnoreCase("REST") && !s.toString().trim().isEmpty()) dutyCount++;
-
-            s = schedule.getSessionForDay(DayOfWeek.SATURDAY);
-            if (s != null && !s.toString().equalsIgnoreCase("OFF") && !s.toString().equalsIgnoreCase("REST") && !s.toString().trim().isEmpty()) dutyCount++;
-
-            s = schedule.getSessionForDay(DayOfWeek.SUNDAY);
-            if (s != null && !s.toString().equalsIgnoreCase("OFF") && !s.toString().equalsIgnoreCase("REST") && !s.toString().trim().isEmpty()) dutyCount++;
-
-            System.out.printf(rowFormat, doc.getName(), dutyCount);
+            Report.cprintf(rowFormat, doc.getName(), dutyCount);
             totalDuties += dutyCount;
         }
 
-        System.out.println(line);
-        System.out.printf("| %-16s | %-18d |%n", "TOTAL", totalDuties);
-        System.out.println(line);
+        Report.cprintln(line);
+        Report.cprintf("| %-16s | %-18d |", "TOTAL", totalDuties);
+        Report.cprintln(line);
 
-        // --- Print bar chart block ---
-        System.out.println("\nDuty Frequency by Day:");
-        System.out.println("+------------------+-----------------------------+");
-        System.out.println("| Doctor             Mon Tue Wed Thu Fri Sat Sun |");
-        System.out.println("+------------------+-----------------------------+");
+        // Weekly bar grid
+        Report.cprintln("");
+        Report.cprintln("Duty Frequency by Day:");
+        Report.cprintln("+------------------+-----------------------------+");
+        Report.cprintln("| Doctor             Mon Tue Wed Thu Fri Sat Sun |");
+        Report.cprintln("+------------------+-----------------------------+");
 
-        // Reset iterator to print bars
         it = allDoctors.iterator();
-        int monCount = 0, tueCount = 0, wedCount = 0, thuCount = 0, friCount = 0, satCount = 0, sunCount = 0;
+        int mon=0,tue=0,wed=0,thu=0,fri=0,sat=0,sun=0;
+
         while (it.hasNext()) {
             Doctor doc = it.next();
-            DutySchedule schedule = doc.getDutySchedule();
+            DutySchedule ds = doc.getDutySchedule();
 
-            System.out.printf("| %-18s", doc.getName());
+            StringBuilder row = new StringBuilder();
+            row.append(String.format("| %-18s", doc.getName()));
 
-            // Monday
-            Session s = schedule.getSessionForDay(DayOfWeek.MONDAY);
-            if (s != null && !s.toString().equalsIgnoreCase("OFF") && !s.toString().equalsIgnoreCase("REST") && !s.toString().trim().isEmpty()) {
-                System.out.print("  * ");
-                monCount++;
-            } else {
-                System.out.print("    ");
-            }
+            Session sMon = ds.getSessionForDay(java.time.DayOfWeek.MONDAY);
+            row.append(isOnDuty(sMon) ? "  * " : "    "); if (isOnDuty(sMon)) mon++;
 
-            // Tuesday
-            s = schedule.getSessionForDay(DayOfWeek.TUESDAY);
-            if (s != null && !s.toString().equalsIgnoreCase("OFF") && !s.toString().equalsIgnoreCase("REST") && !s.toString().trim().isEmpty()) {
-                System.out.print("  * ");
-                tueCount++;
-            } else {
-                System.out.print("    ");
-            }
+            Session sTue = ds.getSessionForDay(java.time.DayOfWeek.TUESDAY);
+            row.append(isOnDuty(sTue) ? "  * " : "    "); if (isOnDuty(sTue)) tue++;
 
-            // Wednesday
-            s = schedule.getSessionForDay(DayOfWeek.WEDNESDAY);
-            if (s != null && !s.toString().equalsIgnoreCase("OFF") && !s.toString().equalsIgnoreCase("REST") && !s.toString().trim().isEmpty()) {
-                System.out.print("  * ");
-                wedCount++;
-            } else {
-                System.out.print("    ");
-            }
+            Session sWed = ds.getSessionForDay(java.time.DayOfWeek.WEDNESDAY);
+            row.append(isOnDuty(sWed) ? "  * " : "    "); if (isOnDuty(sWed)) wed++;
 
-            // Thursday
-            s = schedule.getSessionForDay(DayOfWeek.THURSDAY);
-            if (s != null && !s.toString().equalsIgnoreCase("OFF") && !s.toString().equalsIgnoreCase("REST") && !s.toString().trim().isEmpty()) {
-                System.out.print("  * ");
-                thuCount++;
-            } else {
-                System.out.print("    ");
-            }
+            Session sThu = ds.getSessionForDay(java.time.DayOfWeek.THURSDAY);
+            row.append(isOnDuty(sThu) ? "  * " : "    "); if (isOnDuty(sThu)) thu++;
 
-            // Friday
-            s = schedule.getSessionForDay(DayOfWeek.FRIDAY);
-            if (s != null && !s.toString().equalsIgnoreCase("OFF") && !s.toString().equalsIgnoreCase("REST") && !s.toString().trim().isEmpty()) {
-                System.out.print("  * ");
-                friCount++;
-            } else {
-                System.out.print("    ");
-            }
+            Session sFri = ds.getSessionForDay(java.time.DayOfWeek.FRIDAY);
+            row.append(isOnDuty(sFri) ? "  * " : "    "); if (isOnDuty(sFri)) fri++;
 
-            // Saturday
-            s = schedule.getSessionForDay(DayOfWeek.SATURDAY);
-            if (s != null && !s.toString().equalsIgnoreCase("OFF") && !s.toString().equalsIgnoreCase("REST") && !s.toString().trim().isEmpty()) {
-                System.out.print("  * ");
-                satCount++;
-            } else {
-                System.out.print("    ");
-            }
+            Session sSat = ds.getSessionForDay(java.time.DayOfWeek.SATURDAY);
+            row.append(isOnDuty(sSat) ? "  * " : "    "); if (isOnDuty(sSat)) sat++;
 
-            // Sunday
-            s = schedule.getSessionForDay(DayOfWeek.SUNDAY);
-            if (s != null && !s.toString().equalsIgnoreCase("OFF") && !s.toString().equalsIgnoreCase("REST") && !s.toString().trim().isEmpty()) {
-                System.out.print("  * ");
-                sunCount++;
-            } else {
-                System.out.print("    ");
-            }
+            Session sSun = ds.getSessionForDay(java.time.DayOfWeek.SUNDAY);
+            row.append(isOnDuty(sSun) ? "  * " : "    "); if (isOnDuty(sSun)) sun++;
 
-            System.out.println(" |");
+            row.append(" |");
+            Report.cprintln(row.toString());
         }
 
-        System.out.println("+------------------+-----------------------------+");
-        // Find max and min
-        int maxCount = monCount;
-        int minCount = monCount;
+        Report.cprintln("+------------------+-----------------------------+");
 
-        if (tueCount > maxCount) maxCount = tueCount;
-        if (wedCount > maxCount) maxCount = wedCount;
-        if (thuCount > maxCount) maxCount = thuCount;
-        if (friCount > maxCount) maxCount = friCount;
-        if (satCount > maxCount) maxCount = satCount;
-        if (sunCount > maxCount) maxCount = sunCount;
+        // max / min day(s)
+        int max = Math.max(Math.max(Math.max(mon,tue), Math.max(wed,thu)), Math.max(Math.max(fri,sat), sun));
+        int min = Math.min(Math.min(Math.min(mon,tue), Math.min(wed,thu)), Math.min(Math.min(fri,sat), sun));
 
-        // Determine min
-        if (tueCount < minCount) minCount = tueCount;
-        if (wedCount < minCount) minCount = wedCount;
-        if (thuCount < minCount) minCount = thuCount;
-        if (friCount < minCount) minCount = friCount;
-        if (satCount < minCount) minCount = satCount;
-        if (sunCount < minCount) minCount = sunCount;
+        StringBuilder maxDays = new StringBuilder();
+        if (mon==max) maxDays.append("Mon ");
+        if (tue==max) maxDays.append("Tue ");
+        if (wed==max) maxDays.append("Wed ");
+        if (thu==max) maxDays.append("Thu ");
+        if (fri==max) maxDays.append("Fri ");
+        if (sat==max) maxDays.append("Sat ");
+        if (sun==max) maxDays.append("Sun ");
 
-        // Build day labels for max
-        String maxDays = "";
-        if (monCount == maxCount) maxDays += "Mon ";
-        if (tueCount == maxCount) maxDays += "Tue ";
-        if (wedCount == maxCount) maxDays += "Wed ";
-        if (thuCount == maxCount) maxDays += "Thu ";
-        if (friCount == maxCount) maxDays += "Fri ";
-        if (satCount == maxCount) maxDays += "Sat ";
-        if (sunCount == maxCount) maxDays += "Sun ";
-        
-        String minDays = "";
-        if (monCount == minCount) minDays += "Mon ";
-        if (tueCount == minCount) minDays += "Tue ";
-        if (wedCount == minCount) minDays += "Wed ";
-        if (thuCount == minCount) minDays += "Thu ";
-        if (friCount == minCount) minDays += "Fri ";
-        if (satCount == minCount) minDays += "Sat ";
-        if (sunCount == minCount) minDays += "Sun ";
-        System.out.println("\nDay(s) with Most Doctors: " + maxDays + " (" + maxCount + ")");
-        System.out.println("Day(s) with Least Doctors: " + minDays + " (" + minCount + ")");
-        
+        StringBuilder minDays = new StringBuilder();
+        if (mon==min) minDays.append("Mon ");
+        if (tue==min) minDays.append("Tue ");
+        if (wed==min) minDays.append("Wed ");
+        if (thu==min) minDays.append("Thu ");
+        if (fri==min) minDays.append("Fri ");
+        if (sat==min) minDays.append("Sat ");
+        if (sun==min) minDays.append("Sun ");
+
+        Report.cprintln("");
+        Report.cprintln("Day(s) with Most Doctors: " + maxDays + "(" + max + ")");
+        Report.cprintln("Day(s) with Least Doctors: " + minDays + "(" + min + ")");
+
         Report.printFooter();
     }
-    
-    public void doctorInformationReport() {
+
+    private void doctorInformationReport() {
         Report.printHeader("Doctors Information Report");
-        displayAllDoctors();
+
+        ClinicADT<Doctor> all = doctorControl.getAllDoctors();
+        if (all.isEmpty()) {
+            Report.cprintln("(No doctors found.)");
+            Report.printFooter();
+            return;
+        }
+
+        String line = "+----------+----------------------+--------+-----------------+--------------+------+";
+        String header = String.format("| %-8s | %-20s | %-6s | %-15s | %-12s | %-4s |",
+                "DoctorID","Name","Gender","IC Number","Phone","Room");
+
+        Report.cprintln(line);
+        Report.cprintln(header);
+        Report.cprintln(line);
+
+        ClinicADT.MyIterator<Doctor> it = all.iterator();
+        while (it.hasNext()) {
+            Doctor d = it.next();
+            String row = String.format("| %-8s | %-20s | %-6s | %-15s | %-12s | %-4s |",
+                    d.getId(), d.getName(), d.getGender(), d.getIcNumber(), d.getPhoneNumber(), d.getRoomNumber());
+            Report.cprintln(row);
+        }
+
+        Report.cprintln(line);
         Report.printFooter();
+    }
+
+   private void doctorRoomAllocationReport() {
+        Report.printHeader("Doctors Room Allocation Report");
+
+        // Define a formatted line and row for the table
+        String line = "+----------+------------------------+--------+-----------------+--------------+------+";
+        String fmt  = "| %-8s | %-20s | %-6s | %-15s | %-12s | %-4s |";
+
+        Report.cprintln(line);
+        Report.cprintf(fmt, "DoctorID", "Name", "Gender", "IC Number", "Phone", "Room");
+        Report.cprintln(line);
+
+        // Iterate over the doctors and display the table with their data
+        ClinicADT.MyIterator<Doctor> it = doctorControl.getAllDoctors().iterator();
+        while (it.hasNext()) {
+            Doctor d = it.next();
+            Report.cprintf(fmt,
+                    d.getId(),
+                    d.getName(),
+                    d.getGender(),
+                    d.getIcNumber(),
+                    d.getPhoneNumber(),
+                    d.getRoomNumber());
+        }
+
+        Report.cprintln(line);
+        Report.printFooter();
+    }
+
+
+
+    private void doctorContactListReport() {
+        Report.printHeader("Doctors Contact List Report");
+
+        // Define a formatted line and row for the table
+        String line = "+------------------+--------------+";
+        String fmt  = "| %-16s | %-12s |";
+
+        Report.cprintln(line);
+        Report.cprintf(fmt, "Doctor", "Phone");
+        Report.cprintln(line);
+
+        // Iterate over the doctors and display the table with their contact information
+        ClinicADT.MyIterator<Doctor> it = doctorControl.getAllDoctors().iterator();
+        while (it.hasNext()) {
+            Doctor d = it.next();
+            Report.cprintf(fmt, d.getName(), d.getPhoneNumber());
+        }
+
+        Report.cprintln(line);
+        Report.printFooter();
+    }
+
+   private void doctorOnDutyTodayReport() {
+        Report.printHeader("Doctors On-Duty Today Report");
+
+        // Define a formatted line and row for the table with consistent column widths
+        String line = "+------------------+-----------+";
+        String fmt  = "| %-16s | %-9s |";  // Adjusting column width for better alignment
+
+        // Print the header and table line
+        Report.cprintln(line);
+        Report.cprintf(fmt, "Doctor", "Session");
+        Report.cprintln(line);
+
+        // Get today's day of the week
+        java.time.DayOfWeek today = java.time.LocalDate.now().getDayOfWeek();
+        ClinicADT.MyIterator<Doctor> it = doctorControl.getAllDoctors().iterator();
+        while (it.hasNext()) {
+            Doctor d = it.next();
+            Session s = d.getDutySchedule().getSessionForDay(today);
+            // Print each doctor with their session, aligned properly
+            Report.cprintf(fmt, d.getName(), s == null ? "REST" : s.toString());
+        }
+
+        Report.cprintln(line);
+        Report.printFooter();
+    }
+
+
+
+    // =========================
+    // ======= UTILITIES =======
+    // =========================
+    private int getNextAvailableRoom() {
+        for (int i = 1; i <= MAX_ROOMS; i++) {
+            if (doctorControl.checkRoomAvailability(i)) return i;
+        }
+        return -1; // none
+    }
+
+    private boolean isOnDuty(Session s) {
+        return s != null && s != Session.REST && !s.toString().isBlank();
+    }
+
+    private String readLine(String prompt) {
+        System.out.print(prompt);
+        return scanner.nextLine().trim();
+    }
+
+    private int readInt(String prompt) {
+        while (true) {
+            String s = readLine(prompt);
+            try { return Integer.parseInt(s); }
+            catch (NumberFormatException e) { Report.cprintln("Please enter a valid number."); }
+        }
     }
 }

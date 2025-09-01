@@ -1,3 +1,13 @@
-1,P1000,John,Lee,D1000,2025-09-09 17:00,hijklmn
-2,P1001,Sunny,Jasden,D1001,2025-08-30 10:00,To be diagnosed during appointment
-3,P1000,John,Carl,D1002,2025-08-29 11:00,Food Poisoning
+1,P1000,John,dd,D1006,2025-09-01 08:00,Needs treatment,PROCESSED
+2,P1001,Sunny,JoshuaIFBBPRO,D1003,2025-09-01 09:00,Needs treatment,PROCESSED
+3,P1000,John,dd,D1006,2025-09-01 09:00,Needs treatment,PROCESSED
+4,P1001,Sunny,Jasden,D1001,2025-09-01 14:00,Needs treatment,PROCESSED
+5,P1001,Sunny,Lee,D1000,2025-08-31 11:00,Needs treatment,PROCESSED
+6,P1001,Sunny,Lee,D1000,2025-08-31 10:00,Needs treatment,PROCESSED
+7,P1000,John,JoshuaIFBBPRO,D1003,2025-09-01 10:00,No treatment,PROCESSED
+8,P1002,john papa,JoshuaIFBBPRO,D1003,2025-09-01 08:00,Needs treatment,PROCESSED
+9,P1002,john papa,dd,D1006,2025-09-01 10:00,Needs treatment,PROCESSED
+10,P1002,john papa,Carl,D1002,2025-09-02 10:00,Needs treatment,PROCESSED
+11,P1001,Sunny,Carl,D1002,2025-09-02 09:00,Needs treatment,PROCESSED
+12,P1001,Sunny,Carl,D1002,2025-09-02 11:00,Needs treatment,PROCESSED
+13,P1001,Sunny,dd,D1006,2025-09-11 10:00,Needs treatment,PROCESSED

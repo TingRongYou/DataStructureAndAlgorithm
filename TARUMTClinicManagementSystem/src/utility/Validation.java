@@ -1,5 +1,6 @@
 package utility;
 
+import entity.Medicine;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.Year;
@@ -220,9 +221,21 @@ public class Validation {
 
     public static String validateMedicineUnit(String unit) {
         if (isNullOrEmpty(unit)) return "Unit cannot be empty";
-        if (!MEDICINE_UNIT_PATTERN.matcher(unit).matches()) 
-            return "Unit must be mg, ml, or g";
-        return null;
+
+        String normalized = unit.trim().toLowerCase();
+
+        switch (normalized) {
+            case "mg":
+            case "ml":
+            case "g":
+            case "tablet":
+            case "capsule":
+            case "drop":
+            case "bottle":
+                return null; // valid
+            default:
+                return "Unit must be one of: mg, ml, g, tablet, capsule, drop, bottle";
+        }
     }
 
     public static String validateMedicineUsage(String usage){
@@ -237,13 +250,35 @@ public class Validation {
         return null;
     }
     
+    public static boolean validateStock(Medicine med, int requested) {
+        if (med == null) {
+            System.out.println("Invalid medicine.");
+            return false;
+        }
+        if (requested <= 0) {
+            System.out.println("Quantity must be greater than 0.");
+            return false;
+        }
+        if (med.getQuantity() <= 0) {
+            System.out.println(med.getName() + " is OUT OF STOCK.");
+            return false;
+        }
+        if (requested > med.getQuantity()) {
+            System.out.println("Requested " + requested +
+                    " exceeds available stock (" + med.getQuantity() + ").");
+            return false;
+        }
+        return true; // ✅ valid
+    }
+
+    
     public static String validateMedicineExpiry(String dateStr) {
         try {
             LocalDate date = LocalDate.parse(dateStr); // expects YYYY-MM-DD
             if (date.isBefore(LocalDate.now())) {
                 return "Error: Expiration date cannot be in the past.";
             }
-            return null; // ✅ valid, no error
+            return null; // valid, no error
         } catch (Exception e) {
             return "Error: Invalid date format. Use YYYY-MM-DD.";
         }

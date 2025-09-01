@@ -1,0 +1,49 @@
+1,P1001,Sunny,D1000,Hypertension,With prescription,2025-08-30 01:13,true
+2,P1001,Sunny,D1000,Gastroenteritis,With prescription,2025-08-30 01:20,true
+3,P1000,John,D1000,Diabetes,With prescription,2025-08-30 16:34,true
+4,P1000,John,D1000,Diabetes,With prescription,2025-08-30 16:36,true
+5,P1000,John,D1004,Allergies,With prescription,2025-08-30 16:43,true
+6,P1001,Sunny,D1007,Allergies,With prescription,2025-08-30 16:48,true
+7,P1001,Sunny,D1007,Allergies,With prescription,2025-08-30 17:18,true
+8,P1001,Sunny,D1000,Allergies,With prescription,2025-08-30 17:21,true
+9,P1001,Sunny,D1000,Hypertension,With prescription,2025-08-30 17:50,true
+10,P1001,Sunny,D1000,Diabetes,With prescription,2025-08-30 17:57,true
+11,P1001,Sunny,D1001,Diabetes,With prescription,2025-08-30 18:05,true
+12,P1001,Sunny,D1004,Diabetes,With prescription,2025-08-30 18:11,true
+13,P1001,Sunny,D1000,Gastroenteritis,With prescription,2025-08-30 18:17,true
+14,P1001,Sunny,D1007,Diabetes,With prescription,2025-08-30 18:20,true
+15,P1001,Sunny,D1004,Asthma,With prescription,2025-08-30 18:22,true
+16,P1001,Sunny,D1007,Allergies,With prescription,2025-08-30 18:24,true
+17,P1001,Sunny,D1001,Diabetes,With prescription,2025-08-30 18:44,true
+18,P1001,Sunny,D1004,Allergies,With prescription,2025-08-30 18:49,true
+19,P1001,Sunny,D1001,Diabetes,With prescription,2025-08-30 22:00,true
+20,P1000,John,D1007,Allergies,With prescription,2025-08-30 22:01,true
+21,P1001,Sunny,D1004,Gastroenteritis,With prescription,2025-08-30 22:07,true
+22,P1001,Sunny,D1001,Asthma,With prescription,2025-08-30 22:20,true
+23,P1001,Sunny,D1001,Allergies,With prescription,2025-08-30 22:38,true
+24,P1001,Sunny,D1007,Asthma,With prescription,2025-08-30 23:06,true
+25,P1001,Sunny,D1001,Asthma,With prescription,2025-08-30 23:15,true
+26,P1001,Sunny,D1007,Asthma,With prescription,2025-08-30 23:18,true
+27,P1001,Sunny,D1004,Allergies,No medicine,2025-08-30 23:20,true
+28,P1001,Sunny,D1007,Gastroenteritis,With prescription,2025-08-30 23:25,true
+29,P1001,Sunny,D1007,Allergies,No medicine,2025-08-30 23:26,true
+30,P1001,Sunny,D1007,Allergies,No medicine,2025-08-30 23:27,true
+31,P1001,Sunny,D1007,Asthma,No medicine,2025-08-30 23:27,true
+32,P1001,Sunny,D1006,Diabetes,With prescription,2025-08-31 00:40,true
+33,P1001,Sunny,D1006,Hypertension,With prescription,2025-08-31 00:58,true
+34,P1001,Sunny,D1003,Allergies,With prescription,2025-08-31 01:03,true
+35,P1001,Sunny,D1006,Diabetes,With prescription,2025-08-31 01:11,true
+36,P1000,John,D1003,Diabetes,With prescription,2025-08-31 01:21,true
+37,P1001,Sunny,D1003,Gastroenteritis,With prescription,2025-08-31 01:25,true
+38,P1000,John,D1006,Allergies,With prescription,2025-08-31 01:31,true
+39,P1001,Sunny,D1003,COVID-19 suspected,With prescription,2025-08-31 01:33,true
+40,P1000,John,D1006,Influenza,With prescription,2025-08-31 01:38,true
+41,P1001,Sunny,D1001,Hypertension,No medicine,2025-08-31 01:41,true
+42,P1001,Sunny,D1000,COVID-19 suspected,With prescription,2025-08-31 01:42,true
+43,P1001,Sunny,D1000,COVID-19 suspected,With prescription,2025-08-31 01:44,true
+44,P1002,john papa,D1003,Common Cold,With prescription,2025-08-31 15:44,true
+45,P1002,john papa,D1006,Allergies,With prescription,2025-08-31 22:48,true
+46,P1002,john papa,D1002,Gastroenteritis,With prescription,2025-09-01 18:59,true
+47,P1001,Sunny,D1002,Diabetes,With prescription,2025-09-01 19:07,true
+48,P1001,Sunny,D1002,Diabetes,With prescription,2025-09-01 19:18,true
+49,P1001,Sunny,D1006,fff,With prescription,2025-09-01 20:53,true

@@ -2,16 +2,16 @@ package adt;
 
 public interface ClinicADT<T> {
 
-    // --- Custom Comparator ---
+    // --- Custom Iterator ---
     public static interface MyIterator<T> {
-       boolean hasNext();
-       T next();
+        boolean hasNext();
+        T next();
     }
 
+    // --- Custom Comparator ---
     public static interface MyComparator<T> {
         int compare(T o1, T o2);
     }
-
 
     // --- List-like operations ---
     void add(T item);
@@ -33,8 +33,11 @@ public interface ClinicADT<T> {
     boolean isEmpty();
     void clear();
 
-    // --- Sorting ---
+    // --- Sorting (Merge Sort)---
     void sort(MyComparator<T> comparator);
+
+    // --- Searching (Binary Search) ---
+    int search(T key, MyComparator<T> comparator);
 
     // --- Iterator ---
     MyIterator<T> iterator();

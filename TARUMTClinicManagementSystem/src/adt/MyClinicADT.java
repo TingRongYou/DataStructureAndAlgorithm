@@ -35,12 +35,14 @@ public class MyClinicADT<T> implements ClinicADT<T> {
     }
 
     @Override
+    @SuppressWarnings("unchecked")
     public T get(int index) {
         if (index < 0 || index >= size) throw new IndexOutOfBoundsException();
         return (T) data[index];
     }
 
     @Override
+    @SuppressWarnings("unchecked")
     public T set(int index, T item) {
         if (index < 0 || index >= size) throw new IndexOutOfBoundsException();
         T old = (T) data[index];
@@ -48,24 +50,24 @@ public class MyClinicADT<T> implements ClinicADT<T> {
         return old;
     }
 
+    /**
+     * Bounds-safe remove:
+     * - returns null if index is invalid (instead of throwing)
+     * - shifts tail left and clears last slot
+     */
     @Override
+    @SuppressWarnings("unchecked")
     public T remove(int index) {
-        if (index < 0 || index >= size) throw new IndexOutOfBoundsException();
+        if (index < 0 || index >= size) {
+            return null;
+        }
         T removed = (T) data[index];
         int numMoved = size - index - 1;
-        if (numMoved > 0) System.arraycopy(data, index + 1, data, index, numMoved);
+        if (numMoved > 0) {
+            System.arraycopy(data, index + 1, data, index, numMoved);
+        }
         data[--size] = null;
         return removed;
-    }
-
-    @Override
-    public boolean remove(T item) {
-        int index = indexOf(item);
-        if (index != -1) {
-            remove(index);
-            return true;
-        }
-        return false;
     }
 
     @Override
@@ -116,60 +118,66 @@ public class MyClinicADT<T> implements ClinicADT<T> {
     @Override
     public void sort(MyComparator<T> comparator) {
         if (comparator == null) throw new IllegalArgumentException("Comparator cannot be null");
-        if (size > 1) {
-            mergeSort(0, size - 1, comparator);
-        }
+        if (size > 1) mergeSort(0, size - 1, comparator);
     }
 
     @SuppressWarnings("unchecked")
     private void mergeSort(int left, int right, MyComparator<T> comparator) {
         if (left < right) {
             int mid = (left + right) / 2;
-
-            // Recursively divide
             mergeSort(left, mid, comparator);
             mergeSort(mid + 1, right, comparator);
-
-            // Merge the sorted halves
             merge(left, mid, right, comparator);
         }
     }
 
     @SuppressWarnings("unchecked")
     private void merge(int left, int mid, int right, MyComparator<T> comparator) {
-        // Sizes of the two subarrays
-        int n1 = mid - left + 1;
-        int n2 = right - mid;
+        int n1 = mid - left + 1, n2 = right - mid;
+        Object[] L = new Object[n1], R = new Object[n2];
+        for (int i = 0; i < n1; i++) L[i] = data[left + i];
+        for (int j = 0; j < n2; j++) R[j] = data[mid + 1 + j];
 
-        // Temporary arrays
-        Object[] L = new Object[n1];
-        Object[] R = new Object[n2];
-
-        // Copy data into temp arrays
-        for (int i = 0; i < n1; i++)
-            L[i] = data[left + i];
-        for (int j = 0; j < n2; j++)
-            R[j] = data[mid + 1 + j];
-
-        // Merge the temp arrays back into data[]
         int i = 0, j = 0, k = left;
         while (i < n1 && j < n2) {
-            if (comparator.compare((T) L[i], (T) R[j]) <= 0) {
-                data[k++] = L[i++];
+            if (comparator.compare((T) L[i], (T) R[j]) <= 0) data[k++] = L[i++];
+            else data[k++] = R[j++];
+        }
+        while (i < n1) data[k++] = L[i++];
+        while (j < n2) data[k++] = R[j++];
+    }
+
+    // ---------------- Binary Search (NEW) ----------------
+    /**
+     * Binary search for {@code key} in this list using the provided comparator.
+     * The list must already be sorted with the same comparator.
+     *
+     * @param key         the element to search for
+     * @param comparator  comparator used for ordering
+     * @return index of the search key, if found; otherwise {@code (-(insertionPoint) - 1)}.
+     *         The insertion point is the index at which the key would be inserted.
+     */
+    @SuppressWarnings("unchecked")
+    public int search(T key, MyComparator<T> comparator) {
+        if (comparator == null) throw new IllegalArgumentException("Comparator cannot be null");
+
+        int low = 0;
+        int high = size - 1;
+
+        while (low <= high) {
+            int mid = (low + high) >>> 1; // avoid overflow
+            T midVal = (T) data[mid];
+            int cmp = comparator.compare(midVal, key);
+
+            if (cmp < 0) {
+                low = mid + 1;
+            } else if (cmp > 0) {
+                high = mid - 1;
             } else {
-                data[k++] = R[j++];
+                return mid; // key found
             }
         }
-
-        // Copy remaining elements of L[]
-        while (i < n1) {
-            data[k++] = L[i++];
-        }
-
-        // Copy remaining elements of R[]
-        while (j < n2) {
-            data[k++] = R[j++];
-        }
+        return -(low + 1); // key not found
     }
 
     // ---------------- Iterator ----------------
@@ -180,6 +188,7 @@ public class MyClinicADT<T> implements ClinicADT<T> {
             @Override
             public boolean hasNext() { return currentIndex < size; }
             @Override
+            @SuppressWarnings("unchecked")
             public T next() {
                 if (!hasNext()) throw new RuntimeException("No more elements");
                 return (T) data[currentIndex++];
@@ -198,5 +207,10 @@ public class MyClinicADT<T> implements ClinicADT<T> {
         }
         sb.append("]");
         return sb.toString();
+    }
+
+    @Override
+    public boolean remove(T item) {
+        throw new UnsupportedOperationException("Not supported yet.");
     }
 }

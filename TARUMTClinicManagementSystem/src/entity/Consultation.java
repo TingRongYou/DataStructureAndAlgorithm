@@ -14,8 +14,16 @@ public class Consultation implements Comparable<Consultation> {
     private LocalDateTime consultationDate;
     private String diagnosis;
 
+    // IMPORTANT: include CONSULTING so the status survives reloads
+    public enum Status { PENDING, CONSULTING, PROCESSED, COMPLETED; }
+
+    private Status status = Status.PENDING;   // default when created
+    private String prescriptionNotes;
+    private Integer linkedTreatmentId;
+
     // Constructor for new consultations (auto-ID)
-    public Consultation(String patientId, String patientName, String doctorName, String doctorId, LocalDateTime consultationDate, String diagnosis) {
+    public Consultation(String patientId, String patientName, String doctorName, String doctorId,
+                        LocalDateTime consultationDate, String diagnosis) {
         this.consultationId = counter++;
         this.patientId = patientId;
         this.patientName = patientName;
@@ -26,7 +34,8 @@ public class Consultation implements Comparable<Consultation> {
     }
 
     // Constructor for loading from file (manual ID)
-    public Consultation(int consultationId, String patientId, String patientName, String doctorName, String doctorId, LocalDateTime consultationDate, String diagnosis) {
+    public Consultation(int consultationId, String patientId, String patientName, String doctorName, String doctorId,
+                        LocalDateTime consultationDate, String diagnosis) {
         this.consultationId = consultationId;
         this.patientId = patientId;
         this.patientName = patientName;
@@ -35,105 +44,61 @@ public class Consultation implements Comparable<Consultation> {
         this.consultationDate = consultationDate;
         this.diagnosis = diagnosis;
 
-        if (consultationId >= counter) {
-            counter = consultationId + 1;
-        }
+        if (consultationId >= counter) counter = consultationId + 1;
     }
 
     // Getters
-    public int getId() {
-        return consultationId;
-    }
-
-    public String getPatientId() {
-        return patientId;
-    }
-
-    public String getPatientName() {
-        return patientName;
-    }
-
-    public String getDoctorName() {
-        return doctorName;
-    }
-
-    public String getDoctorId() {
-        return doctorId;
-    }
-
-    public LocalDateTime getConsultationDate() {
-        return consultationDate;
-    }
-    public String getDiagnosis(){
-        return diagnosis;
-    }
+    public int getId() { return consultationId; }
+    public String getPatientId() { return patientId; }
+    public String getPatientName() { return patientName; }
+    public String getDoctorName() { return doctorName; }
+    public String getDoctorId() { return doctorId; }
+    public LocalDateTime getConsultationDate() { return consultationDate; }
+    public String getDiagnosis() { return diagnosis; }
+    public Status getStatus() { return status; }
+    public String getPrescriptionNotes() { return prescriptionNotes; }
+    public Integer getLinkedTreatmentId() { return linkedTreatmentId; }
 
     // Setters
-    public void setPatientId(String patientId) {
-        this.patientId = patientId;
-    }
+    public void setPatientId(String patientId) { this.patientId = patientId; }
+    public void setPatientName(String name) { this.patientName = name; }
+    public void setDoctorName(String name) { this.doctorName = name; }
+    public void setDoctorId(String doctorId) { this.doctorId = doctorId; }
+    public void setConsultationDate(LocalDateTime date) { this.consultationDate = date; }
+    public void setDiagnosis(String diagnosis){ this.diagnosis = diagnosis; }
+    public void setStatus(Status status) { this.status = status; }
+    public void setPrescriptionNotes(String notes) { this.prescriptionNotes = notes; }
+    public void setLinkedTreatmentId(Integer id) { this.linkedTreatmentId = id; }
 
-    public void setPatientName(String name) {
-        this.patientName = name;
-    }
-
-    public void setDoctorName(String name) {
-        this.doctorName = name;
-    }
-
-    public void setDoctorId(String doctorId) {
-        this.doctorId = doctorId;
-    }
-
-    public void setConsultationDate(LocalDateTime date) {
-        this.consultationDate = date;
-    }
-    
-    public void setDiagnosis(String diagnosis){
-        this.diagnosis = diagnosis;
-    }
-
-    // Comparison (for sorting by date)
-    @Override
-    public int compareTo(Consultation other) {
+    // Sorting by date
+    @Override public int compareTo(Consultation other) {
         return this.consultationDate.compareTo(other.consultationDate);
     }
 
-    // CSV-style format for file saving
+    // CSV-style (not used by controller writer but kept here)
     public String toCSV() {
-        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm");
+        DateTimeFormatter f = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm");
         return String.format("%d,%s,%s,%s,%s,%s",
-                consultationId, patientId, patientName, doctorId, doctorName, consultationDate.format(formatter));
+                consultationId, patientId, patientName, doctorId, doctorName, consultationDate.format(f));
     }
 
-    // String representation
-    @Override
-    public String toString() {
-        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm");
+    @Override public String toString() {
+        DateTimeFormatter f = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm");
         return "ID: " + consultationId +
                ", Patient: " + patientName + " (" + patientId + ")" +
                ", Doctor: " + doctorName +
-               ", Date: " + consultationDate.format(formatter);
+               ", Date: " + consultationDate.format(f);
     }
 
-    // Equality based on consultationId
-    @Override
-    public boolean equals(Object o) {
+    @Override public boolean equals(Object o) {
         if (this == o) return true;
         if (!(o instanceof Consultation)) return false;
         Consultation that = (Consultation) o;
         return consultationId == that.consultationId;
     }
+    @Override public int hashCode() { return Objects.hash(consultationId); }
 
-    @Override
-    public int hashCode() {
-        return Objects.hash(consultationId);
-    }
-
-    // Static utility for setting the counter manually (optional)
     public static void setCounter(int nextId) {
-        if (nextId > counter) {
-            counter = nextId;
-        }
+        if (nextId > counter) counter = nextId;
     }
 }

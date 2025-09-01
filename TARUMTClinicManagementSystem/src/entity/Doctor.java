@@ -40,8 +40,8 @@ public class Doctor {
             if (numeric >= idCounter) {
                 idCounter = numeric + 1;
             }
-        } catch (NumberFormatException ignored) {
-            // Ignore if ID format is unexpected
+        } 
+        catch (NumberFormatException ignored) {
         }
     }
 

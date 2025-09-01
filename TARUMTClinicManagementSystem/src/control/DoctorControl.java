@@ -13,11 +13,13 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.time.DayOfWeek;
 import java.time.LocalDateTime;
+import java.time.LocalTime;
 import java.util.Scanner;
 
 import static tarumtclinicmanagementsystem.Session.AFTERNOON;
 import static tarumtclinicmanagementsystem.Session.MORNING;
 import static tarumtclinicmanagementsystem.Session.NIGHT;
+import utility.Report;
 
 public class DoctorControl {
     private ClinicADT<Doctor> doctorList;
@@ -122,9 +124,9 @@ public class DoctorControl {
         }
         return null;
     }
-    
+
     public int getDoctorCount() {
-        return doctorList.size();  // assuming doctorList is ClinicADT<Doctor>
+        return doctorList.size();
     }
 
     public void printDoctorsSortedByName() {
@@ -137,32 +139,50 @@ public class DoctorControl {
         ClinicADT.MyIterator<Doctor> iter = doctorList.iterator();
         while (iter.hasNext()) sorted.add(iter.next());
 
-        sorted.sort((d1, d2) -> d1.getName().compareToIgnoreCase(d2.getName())); // using MyComparator
+        // use your ADT's sort with a comparator
+        sorted.sort((d1, d2) -> d1.getName().compareToIgnoreCase(d2.getName()));
 
         printDoctorTableHeader();
         iter = sorted.iterator();
         while (iter.hasNext()) printDoctorRow(iter.next());
         printDoctorTableFooter();
     }
-    
+
     public boolean checkRoomAvailability(int roomNumber) {
-        return !isRoomOccupied(roomNumber);  // returns true if room is free
+        return !isRoomOccupied(roomNumber);
     }
 
     public boolean isDoctorAvailable(Doctor doctor, LocalDateTime startTime, int durationHours) {
-        if (doctor == null) return false;
+        if (doctor == null || startTime == null || durationHours <= 0) return false;
 
         DayOfWeek dayOfWeek = startTime.getDayOfWeek();
         Session sessionForDay = doctor.getDutySchedule().getSessionForDay(dayOfWeek);
         if (sessionForDay == Session.REST) return false;
 
-        int hour = startTime.getHour();
-        return switch (sessionForDay) {
-            case MORNING -> hour >= 8 && (hour + durationHours) <= 12;
-            case AFTERNOON -> hour >= 12 && (hour + durationHours) <= 18;
-            case NIGHT -> hour >= 18 && (hour + durationHours) <= 24;
-            default -> false;
-        };
+        // Align to Session’s declared working window
+        LocalTime start = parseTime(sessionForDay.getStartTime());
+        LocalTime end   = parseTime(sessionForDay.getEndTime());
+        LocalTime reqStart = startTime.toLocalTime();
+        LocalTime reqEnd   = reqStart.plusHours(durationHours);
+
+        // Handle overnight (NIGHT 20:00 → 08:00 next day)
+        boolean overnight = end.isBefore(start);
+        if (!overnight) {
+            // simple window: start <= reqStart and reqEnd <= end
+            return !reqStart.isBefore(start) && !reqEnd.isAfter(end);
+        } else {
+            // overnight window: available if within [start..24:00) or [00:00..end]
+            boolean inLate = !reqStart.isBefore(start) && reqEnd.isBefore(LocalTime.MIDNIGHT.plusSeconds(1));
+            boolean inEarly = !reqEnd.isAfter(end);
+            // Also allow a request that straddles midnight fully within the window
+            boolean crossesMidnight = reqStart.isAfter(start) && reqEnd.isAfter(LocalTime.MIDNIGHT) && !reqEnd.isAfter(end);
+            return inLate || inEarly || crossesMidnight;
+        }
+    }
+
+    private LocalTime parseTime(String hhmm) {
+        // Session.REST uses "-", but we guard before calling this
+        return LocalTime.parse(hhmm);
     }
 
     public boolean isDoctorAvailableForAppointment(
@@ -175,6 +195,7 @@ public class DoctorControl {
         if (!isDoctorAvailable(doctor, startTime, durationHours)) return false;
         LocalDateTime endTime = startTime.plusHours(durationHours);
 
+        // Check overlap with existing consultations (1 hour each)
         ClinicADT.MyIterator<Consultation> cIter = consultations.iterator();
         while (cIter.hasNext()) {
             Consultation c = cIter.next();
@@ -185,6 +206,7 @@ public class DoctorControl {
             }
         }
 
+        // Check overlap with treatments (2 hours each)
         ClinicADT.MyIterator<MedicalTreatment> tIter = treatments.iterator();
         while (tIter.hasNext()) {
             MedicalTreatment t = tIter.next();
@@ -200,7 +222,7 @@ public class DoctorControl {
 
     public void printAvailableDoctors() {
         boolean found = false;
-        System.out.println("=== Available Doctors ===");
+        Report.cprintln("====== Available Doctors ======");
 
         printDoctorTableHeader();
 
@@ -228,7 +250,7 @@ public class DoctorControl {
         while (iterator.hasNext()) {
             Doctor doc = iterator.next();
             if (isDoctorAvailable(doc, startTime, durationHours)) {
-                System.out.printf("Doctor: %s (%s), Room: %d\n", doc.getName(), doc.getId(), doc.getRoomNumber());
+                System.out.printf("Doctor: %s (%s), Room: %d%n", doc.getName(), doc.getId(), doc.getRoomNumber());
                 found = true;
             }
         }
@@ -260,8 +282,8 @@ public class DoctorControl {
             System.out.println("Error writing to file: " + filePath + " - " + e.getMessage());
         }
     }
-    
-   public void updateDoctorScheduleById(String doctorId, Scanner scanner) {
+
+    public void updateDoctorScheduleById(String doctorId, Scanner scanner) {
         Doctor doctor = getDoctorById(doctorId);
         if (doctor == null) {
             System.out.println("Doctor ID not found.");
@@ -299,7 +321,7 @@ public class DoctorControl {
         saveToFile(doctorFilePath); // persist changes
     }
 
-   public void loadFromFile(String filePath) {
+    public void loadFromFile(String filePath) {
         File file = new File(filePath);
         if (!file.exists()) {
             System.out.println("No existing doctor data found at: " + filePath + ". Starting fresh.");
@@ -340,7 +362,7 @@ public class DoctorControl {
                         currentDoctor = null;
                         currentSchedule = null;
                     }
-                } 
+                }
                 // Schedule line: starts with at least one space
                 else if (currentSchedule != null && currentDoctor != null) {
                     String[] scheduleParts = line.split(":\\s*", 2);
@@ -350,8 +372,8 @@ public class DoctorControl {
                             Session session = Session.valueOf(scheduleParts[1].trim().toUpperCase());
                             currentSchedule.setDaySession(day, session);
                         } catch (IllegalArgumentException e) {
-                            System.out.println("Warning: Invalid schedule entry for doctor " 
-                                + currentDoctor.getName() + ": " + line);
+                            System.out.println("Warning: Invalid schedule entry for doctor "
+                                    + currentDoctor.getName() + ": " + line);
                         }
                     } else {
                         System.out.println("Warning: Invalid schedule format: " + line);
@@ -363,18 +385,16 @@ public class DoctorControl {
         }
     }
 
-
-
     // Utility printing methods
     private void printDoctorTableHeader() {
         System.out.println("+------------+----------------+--------+------------+------------+------------------+--------------+");
-        System.out.printf("| %-10s | %-14s | %-6s | %-10s | %-10s | %-16s | %-12s |\n",
+        System.out.printf("| %-10s | %-14s | %-6s | %-10s | %-10s | %-16s | %-12s |%n",
                 "Doctor ID", "Name", "Room", "Available", "Gender", "IC Number", "Phone");
         System.out.println("+------------+----------------+--------+------------+------------+------------------+--------------+");
     }
 
     private void printDoctorRow(Doctor doc) {
-        System.out.printf("| %-10s | %-14s | %-6d | %-10s | %-10s | %-16s | %-12s |\n",
+        System.out.printf("| %-10s | %-14s | %-6d | %-10s | %-10s | %-16s | %-12s |%n",
                 doc.getId(), doc.getName(), doc.getRoomNumber(),
                 doc.isAvailable() ? "Yes" : "No",
                 doc.getGender(), doc.getIcNumber(), doc.getPhoneNumber());
@@ -383,18 +403,17 @@ public class DoctorControl {
     private void printDoctorTableFooter() {
         System.out.println("+------------+----------------+--------+------------+------------+------------------+--------------+");
     }
-    
+
     public int countDutySessions(Doctor doc) {
         DutySchedule schedule = doc.getDutySchedule();
         int dutyCount = 0;
 
         for (DayOfWeek day : DayOfWeek.values()) {
-            Session session = schedule.getSessionForDay(day); // Use Session type
-            if (session != null && !session.toString().equalsIgnoreCase("OFF") && !session.toString().trim().isEmpty()) {
+            Session session = schedule.getSessionForDay(day);
+            if (session != null && session != Session.REST) {
                 dutyCount++;
             }
         }
-
         return dutyCount;
     }
 }

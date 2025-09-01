@@ -31,18 +31,12 @@ public enum Session {
     public String getRecessStart() { return recessStart; }
     public String getRecessEnd() { return recessEnd; }
 
-    /**
-     * Returns the working period of the session as a string.
-     * Example: "08:00-14:00"
-     */
+    //Returns the working period of the session as a string.
     public String getWorkTime() {
         return startTime + "-" + endTime;
     }
 
-    /**
-     * Returns the recess period of the session as a string.
-     * Example: "10:30-11:00"
-     */
+    //Returns the recess period of the session as a string.
     public String getRecessTime() {
         return recessStart + "-" + recessEnd;
     }
